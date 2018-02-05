@@ -98,14 +98,19 @@ $nl
     null-matrix?
     well-formed-matrix?
     square-matrix?
-} ;
+}
 
-! HELP: negative-power-matrix?
-! { $values { "m" integer } { "n" integer } }
-! { $description "Determines whether an object is in the class of " { $link negative-power-matrix } " objects." } ;
+"Errors thrown by this vocabulary:"
+{ $related-subsections negative-power-matrix } ;
+
+HELP: negative-power-matrix
+{ $values { "m" sequence } { "n" integer } }
+{ $description "Throws a " { $link negative-power-matrix } " error." }
+{ $error-description "Given the semantics of " { $link m^n } ", negative exponents are not within the domain of the power matrix function." } ;
+
+{ negative-power-matrix m^n } related-words
 
 ! creators
-
 HELP: <matrix>
 { $values { "m" integer } { "n" integer } { "element" object } { "matrix" sequence } }
 { $description "Creates a matrix of size " { $snippet "m x n" } ", filled with " { $snippet "element" } "." }
@@ -221,8 +226,24 @@ HELP: <simple-eye>
     }
 } ;
 
+HELP: <square-rows>
+{ $values { "desc" { $or sequence integer } } { "matrix" sequence } }
+{ $description "Generate a square row matrix using the input descriptor. If the descriptor is a number, it is used to generate square rows within that range. If the descriptor is a sequence, it is " { $link replicate } "d to create each row." }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "3 <square-rows> ."
+        "{ { 0 1 2 } { 0 1 2 } { 0 1 2 } }"
+    }
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ 2 3 5 } <square-rows> ."
+        "{ { 2 3 5 } { 2 3 5 } { 2 3 5 } }"
+    }
+} ;
+
 HELP: <square-cols>
-{ $values { "desc" "a descriptor" } { "matrix" sequence } }
+{ $values { "desc" { $or sequence integer } } { "matrix" sequence } }
 { $description "Generate a square column matrix using the input descriptor. If the descriptor is a number, it is used to generate square columns within that range. If the descriptor is a sequence, one column is created to replicate each of its elements." }
 { $examples
     { $example
@@ -237,35 +258,38 @@ HELP: <square-cols>
     }
 } ;
 
-HELP: <box-matrix>
-{ $values { "r" integer } { "matrix" sequence } }
-{ $description "Create a box matrix with the determinant of " { $snippet "r" } ", filled with ones. The size of the output scales linearly (" { $snippet "(r*2)+1" } ") with the magnitude of the determinant." }
+HELP: <lower-matrix>
+{ $values { "object" object } { "m" integer } { "n" integer } { "matrix" sequence } }
+{ $description "Make a lower triangular matrix, where all the values above the main diagonal are " { $snippet "0" } ". " { $snippet "object" } " will be used as the value for the nonzero part of the matrix, while " { $snippet "m" } " and " { $snippet "n" } " are used as the dimensions. The inverse of this word is " { $link <upper-matrix> } ". See " { $url URL" https://en.wikipedia.org/wiki/Triangular_matrix" "triangular matrix" } "." }
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
-        "2 <box-matrix> ."
+        "1 5 5 <lower-matrix> ."
 "{
-    { 1 1 1 1 1 }
-    { 1 1 1 1 1 }
-    { 1 1 1 1 1 }
-    { 1 1 1 1 1 }
+    { 1 0 0 0 0 }
+    { 1 1 0 0 0 }
+    { 1 1 1 0 0 }
+    { 1 1 1 1 0 }
     { 1 1 1 1 1 }
 }"
     }
+} ;
+
+HELP: <upper-matrix>
+{ $values { "object" object } { "m" integer } { "n" integer } { "matrix" sequence } }
+{ $description "Make an upper triangular matrix, where all the values below the main diagonal are " { $snippet "0" } ". " { $snippet "object" } " will be used as the value for the nonzero part of the matrix, while " { $snippet "m" } " and " { $snippet "n" } " are used as the dimensions. The inverse of this word is " { $link <lower-matrix> } ". See " { $url URL" https://en.wikipedia.org/wiki/Triangular_matrix" "triangular matrix" } "." }
+{ $examples
     { $example
         "USING: math.matrices prettyprint ;"
-        "3 <box-matrix> ."
+        "1 5 5 <upper-matrix> ."
 "{
-    { 1 1 1 1 1 1 1 }
-    { 1 1 1 1 1 1 1 }
-    { 1 1 1 1 1 1 1 }
-    { 1 1 1 1 1 1 1 }
-    { 1 1 1 1 1 1 1 }
-    { 1 1 1 1 1 1 1 }
-    { 1 1 1 1 1 1 1 }
+    { 1 1 1 1 1 }
+    { 0 1 1 1 1 }
+    { 0 0 1 1 1 }
+    { 0 0 0 1 1 }
+    { 0 0 0 0 1 }
 }"
     }
-
 } ;
 
 HELP: <cartesian-square-indices>
@@ -345,6 +369,37 @@ HELP: <toeplitz-matrix>
     }
 } ;
 
+HELP: <box-matrix>
+{ $values { "r" integer } { "matrix" sequence } }
+{ $description "Create a box matrix with the determinant of " { $snippet "r" } ", filled with ones. The size of the output scales linearly (" { $snippet "(r*2)+1" } ") with the magnitude of the determinant." }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "2 <box-matrix> ."
+"{
+    { 1 1 1 1 1 }
+    { 1 1 1 1 1 }
+    { 1 1 1 1 1 }
+    { 1 1 1 1 1 }
+    { 1 1 1 1 1 }
+}"
+    }
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "3 <box-matrix> ."
+"{
+    { 1 1 1 1 1 1 1 }
+    { 1 1 1 1 1 1 1 }
+    { 1 1 1 1 1 1 1 }
+    { 1 1 1 1 1 1 1 }
+    { 1 1 1 1 1 1 1 }
+    { 1 1 1 1 1 1 1 }
+    { 1 1 1 1 1 1 1 }
+}"
+    }
+
+} ;
+
 HELP: <scale-matrix4>
 { $values { "factors" sequence } { "matrix" sequence } }
 { $description "Make a 4x4 " { $url URL" https://en.wikipedia.org/wiki/Scaling_(geometry)#Matrix_representation" "scaling matrix" } ". Only the first three values in " { $snippet "factors" } " are used." }
@@ -379,25 +434,122 @@ HELP: <frustum-matrix4>
 } ;
 { <frustum-matrix4> glFrustum } related-words
 
+HELP: mneg
+{ $values { "m" sequence } { "m" object } }
+{ $description "Negate (invert the sign) of all elements in the matrix." }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ { 5 9 } { 15 17 } } mneg ."
+        "{ { -5 -9 } { -15 -17 } }"
+    }
+} ;
+
 HELP: n+m
 { $values { "n" object } { "m" sequence }  }
 { $description { $snippet "n" } " is treated as a scalar and added to each element of the matrix " { $snippet "m" } "." }
+{ $notes "This word is the swapped equivalent of " { $link m+n } "." }
 { $examples
     { $example
         "USING: kernel math.matrices prettyprint ;"
-        "3 <identity-matrix> 1 swap n+m ."
+        "1 3 <identity-matrix> n+m ."
         "{ { 2 1 1 } { 1 2 1 } { 1 1 2 } }"
+    }
+} ;
+
+HELP: m+n
+{ $values { "n" object } { "m" sequence }  }
+{ $description { $snippet "n" } " is treated as a scalar and added to each element of the matrix " { $snippet "m" } "." }
+{ $notes "This word is the swapped equivalent of " { $link n+m } "." }
+{ $examples
+    { $example
+        "USING: kernel math.matrices prettyprint ;"
+        "3 <identity-matrix> 1 m+n ."
+        "{ { 2 1 1 } { 1 2 1 } { 1 1 2 } }"
+    }
+} ;
+
+HELP: n-m
+{ $values { "n" object } { "m" sequence }  }
+{ $description { $snippet "n" } " is treated as a scalar and subtracted from each element of the matrix " { $snippet "m" } "." }
+{ $notes "This word is the swapped equivalent of " { $link m-n } "." }
+{ $examples
+    { $example
+        "USING: kernel math.matrices prettyprint ;"
+        "1 3 <identity-matrix> n-m ."
+        "{ { 0 1 1 } { 1 0 1 } { 1 1 0 } }"
+    }
+} ;
+
+HELP: m-n
+{ $values { "n" object } { "m" sequence }  }
+{ $description { $snippet "n" } " is treated as a scalar and subtracted from each element of the matrix " { $snippet "m" } "." }
+{ $notes "This word is the swapped equivalent of " { $link n-m } "." }
+{ $examples
+    { $example
+        "USING: kernel math.matrices prettyprint ;"
+        "3 <identity-matrix> 1 m-n ."
+        "{ { 0 -1 -1 } { -1 0 -1 } { -1 -1 0 } }"
     }
 } ;
 
 HELP: n*m
 { $values { "n" object } { "m" sequence }  }
-{ $description { $snippet "n" } " is treated as a scalar. Each element in " { $snippet "m" } " is multiplied by " { $snippet "n" } "." }
+{ $description "Every element in the input matrix " { $snippet "m" } " is multiplied by the scalar "{ $snippet "n" } ". The output has the same shape as the input." }
+{ $notes "This word is the swapped equivalent of " { $link m*n } "." }
 { $examples
     { $example
         "USING: kernel math.matrices prettyprint ;"
-        "3 <identity-matrix> 3 swap n*m ."
+        "3 3 <identity-matrix> n*m ."
         "{ { 3 0 0 } { 0 3 0 } { 0 0 3 } }"
+    }
+} ;
+
+HELP: m*n
+{ $values { "n" object } { "m" sequence }  }
+{ $description "Every element in the input matrix " { $snippet "m" } " is multiplied by the scalar "{ $snippet "n" } ". The output has the same shape as the input." }
+{ $notes "This word is the swapped equivalent of " { $link n*m } "." }
+{ $examples
+    { $example
+        "USING: kernel math.matrices prettyprint ;"
+        "3 <identity-matrix> 3 m*n ."
+        "{ { 3 0 0 } { 0 3 0 } { 0 0 3 } }"
+    }
+} ;
+
+HELP: n/m
+{ $values { "n" object } { "m" sequence }  }
+{ $description "Every element in the input matrix " { $snippet "m" } " is divided by the scalar "{ $snippet "n" } ". The output has the same shape as the input." }
+{ $notes "This word is the swapped equivalent of " { $link m/n } "." }
+{ $examples
+    { $example
+        "USING: kernel math.matrices prettyprint ;"
+        "2 2 <box-matrix> n/m ."
+"{
+    { 2 2 2 2 2 }
+    { 2 2 2 2 2 }
+    { 2 2 2 2 2 }
+    { 2 2 2 2 2 }
+    { 2 2 2 2 2 }
+}"
+    }
+} ;
+
+HELP: m/n
+{ $values { "n" object } { "m" sequence }  }
+{ $description "Every element in the input matrix " { $snippet "m" } " is divided by the scalar "{ $snippet "n" } ". The output has the same shape as the input." }
+{ $notes "This word is the swapped equivalent of " { $link n/m } "." }
+{ $examples
+    { $example
+        "USING: kernel math.matrices prettyprint ;"
+        "2 <box-matrix> 2 m/n ."
+"{
+    { 1/2 1/2 1/2 1/2 1/2 }
+    { 1/2 1/2 1/2 1/2 1/2 }
+    { 1/2 1/2 1/2 1/2 1/2 }
+    { 1/2 1/2 1/2 1/2 1/2 }
+    { 1/2 1/2 1/2 1/2 1/2 }
+}"
     }
 } ;
 
@@ -445,6 +597,39 @@ HELP: m/
     }
 } ;
 
+HELP: m.v
+{ $values { "m" sequence } { "v" sequence } { "p" sequence } }
+{ $description "Computes the dot product of a matrix and a vector." }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ { 1 -1 2 } { 0 -3 1 } } { 2 1 0 } m.v ."
+        "{ 1 -3 }"
+    }
+} ;
+
+HELP: v.m
+{ $values { "m" sequence } { "v" sequence } { "p" sequence } }
+{ $description "Computes the dot product of a vector and a matrix." }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ 2 1 0 } { { 1 -1 2 } { 0 -3 1 } } v.m ."
+        "{ 2 -5 5 }"
+    }
+} ;
+
+HELP: m.
+{ $values { "m" sequence } }
+{ $description "Computes the dot product of two matrices, i.e multiplies them." }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ { 1 -1 2 } { 0 -3 1 } } { { 3 7 } { 9 12 } } m. ."
+        "{ { -6 -5 } { -27 -36 } }"
+    }
+} ;
+
 HELP: m~
 { $values { "m1" sequence } { "m2" sequence } { "epsilon" number } { "?" boolean } }
 { $description "Compares the matrices using the " { $snippet "epsilon" } "." }
@@ -453,17 +638,6 @@ HELP: m~
         "USING: kernel math math.matrices prettyprint ;"
         "{ { 5 9 } { 15 17 } } dup [ .01 + ] matrix-map .1 m~ ."
         "t"
-    }
-} ;
-
-HELP: mneg
-{ $values { "m" sequence } { "m" object } }
-{ $description "Negate (invert the sign) of all elements in the matrix." }
-{ $examples
-    { $example
-        "USING: math.matrices prettyprint ;"
-        "{ { 5 9 } { 15 17 } } mneg ."
-        "{ { -5 -9 } { -15 -17 } }"
     }
 } ;
 
@@ -497,39 +671,6 @@ HELP: mnorm
         "USING: math.matrices prettyprint ;"
         "{ { 5 9 } { 15 17 } } mnorm ."
         "{ { 5/17 9/17 } { 15/17 1 } }"
-    }
-} ;
-
-HELP: m.v
-{ $values { "m" sequence } { "v" sequence } { "p" sequence } }
-{ $description "Computes the dot product of a matrix and a vector." }
-{ $examples
-    { $example
-        "USING: math.matrices prettyprint ;"
-        "{ { 1 -1 2 } { 0 -3 1 } } { 2 1 0 } m.v ."
-        "{ 1 -3 }"
-    }
-} ;
-
-HELP: v.m
-{ $values { "m" sequence } { "v" sequence } { "p" sequence } }
-{ $description "Computes the dot product of a vector and a matrix." }
-{ $examples
-    { $example
-        "USING: math.matrices prettyprint ;"
-        "{ 2 1 0 } { { 1 -1 2 } { 0 -3 1 } } v.m ."
-        "{ 2 -5 5 }"
-    }
-} ;
-
-HELP: m.
-{ $values { "m" sequence } }
-{ $description "Computes the dot product of two matrices, i.e multiplies them." }
-{ $examples
-    { $example
-        "USING: math.matrices prettyprint ;"
-        "{ { 1 -1 2 } { 0 -3 1 } } { { 3 7 } { 9 12 } } m. ."
-        "{ { -6 -5 } { -27 -36 } }"
     }
 } ;
 

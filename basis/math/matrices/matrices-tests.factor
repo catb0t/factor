@@ -385,6 +385,7 @@ CONSTANT: test-points {
 { f } [ { { 1 } { 2 3 } } square-matrix? ] unit-test
 { f } [ { { 1 2 } } square-matrix? ] unit-test
 
+! TODO: from <<<<<<< HEAD
 { 9 }
 [ { { 2 -2 1 } { 1 3 -1 } { 2 -4 2 } } m-1norm ] unit-test
 
@@ -393,3 +394,11 @@ CONSTANT: test-points {
 
 { 2.0 }
 [ { { 1 1 } { 1 1 } } frobenius-norm ] unit-test
+! TODO: from "intermediate commit"
+! any deep-empty matrix is null
+! it doesn't make any sense for { } to be null while { { } } to be considered nonnull
+{ t } [ { } null-matrix? ] unit-test
+{ t } [ { { } } null-matrix? ] unit-test
+{ t } [ { { { } } { { { } } } } null-matrix? ] unit-test
+{ t } [ { { } { } { } } null-matrix? ] unit-test
+{ f } [ { { { 1 } } { 2 } { } } null-matrix? ] unit-test

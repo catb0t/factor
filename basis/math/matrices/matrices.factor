@@ -1,12 +1,22 @@
 ! Copyright (C) 2005, 2010 Slava Pestov, Joe Groff, Cat Stevens.
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays columns kernel locals math math.bits
-math.functions math.order math.vectors sequences
+math.functions math.order math.vectors sequences sequences.deep
 sequences.private fry math.vectors.private math.statistics grouping
 combinators.short-circuit math.ranges combinators.smart ;
 IN: math.matrices
 
-ERROR: negative-power-matrix m n ;
+ERROR: negative-power-matrix { m sequence } { n integer } ;
+
+! if these are defined lower down we get a compiler error
+DEFER: dimension-range
+<PRIVATE ! implementation details of <lower-matrix> and <upper-matrix>
+: upper-matrix-indices ( matrix -- matrix' )
+    dimension-range <reversed> [ tail-slice* >array ] 2map concat ;
+
+: lower-matrix-indices ( matrix -- matrix' )
+    dimension-range [ head-slice >array ] 2map concat ;
+PRIVATE>
 
 ! Matrices
 : <matrix-by> ( m n quot: ( ... -- elt ) -- matrix )
@@ -42,27 +52,36 @@ ERROR: negative-power-matrix m n ;
     [ n <identity-matrix> ]
     [ m n k 1 <eye> ] if ; inline
 
-DEFER: matrix-indices
+GENERIC: <square-rows> ( desc -- matrix )
+M: integer <square-rows> <iota> <square-rows> ;
+M: sequence <square-rows>
+    [ length ] keep >array '[ _ clone ] { } replicate-as ;
+
+GENERIC: <square-cols> ( desc -- matrix )
+M: integer <square-cols> <iota> <square-cols> ;
+M: sequence <square-cols>
+    [ length ] keep [ <array> ] with { } map-as ;
+
 DEFER: matrix-set-nths
 
 : <lower-matrix> ( object m n -- matrix )
-    <zero-matrix> [ matrix-indices ] [ matrix-set-nths ] [ ] tri ;
+    <zero-matrix> [ lower-matrix-indices ] [ matrix-set-nths ] [ ] tri ;
 
 : <upper-matrix> ( object m n -- matrix )
-    <zero-matrix> [ matrix-indices ] [ matrix-set-nths ] [ ] tri ;
+    <zero-matrix> [ upper-matrix-indices ] [ matrix-set-nths ] [ ] tri ;
 
 : <cartesian-square-indices> ( n -- matrix )
     <iota> dup cartesian-product ; inline
 
 ! Special matrix constructors follow
+: <hankel-matrix> ( n -- matrix )
+  [ <iota> dup ] keep '[ + abs 1 + dup _ > [ drop 0 ] when ] cartesian-map ;
+
 : <hilbert-matrix> ( m n -- matrix )
     [ <iota> ] bi@ [ + 1 + recip ] cartesian-map ;
 
 : <toeplitz-matrix> ( n -- matrix )
     <iota> dup [ - abs 1 + ] cartesian-map ;
-
-: <hankel-matrix> ( n -- matrix )
-    [ <iota> dup ] keep '[ + abs 1 + dup _ > [ drop 0 ] when ] cartesian-map ;
 
 : <box-matrix> ( r -- matrix )
     2 * 1 + dup '[ _ 1 <array> ] replicate ;
@@ -242,6 +261,9 @@ PRIVATE>
 : column-map ( matrix quot -- seq )
     [ [ first length <iota> ] keep ] dip '[ _ col @ ] map ; inline
 
+! row-map would make sense compared to column-map
+ALIAS: row-map matrix-map
+
 : cartesian-matrix-map ( matrix quot -- matrix' )
     [ [ first length <cartesian-square-indices> ] keep ] dip
     '[ _ @ ] matrix-map ; inline
@@ -256,30 +278,9 @@ PRIVATE>
 
 : sample-covariance-matrix ( matrix -- cov ) 1 covariance-matrix-ddof ; inline
 
-GENERIC: <square-rows> ( desc -- matrix )
-M: integer <square-rows> <iota> <square-rows> ;
-M: sequence <square-rows>
-    [ length ] keep >array '[ _ clone ] { } replicate-as ;
-
-GENERIC: <square-cols> ( desc -- matrix )
-M: integer <square-cols> <iota> <square-cols> ;
-M: sequence <square-cols>
-    [ length ] keep [ <array> ] with { } map-as ;
-
-: null-matrix? ( matrix -- ? ) empty? ; inline
-
-: well-formed-matrix? ( matrix -- ? )
-    [ t ] [
-        [ ] [ first length ] bi
-        '[ length _ = ] all?
-    ] if-empty ;
-
 : dim ( matrix -- pair/f )
     [ 2 0 <array> ]
     [ [ length ] [ first length ] bi 2array ] if-empty ;
-
-: square-matrix? ( matrix -- ? )
-    { [ well-formed-matrix? ] [ dim all-eq? ] } 1&& ;
 
 : matrix-coordinates ( dim -- coordinates )
     first2 [ <iota> ] bi@ cartesian-product ; inline
@@ -287,8 +288,14 @@ M: sequence <square-cols>
 : dimension-range ( matrix -- dim range )
     dim [ matrix-coordinates ] [ first [1,b] ] bi ;
 
-: upper-matrix-indices ( matrix -- matrix' )
-    dimension-range <reversed> [ tail-slice* >array ] 2map concat ;
+: null-matrix? ( matrix -- ? ) flatten empty? ; inline
 
-: lower-matrix-indices ( matrix -- matrix' )
-    dimension-range [ head-slice >array ] 2map concat ;
+: well-formed-matrix? ( matrix -- ? )
+    [ t ] [
+        [ ] [ first length ] bi
+        '[ length _ = ] all?
+    ] if-empty ;
+
+: square-matrix? ( matrix -- ? )
+    { [ well-formed-matrix? ] [ dim all-eq? ] } 1&& ;
+

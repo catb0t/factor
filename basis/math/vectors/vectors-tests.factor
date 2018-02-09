@@ -2,6 +2,7 @@ USING: math.vectors tools.test kernel specialized-arrays compiler
 kernel.private alien.c-types math.functions ;
 SPECIALIZED-ARRAY: int
 
+{ { 10 20 30 } } [ 10 { 1 2 3 } n*v ] unit-test
 { { 1 2 3 } } [ 1/2 { 2 4 6 } n*v ] unit-test
 { { 1 2 3 } } [ { 2 4 6 } 1/2 v*n ] unit-test
 { { 1 2 3 } } [ { 2 4 6 } 2 v/n ] unit-test

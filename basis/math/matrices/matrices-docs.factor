@@ -2,11 +2,24 @@
 USING: help.markup help.syntax kernel math opengl.gl sequences prettyprint urls ;
 IN: math.matrices
 
-<PRIVATE
-: $related-subsections ( element -- ) [ related-words ] [ $subsections ] bi ;
-PRIVATE>
-
 ABOUT: "math.matrices"
+{
+  { <matrix> <matrix-by> <matrix-by-indices> <zero-matrix> <zero-square-matrix> <diagonal-matrix> <identity-matrix>
+      <simple-eye> <eye> <square-rows> <square-cols> <upper-matrix> <lower-matrix> <cartesian-square-indices> }
+  { <box-matrix> <hankel-matrix> <hilbert-matrix> <toeplitz-matrix> <vandermonde-matrix> }
+  { <frustum-matrix4> <ortho-matrix4> <rotation-matrix3> <rotation-matrix4> <scale-matrix3>
+      <scale-matrix4> <skew-matrix4> <translation-matrix4> }
+  { mneg n+m m+n n-m m-n n*m m*n n/m m/n m^n }
+  { m+ m- m* m/ m~ }
+  { v.m m.v m. }
+  { matrix-map column-map row-map cartesian-matrix-map cartesian-column-map cartesian-row-map
+      gram-schmidt gram-schmidt-normalize stitch kronecker-product outer-product }
+  { covariance-matrix covariance-matrix-ddof sample-covariance-matrix }
+  { row rows col cols }
+  { matrix-set-nth matrix-set-nths }
+  { dim mmin mmax mnorm null-matrix? well-formed-matrix? square-matrix? }
+  { negative-power-matrix m^n }
+} [ related-words ] each
 
 ARTICLE: "math.matrices" "Matrix operations"
 "The " { $vocab-link "math.matrices" } " vocabulary implements many ways of working with 2-dimensional sequences, known as matrices. Operations on numeric vectors are implemented in " { $vocab-link "math.vectors" } ", upon which this vocabulary relies."
@@ -14,7 +27,7 @@ $nl
 "Instead of a separate matrix " { $link tuple } " to be instantiated, words in this vocabulary operate on 2-dimensional sequences. In this vocabulary's stack effects, " { $snippet "m" } " and " { $snippet "matrix" } " are the conventional names used for a given matrix object, though " { $snippet "m" } " may refer to a number."
 $nl
 "Making simple matrices:"
-{ $related-subsections
+{ $subsections
     <matrix>
     <matrix-by>
     <matrix-by-indices>
@@ -32,7 +45,7 @@ $nl
 }
 
 "Making special kinds of matrices:"
-{ $related-subsections
+{ $subsections
     <box-matrix>
     <hankel-matrix>
     <hilbert-matrix>
@@ -41,7 +54,7 @@ $nl
 }
 
 "Making domain-specific transformation matrices:"
-{ $related-subsections
+{ $subsections
     <frustum-matrix4>
     <ortho-matrix4>
     <rotation-matrix3>
@@ -53,44 +66,44 @@ $nl
 }
 
 "By-element mathematical operations of a matrix and a scalar:"
-{ $related-subsections mneg n+m m+n n-m m-n n*m m*n n/m m/n m^n }
+{ $subsections mneg n+m m+n n-m m-n n*m m*n n/m m/n m^n }
 
 "By-element mathematical operations of two matricess:"
-{ $related-subsections m+ m- m* m/ m~ }
+{ $subsections m+ m- m* m/ m~ }
 
 "Dot product (multiplication) of vectors and matrices:"
-{ $related-subsections v.m m.v m. }
+{ $subsections v.m m.v m. }
 
 "Transformations on matrices:"
-{ $related-subsections
+{ $subsections
     matrix-map
-    cartesian-matrix-map
-    cartesian-matrix-column-map
     column-map
+    row-map
+    cartesian-matrix-map
+    cartesian-column-map
+    cartesian-row-map
     gram-schmidt
     gram-schmidt-normalize
     stitch
-    kronecker
-    outer
-    upper-matrix-indices
-    lower-matrix-indices
+    kronecker-product
+    outer-product
 }
 
 "Covariance in matrices:"
-{ $related-subsections
+{ $subsections
     covariance-matrix
     covariance-matrix-ddof
     sample-covariance-matrix
 }
 
 "Accesing parts of a matrix:"
-{ $related-subsections row rows col cols }
+{ $subsections row rows col cols }
 
 "Mutating matrices in place:"
-{ $related-subsections matrix-set-nth matrix-set-nths }
+{ $subsections matrix-set-nth matrix-set-nths }
 
 "Attributes of a matrix:"
-{ $related-subsections
+{ $subsections
     dim
     mmin
     mmax
@@ -101,14 +114,18 @@ $nl
 }
 
 "Errors thrown by this vocabulary:"
-{ $related-subsections negative-power-matrix } ;
+{ $subsections negative-power-matrix non-square-determinant } ;
 
 HELP: negative-power-matrix
 { $values { "m" sequence } { "n" integer } }
 { $description "Throws a " { $link negative-power-matrix } " error." }
 { $error-description "Given the semantics of " { $link m^n } ", negative exponents are not within the domain of the power matrix function." } ;
 
-{ negative-power-matrix m^n } related-words
+HELP: non-square-determinant
+{ $values { "m" integer } { "n" integer } }
+{ $description "Throws a " { $link non-square-determinant } " error." }
+{ $error-description { $link determinant } " was used with a non-square matrix whose dimensions are " { $snippet "m x n" } ". It is not generally possible to find the determinant of a non-square matrix." } ;
+
 
 ! creators
 HELP: <matrix>
@@ -129,7 +146,11 @@ HELP: <matrix>
 
 HELP: <matrix-by>
 { $values { "m" integer } { "n" integer } { "quot" { $quotation ( ... -- elt ) } } }
-{ $description "Creates a matrix of size " { $snippet "m x n" } " using elements given by " { $snippet "quot" } "."  }
+{ $description "Creates a matrix of size " { $snippet "m x n" } " using elements given by " { $snippet "quot" } ", a quotation called to create each element."  }
+{ $notes "The following are equivalent:"
+  { $code "m n [ 2drop foo ] <matrix-by-indices>" }
+  { $code "m n [ foo ] <matrix-by>" }
+}
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
@@ -137,6 +158,22 @@ HELP: <matrix-by>
         "{ { 5 5 5 5 5 } { 5 5 5 5 5 } { 5 5 5 5 5 } { 5 5 5 5 5 } }"
     }
 } ;
+
+HELP: <matrix-by-indices>
+{ $values { "m" integer } { "n" integer } { "quot" { $quotation ( ... m' n' -- ... elt ) } } { "matrix" sequence } }
+{ $description "Creates an " { $snippet "m x n" } " matrix using elements given by " { $snippet "quot" } " . This word differs from " { $link <matrix-by> } " in that the indices are placed on the stack (in the same order) before " { $snippet "quot" } " runs. The output of the quotation will be the element at the given position in the matrix." }
+{ $notes "The following are equivalent:"
+  { $code "m n [ 2drop foo ] <matrix-by-indices>" }
+  { $code "m n [ foo ] <matrix-by>" }
+}
+{ $examples
+    { $example
+        "USING: math math.matrices prettyprint ;"
+        "3 4 [ * ] <matrix-by-indices> ."
+        "{ { 0 0 0 0 } { 0 1 2 3 } { 0 2 4 6 } }"
+    }
+} ;
+
 
 HELP: <zero-matrix>
 { $values { "m" integer } { "n" integer } { "matrix" sequence } }
@@ -315,7 +352,7 @@ HELP: <cartesian-square-indices>
 HELP: <hankel-matrix>
 { $values { "n" integer } { "matrix" sequence } }
 { $description
-    "A Hankel matrix is a symmetric, square matrix in which each ascending skew-diagonal from left to right is constant. The determinant of a Hankel matrix is called the catalecticant. See " { $url URL" https://en.wikipedia.org/wiki/Hankel_matrix" "hankel matrix" } "."
+    "A Hankel matrix is a symmetric, square matrix in which each ascending skew-diagonal from left to right is constant. See " { $url URL" https://en.wikipedia.org/wiki/Hankel_matrix" "hankel matrix" } "."
     $nl
     "The following is true of any Hankel matrix" { $snippet "A" } ": " { $snippet "A[i][j] = A[j][i] = a[i+j-2]" } "."
     $nl
@@ -371,7 +408,7 @@ HELP: <toeplitz-matrix>
 
 HELP: <box-matrix>
 { $values { "r" integer } { "matrix" sequence } }
-{ $description "Create a box matrix with the determinant of " { $snippet "r" } ", filled with ones. The size of the output scales linearly (" { $snippet "(r*2)+1" } ") with the magnitude of the determinant." }
+{ $description "Create a box (square) matrix with the dimensions of " { $snippet "r x r" } ", filled with ones. The number of elements in the output scales linearly (" { $snippet "(r*2)+1" } ") with the magnitude of " { $snippet "r" } "." }
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
@@ -402,7 +439,8 @@ HELP: <box-matrix>
 
 HELP: <scale-matrix4>
 { $values { "factors" sequence } { "matrix" sequence } }
-{ $description "Make a 4x4 " { $url URL" https://en.wikipedia.org/wiki/Scaling_(geometry)#Matrix_representation" "scaling matrix" } ". Only the first three values in " { $snippet "factors" } " are used." }
+{ $description "Make a " { $snippet "4 x 4" } " scaling matrix, used to scale an object in 3 or more dimensions. See " { $url URL" https://en.wikipedia.org/wiki/Scaling_(geometry)#Matrix_representation" "scaling matrix on Wikipedia" } "." }
+{ $notes "Only the first three values in " { $snippet "factors" } " are used." }
 { $examples
     { $example
         "USING: kernel math.matrices prettyprint ;"
@@ -418,8 +456,12 @@ HELP: <scale-matrix4>
 
 HELP: <frustum-matrix4>
 { $values { "xy-dim" sequence } { "near" number } { "far" number } { "matrix" sequence } }
-{ $description "Make a 4x4 matrix suitable for representing an occlusion frustum. A viewing or occlusion frustum is the three-dimensional region of a three-dimensional object which is visible on the screen. See " { $url URL" https://en.wikipedia.org/wiki/Frustum" "frustum" } ". Only the first two values from " { $snippet "xy-dim" } " are used." }
-{ $notes "Though the domain is technically unlimited, for unexpected inputs the range may be undefined." }
+{ $description "Make a " { $snippet "4 x 4" } " matrix suitable for representing an occlusion frustum. A viewing or occlusion frustum is the three-dimensional region of a three-dimensional object which is visible on the screen. See " { $url URL" https://en.wikipedia.org/wiki/Frustum" "frustum on Wikipedia" } "." }
+{ $notes
+    "Only the first two values from " { $snippet "xy-dim" } " are used."
+    $nl
+    "Though the domain is technically unlimited, for unexpected inputs the range may be undefined."
+}
 { $examples
     { $example
         "USING: kernel math.matrices prettyprint ;"
@@ -433,6 +475,23 @@ HELP: <frustum-matrix4>
     }
 } ;
 { <frustum-matrix4> glFrustum } related-words
+
+HELP: <ortho-matrix4>
+{ $values { "dim" sequence } { "matrix" sequence } }
+{ $description "Create a " { $snippet "4 x 4" } " orthogonal matrix. Each element in " { $snippet "dim" } " is converted to its reciprocal (" { $link recip } "), and a " { $link <scale-matrix4> } " is created with the inverted sequence." }
+{ $notes "Only the first three values from " { $snippet "dim" } " are used." }
+{ $examples
+    { $example
+        "USING: kernel math.matrices prettyprint ;"
+        "{ -9.3 100 1/2 } <ortho-matrix4> ."
+"{
+    { -0.1075268817204301 0.0 0.0 0.0 }
+    { 0.0 1/100 0.0 0.0 }
+    { 0.0 0.0 2 0.0 }
+    { 0.0 0.0 0.0 1.0 }
+}"
+    }
+} ;
 
 HELP: mneg
 { $values { "m" sequence } { "m" object } }
@@ -693,28 +752,28 @@ HELP: stitch
     }
 } ;
 
-HELP: kronecker
+HELP: kronecker-product
 { $values { "m1" sequence } { "m2" sequence } { "m" sequence } }
 { $description "Calculates the " { $url URL" http://enwp.org/Kronecker_product" "Kronecker product" } " of two matrices." }
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
-        "{ { 1 2 } { 3 4 } } { { 0 5 } { 6 7 } } kronecker ."
+        "{ { 1 2 } { 3 4 } } { { 0 5 } { 6 7 } } kronecker-product ."
         "{ { 0 5 0 10 } { 6 7 12 14 } { 0 15 0 20 } { 18 21 24 28 } }" }
 } ;
 
-HELP: outer
+HELP: outer-product
 { $values { "u" sequence } { "v" sequence } { "m" sequence } }
-{ $description "Computes the " { $url URL" http://  enwp.org/Outer_product" "outer product" } " of " { $snippet "u" } " and " { $snippet "v" } "." }
+{ $description "Computes the " { $url URL" http://  enwp.org/Outer_product" "outer-product product" } " of " { $snippet "u" } " and " { $snippet "v" } "." }
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
-        "{ 5 6 7 } { 1 2 3 } outer ."
+        "{ 5 6 7 } { 1 2 3 } outer-product ."
         "{ { 5 10 15 } { 6 12 18 } { 7 14 21 } }" }
 } ;
 
 HELP: col
-{ $values { "n" integer } { "matrix" sequence } }
+{ $values { "n" integer } { "matrix" sequence } { "col" sequence } }
 { $description "Get the nth column of the matrix." }
 { $notes "Like most Factor sequences, indexing is 0-based. The first column is given by " { $snippet "m 0 col" } "." }
 { $examples
@@ -726,7 +785,7 @@ HELP: col
 } ;
 
 HELP: cols
-{ $values { "seq" "a sequence of integers" } { "matrix" sequence } }
+{ $values { "seq" "a sequence of integers" } { "matrix" sequence } { "cols" sequence } }
 { $description "Get the columns from " { $snippet "matrix" } " listed by " { $snippet "seq" } "." }
 { $examples
     { $example
@@ -737,7 +796,7 @@ HELP: cols
 } ;
 
 HELP: row
-{ $values { "n" integer } { "matrix" sequence } }
+{ $values { "n" integer } { "matrix" sequence } { "row" sequence } }
 { $description "Get the nth row of the matrix." }
 { $notes "Like most Factor sequences, indexing is 0-based. The first row is given by " { $snippet "m 0 row" } "." }
 { $examples
@@ -749,12 +808,40 @@ HELP: row
 } ;
 
 HELP: rows
-{ $values { "seq" "a sequence of integers" } { "matrix" sequence } }
+{ $values { "seq" "a sequence of integers" } { "matrix" sequence } { "rows" sequence } }
 { $description "Get the rows from " { $snippet "matrix" } " listed by " { $snippet "seq" } "." }
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
         "{ 0 1 } { { 1 2 } { 3 4 } } rows ."
         "{ { 1 2 } { 3 4 } }"
+    }
+} ;
+
+HELP: transpose ;
+{ transpose flip } related-words
+
+
+HELP: null-matrix?
+{ $values { "matrix" sequence } { "?" boolean } }
+{ $description "Determine whether " { $snippet "matrix" } " is a null matrix. A null matrix is an empty sequence, or a sequence which consists only of empty sequences." }
+{ $notes "In mathematics, a null matrix is a matrix full of zeroes. In Factor, a matrix with no scalar (non-sequence) elements is considered null. For the former behaviour, use " { $link zero-matrix? } "." }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ { } { } { } } null-matrix? ."
+        "t"
+    }
+} ;
+
+HELP: zero-matrix?
+{ $values { "matrix" sequence } { "?" boolean } }
+{ $description "Determine whether " { $snippet "matrix" } " is a zero matrix. A zero matrix has no nonzero elements." }
+{ $notes "In mathematics, a null matrix is a matrix full of zeroes. In Factor, such a matrix is considered a zero matrix. For testing whether a matrix has no scalar (non-sequence) elements, use " { $link null-matrix? } "." }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ { } { } { } } null-matrix? ."
+        "t"
     }
 } ;

@@ -290,12 +290,22 @@ DEFER: transpose
 
 : exclude-col ( matrix n -- others )
     [ dup dim second <iota> ] dip
-    '[ _ = ] { } reject-as swap cols transpose ;
+    '[ _ = ] { } reject-as swap cols transpose ; ! need to un-transpose
+
+: lookup-rank ( matrix -- rank ) ;
 PRIVATE>
 
+DEFER: zero-matrix?
+DEFER: square-matrix?
 ! -------------------------------------------------
 ! numerical analysis of matrices follows
-: rank ( matrix -- rank )
+: rank ( matrix -- rank ) {
+      { [ dup zero-matrix? ] [ drop 0 ] }
+      { [ dup square-matrix? ] [ ] }
+      [ lookup-rank ]
+  } cond ;
+
+: nullity ( matrix -- nullity )
     ;
 
 ! well-defined for square matrices
@@ -309,10 +319,12 @@ PRIVATE>
 
 ! well-defined for any well-formed-matrix
 : matrix-exclude-pair ( matrix exclude-pair -- submatrix )
-    dup [ first exclude-row ] dip second exclude-col transpose ;
+    dup [ first exclude-row ] dip second exclude-col ;
 
 ! implementation details of determinant and inverse
 <PRIVATE
+: (1determinant) ( matrix -- 1det ) first first ;
+
 : alternating-sign ( seq odd-elts? -- seq' )
     '[ 2 mod zero? _ = [ neg ] unless ] map-index ;
 
@@ -337,25 +349,36 @@ PRIVATE>
     ! sum the resulting sequence
     sum ;
 
+DEFER: (determinant)
+: alternating-first ( matrix -- alternating )
+    first t alternating-sign ;
+
+: determinants-rest ( n matrix -- seq )
+    rest <repetition> [
+        exclude-col dup length (determinant) ! recurses here
+    ] map-index ; recursive
+
 ! generalized to 4 and higher
 : (ndeterminant) ( matrix n -- ndet )
-    drop ;
+    swap [ alternating-first ] [ determinants-rest ] bi
+    v* sum ; recursive
 
+! switches on dimensions only
 : (determinant) ( matrix n -- determinant ) {
+        { 1 [ (1determinant) ] }
         { 2 [ (2determinant) ] }
         { 3 [ (3determinant) ] }
         [ (ndeterminant) ]
-    } case ; inline
+    } case ; recursive
 PRIVATE>
 
 DEFER: square-matrix?
 ! determinant is undefined for m =/= n, unlike inverse
-: determinant ( matrix -- determinant )
-    dup square-matrix? [
-        dup length (determinant)
-    ] [
-        dim first2 non-square-determinant
-    ] if ;
+: determinant ( matrix -- determinant ) {
+      { [ dup zero-matrix? ] [ drop 0 ] }
+      { [ dup square-matrix? ] [ dup length (determinant) ] }
+      [ dim first2 non-square-determinant ]
+    } cond ;
 
 ! more specific to matrices than sequences:flip, and more efficient too
 : transpose ( matrix -- transposed )
@@ -388,6 +411,7 @@ DEFER: square-matrix?
 : (left-inverse) ( matrix -- left-invert )   ;
 : (right-inverse) ( matrix -- right-invert ) ;
 
+! TODO update this when rank works properly
 ! only defined for rank(A) = rows(A) OR rank(A) = cols(M)
 ! https://en.wikipedia.org/wiki/Invertible_matrix
 : (specialized-inverse) ( rect-matrix -- inverted )
@@ -398,10 +422,12 @@ DEFER: square-matrix?
     } case ;
 PRIVATE>
 
-! end of inverse operations!
 ! A^-1
 : multiplicative-inverse ( matrix -- inverse )
     dup square-matrix? [ (square-inverse) ] [ (specialized-inverse) ] if ;
+
+! -----------------------------
+! end of inverse operations!
 
 ! 0-based as you expect
 : matrix-nth ( pair matrix -- elt )
@@ -456,5 +482,6 @@ ALIAS: cartesian-row-map cartesian-matrix-map
 
 ! TODO: use the faster algorithm here
 : invertible-matrix? ( matrix -- ? )
+    ! determinant zero?
     [ dim first2 max <identity-matrix> ] keep
     dup multiplicative-inverse m. = ;

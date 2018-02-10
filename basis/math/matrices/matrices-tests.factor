@@ -1,4 +1,4 @@
-USING: kernel math math.matrices math.matrices.private
+USING: combinators.short-circuit kernel math math.matrices math.matrices.private
 math.vectors sequences tools.test ;
 IN: math.matrices.tests
 
@@ -338,10 +338,38 @@ CONSTANT: test-points {
 { { 1 2 3 4 } } [ { 1 2 3 4 } <diagonal-matrix> main-diagonal ] unit-test
 { { 1 2 3 4 } } [ { 1 2 3 4 } <diagonal-matrix> transpose main-diagonal ] unit-test
 
-{ 14 } [ { { 4 6 } { 3 8 } } (2determinant) ] unit-test
-{ 14 } [ { { 4 6 } { 3 8 } } determinant ] unit-test
-{ -14 } [ { { 3 8 } { 4 6 } } (2determinant) ] unit-test
-{ -14 } [ { { 3 8 } { 4 6 } } determinant ] unit-test
+{ 14 } [ { { 4 6 } { 3 8 } }   (2determinant) ] unit-test
+{ 14 } [ { { 4 6 } { 3 8 } } 2 (ndeterminant) ] unit-test
+{ 14 } [ { { 4 6 } { 3 8 } }      determinant ] unit-test
+{ -14 } [ { { 3 8 } { 4 6 } }   (2determinant) ] unit-test
+{ -14 } [ { { 3 8 } { 4 6 } } 2 (ndeterminant) ] unit-test
+{ -14 } [ { { 3 8 } { 4 6 } }      determinant ] unit-test
+
+{ -11 } [ { { 2 5 } { 1 -3 } }   (2determinant) ] unit-test
+{ -11 } [ { { 2 5 } { 1 -3 } } 2 (ndeterminant) ] unit-test
+{ -11 } [ { { 2 5 } { 1 -3 } }      determinant ] unit-test
+{ 11 } [ { { 1 -3 } { 2 5 } }   (2determinant) ] unit-test
+{ 11 } [ { { 1 -3 } { 2 5 } } 2 (ndeterminant) ] unit-test
+{ 11 } [ { { 1 -3 } { 2 5 } }      determinant ] unit-test
+
+{ -44 } [ { { 3 0 -1 } { 2 -5 4 } { -3 1 3 } }   (3determinant) ] unit-test
+{ -44 } [ { { 3 0 -1 } { 2 -5 4 } { -3 1 3 } } 3 (ndeterminant) ] unit-test
+{ -44 } [ { { 3 0 -1 } { 2 -5 4 } { -3 1 3 } }      determinant ] unit-test
+
+{ -19 } [ { { 2 -3 1 } { 4 2 -1 } { -5 3 -2 } }   (3determinant) ] unit-test
+{ -19 } [ { { 2 -3 1 } { 4 2 -1 } { -5 3 -2 } } 3 (ndeterminant) ] unit-test
+{ -19 } [ { { 2 -3 1 } { 4 2 -1 } { -5 3 -2 } }      determinant ] unit-test
+
+{ 65 } [ { { 5 1 -2 } { -1 0 4 } { 2 -3 3 } }   (3determinant) ] unit-test
+{ 65 } [ { { 5 1 -2 } { -1 0 4 } { 2 -3 3 } } 3 (ndeterminant) ] unit-test
+{ 65 } [ { { 5 1 -2 } { -1 0 4 } { 2 -3 3 } }      determinant ] unit-test
+
+{ t } [ {
+    { -5  4 -3  2 }
+    { -2  1  0 -1 }
+    { -2 -3 -4 -5  }
+    {  0  2  0  4 }
+} { [ 4 (ndeterminant) ] [ determinant ] [ -24 ] } 1&& ] unit-test
 
 { -306 } [ {
     { 6 1 1 }
@@ -353,3 +381,4 @@ CONSTANT: test-points {
     { 4 -2 5 }
     { 2 8 7 }
 } determinant ] unit-test
+

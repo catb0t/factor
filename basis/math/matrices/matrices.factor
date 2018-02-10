@@ -3,9 +3,13 @@
 USING: accessors arrays columns combinators
 combinators.short-circuit combinators.smart formatting fry
 grouping kernel locals math math.bits math.functions math.order
-math.ranges math.statistics math.vectors math.vectors.private
+math.ranges math.statistics math.vectors math.vectors.private memoize
 sequences sequences.deep sequences.private summary ;
 IN: math.matrices
+
+DEFER: well-formed-matrix?
+PREDICATE: matrix < sequence
+    { [ [ sequence? ] all? ] [ well-formed-matrix? ] } 1&& ;
 
 ! if these are defined lower down we get a compiler error
 DEFER: dimension-range
@@ -112,18 +116,18 @@ DEFER: matrix-set-nths
     theta cos :> c
     theta sin :> s
     axis first3 :> ( x y z )
-    x sq 1.0 x sq - c * +     x y * 1.0 c - * z s * -   x z * 1.0 c - * y s * + 3array
-    x y * 1.0 c - * z s * +   y sq 1.0 y sq - c * +     y z * 1.0 c - * x s * - 3array
-    x z * 1.0 c - * y s * -   y z * 1.0 c - * x s * +   z sq 1.0 z sq - c * +   3array
+    x sq 1.0 x sq - c * +    x y * 1.0 c - * z s * -  x z * 1.0 c - * y s * + 3array
+    x y * 1.0 c - * z s * +  y sq 1.0 y sq - c * +    y z * 1.0 c - * x s * - 3array
+    x z * 1.0 c - * y s * -  y z * 1.0 c - * x s * +  z sq 1.0 z sq - c * +   3array
     3array ;
 
 :: <rotation-matrix4> ( axis theta -- matrix )
     theta cos :> c
     theta sin :> s
     axis first3 :> ( x y z )
-    x sq 1.0 x sq - c * +     x y * 1.0 c - * z s * -   x z * 1.0 c - * y s * +   0 4array
-    x y * 1.0 c - * z s * +   y sq 1.0 y sq - c * +     y z * 1.0 c - * x s * -   0 4array
-    x z * 1.0 c - * y s * -   y z * 1.0 c - * x s * +   z sq 1.0 z sq - c * +     0 4array
+    x sq 1.0 x sq - c * +    x y * 1.0 c - * z s * -  x z * 1.0 c - * y s * +  0 4array
+    x y * 1.0 c - * z s * +  y sq 1.0 y sq - c * +    y z * 1.0 c - * x s * -  0 4array
+    x z * 1.0 c - * y s * -  y z * 1.0 c - * x s * +  z sq 1.0 z sq - c * +    0 4array
     { 0.0 0.0 0.0 1.0 } 4array ;
 
 :: <translation-matrix4> ( offset -- matrix )
@@ -228,6 +232,8 @@ PRIVATE>
 : perp ( v u -- w )
     dupd proj v- ;
 
+ALIAS: transpose flip
+
 ! more math and utilities
 ! implementation details of slightly complicated math like gram schmidt
 <PRIVATE
@@ -281,17 +287,7 @@ PRIVATE>
 ALIAS: row-map matrix-map
 
 ! implementation details of (square-inverse), >minors etc
-DEFER: dim
-DEFER: transpose
 <PRIVATE
-: exclude-row ( matrix n -- others )
-    [ dup dim first <iota> ] dip
-    '[ _ = ] { } reject-as swap rows ;
-
-: exclude-col ( matrix n -- others )
-    [ dup dim second <iota> ] dip
-    '[ _ = ] { } reject-as swap cols transpose ; ! need to un-transpose
-
 : lookup-rank ( matrix -- rank ) ;
 PRIVATE>
 
@@ -317,13 +313,22 @@ DEFER: square-matrix?
 : anti-diagonal ( matrix -- vec )
     dup length 1 - '[ _ - abs swap nth ] map-index ; inline
 
+DEFER: dim
+: rows-except ( matrix n -- others )
+    [ dup dim first <iota> ] dip
+    '[ _ = ] { } reject-as swap rows ;
+
+: cols-except ( matrix n -- others )
+    [ dup dim second <iota> ] dip
+    '[ _ = ] { } reject-as swap cols transpose ; ! need to un-transpose
+
 ! well-defined for any well-formed-matrix
-: matrix-exclude-pair ( matrix exclude-pair -- submatrix )
-    dup [ first exclude-row ] dip second exclude-col ;
+: matrix-except ( matrix exclude-pair -- submatrix )
+    dup [ first rows-except ] dip second cols-except ;
 
 ! implementation details of determinant and inverse
 <PRIVATE
-: (1determinant) ( matrix -- 1det ) first first ;
+: (1determinant) ( matrix -- 1det ) flatten first ;
 
 : alternating-sign ( seq odd-elts? -- seq' )
     '[ 2 mod zero? _ = [ neg ] unless ] map-index ;
@@ -335,11 +340,11 @@ DEFER: square-matrix?
 
 ! optimized for 3x3
 ! https://www.mathsisfun.com/algebra/matrix-determinant.html
-:: (3determinant) ( matrix -- 3det )
+:: (3determinant) ( matrix-seq -- 3det )
     ! first 3 elements of row 1
-    matrix first first3 :> ( a b c )
+    matrix-seq first first3 :> ( a b c )
     ! last 2 rows, transposed to make the next step easier
-    matrix rest transpose
+    matrix-seq rest transpose
     ! get the lower sub-matrices in reverse order of a b c columns
     [ rest ] [ [ first ] [ third ] bi 2array ] [ 1 head* ] tri 3array
     ! transpose and find determinants
@@ -350,44 +355,40 @@ DEFER: square-matrix?
     sum ;
 
 DEFER: (determinant)
-: alternating-first ( matrix -- alternating )
-    first t alternating-sign ;
-
-: determinants-rest ( n matrix -- seq )
-    rest <repetition> [
-        exclude-col dup length (determinant) ! recurses here
-    ] map-index ; recursive
+DEFER: (ndeterminant)
+: make-determinants ( n mat -- seq )
+    <repetition> [
+        cols-except [ length ] keep (ndeterminant) ! recurses here
+    ] map-index ;
 
 ! generalized to 4 and higher
-: (ndeterminant) ( matrix n -- ndet )
-    swap [ alternating-first ] [ determinants-rest ] bi
-    v* sum ; recursive
+: (ndeterminant) ( n mat -- ndet )
+    ! TODO? recurse for n < 3
+    over 3 < [ (determinant) ] [
+        ! [ first t alternating-sign ] [ rest make-determinants ] bi
+        dup first t alternating-sign -rot rest make-determinants
+        v* sum
+    ] if ;
 
 ! switches on dimensions only
-: (determinant) ( matrix n -- determinant ) {
-        { 1 [ (1determinant) ] }
-        { 2 [ (2determinant) ] }
-        { 3 [ (3determinant) ] }
-        [ (ndeterminant) ]
+: (determinant) ( n: integer matrix: matrix -- determinant ) over {
+        { 1 [ nip (1determinant) ] }
+        { 2 [ nip (2determinant) ] }
+        { 3 [ nip (3determinant) ] }
+        [ drop (ndeterminant) ]
     } case ; recursive
 PRIVATE>
 
-DEFER: square-matrix?
 ! determinant is undefined for m =/= n, unlike inverse
 : determinant ( matrix -- determinant ) {
       { [ dup zero-matrix? ] [ drop 0 ] }
-      { [ dup square-matrix? ] [ dup length (determinant) ] }
+      { [ dup square-matrix? ] [ [ length ] keep (determinant) ] }
       [ dim first2 non-square-determinant ]
     } cond ;
 
-! more specific to matrices than sequences:flip, and more efficient too
-: transpose ( matrix -- transposed )
-    [ dim second <iota> ] keep cols ;
-
 ! -----------------------------------------------------
 ! inverse operations and implementations follow
-: additive-inverse ( matrix -- inverse )
-    [ neg ] matrix-map ;
+ALIAS: additive-inverse mneg
 
 ! per element, find the determinant of all other elements except the element's row / col
 ! https://www.mathsisfun.com/algebra/matrix-inverse-minors-cofactors-adjugate.html
@@ -473,7 +474,7 @@ ALIAS: cartesian-row-map cartesian-matrix-map
 
 : well-formed-matrix? ( matrix -- ? )
     [ t ] [
-        [ ] [ first length ] bi
+        dup first length
         '[ length _ = ] all?
     ] if-empty ;
 
@@ -485,3 +486,5 @@ ALIAS: cartesian-row-map cartesian-matrix-map
     ! determinant zero?
     [ dim first2 max <identity-matrix> ] keep
     dup multiplicative-inverse m. = ;
+
+: linearly-independent-matrix? ( matrix -- ? ) ;

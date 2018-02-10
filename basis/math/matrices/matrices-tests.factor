@@ -1,6 +1,41 @@
-USING: combinators.short-circuit kernel math math.matrices math.matrices.private
+USING: arrays combinators.short-circuit grouping kernel math math.matrices math.matrices.private
 math.vectors sequences tools.test ;
 IN: math.matrices.tests
+
+{ {
+    { 5 5 }
+    { 5 5 }
+} } [ 2 2 5 <matrix> ] unit-test
+
+{ {
+    { 5 5 }
+    { 5 5 }
+} } [ 2 2 [ 5 ] <matrix-by> ] unit-test
+
+{ {
+    { 0 1 2 }
+    { 1 2 3 }
+} } [ 2 3 [ + ] <matrix-by-indices> ] unit-test
+
+{ {
+    { 0 1 }
+    { 0 1 }
+} } [ 2 <square-rows> ] unit-test
+
+{ {
+    { 0 0 }
+    { 1 1 }
+} } [ 2 <square-cols> ] unit-test
+
+{ {
+    { 5 6 }
+    { 5 6 }
+} } [ { 5 6 } <square-rows> ] unit-test
+
+{ {
+    { 5 5 }
+    { 6 6 }
+} } [ { 5 6 } <square-cols> ] unit-test
 
 {  { { 0 } { 0 } { 0 } }  } [ 3 1 <zero-matrix> ] unit-test
 
@@ -265,40 +300,8 @@ CONSTANT: test-points {
     { 23+59/147 6+15/49 27+17/49 }
 } } [ test-points covariance-matrix ] unit-test
 
-{ {
-    { 5 5 }
-    { 5 5 }
-} } [ 2 2 5 <matrix> ] unit-test
-
-{ {
-    { 5 5 }
-    { 5 5 }
-} } [ 2 2 [ 5 ] <matrix-by> ] unit-test
-
-{ {
-    { 0 1 2 }
-    { 1 2 3 }
-} } [ 2 3 [ + ] <matrix-by-indices> ] unit-test
-
-{ {
-    { 0 1 }
-    { 0 1 }
-} } [ 2 <square-rows> ] unit-test
-
-{ {
-    { 0 0 }
-    { 1 1 }
-} } [ 2 <square-cols> ] unit-test
-
-{ {
-    { 5 6 }
-    { 5 6 }
-} } [ { 5 6 } <square-rows> ] unit-test
-
-{ {
-    { 5 5 }
-    { 6 6 }
-} } [ { 5 6 } <square-cols> ] unit-test
+! ------------------------
+! predicates
 
 { t } [ { } square-matrix? ] unit-test
 { t } [ { { 1 } } square-matrix? ] unit-test
@@ -318,58 +321,189 @@ CONSTANT: test-points {
 ! TODO: from "intermediate commit"
 ! any deep-empty matrix is null
 ! it doesn't make any sense for { } to be null while { { } } to be considered nonnull
-{ t } [ { } null-matrix? ] unit-test
-{ t } [ { { } } null-matrix? ] unit-test
-{ t } [ { { { } } { { { } } } } null-matrix? ] unit-test
-{ t } [ { { } { } { } } null-matrix? ] unit-test
-{ f } [ { { { 1 } } { 2 } { } } null-matrix? ] unit-test
+{ t } [ {
+    { }
+    { { } }
+    { { { } } }
+    { { } { } { } }
+    { { { } } { { { } } } }
+} [ null-matrix? ] map [ ] all?
+] unit-test
+
+{ f } [ {
+    { 1 2 }
+    { { 1 2 } }
+    { { 1 } { 2 } }
+    { { { 1 } } { 2 } { } }
+} [ null-matrix? ] map [ ] any?
+] unit-test
 
 { t } [ 10 dup <zero-matrix> zero-matrix? ] unit-test
 { t } [ 10 10 15 <simple-eye> zero-matrix? ] unit-test
+{ t } [ 0 dup <zero-matrix> null-matrix? ] unit-test
 { f } [ 0 dup <zero-matrix> zero-matrix? ] unit-test
 { f } [ 4 <identity-matrix> zero-matrix? ] unit-test
 { f } [ 4 <box-matrix> zero-matrix? ] unit-test
 
-{ { 1 1 1 1 } } [ 4 <identity-matrix> main-diagonal ] unit-test
-{ 0 } [ 4 <identity-matrix> anti-diagonal sum ] unit-test
+{ t } [ { }                 well-formed-matrix? ] unit-test
+{ t } [ { { } }             well-formed-matrix? ] unit-test
+{ t } [ { { 1 2 } }         well-formed-matrix? ] unit-test
+{ t } [ { { 1 2 } { 3 4 } } well-formed-matrix? ] unit-test
+{ t } [ { { 1 } { 3 } }     well-formed-matrix? ] unit-test
+{ f } [ { { 1 2 } { 3 } }   well-formed-matrix? ] unit-test
+{ f } [ { { 1 } { 3 2 } }   well-formed-matrix? ] unit-test
 
+! diagonals
+
+{ { 1 1 1 1 } } [ 4 <identity-matrix> main-diagonal ] unit-test
+{ { 0 0 0 0 } } [ 4 <identity-matrix> anti-diagonal ] unit-test
 { { 4 8 } } [ { { 4 6 } { 3 8 } } main-diagonal ] unit-test
 { { 6 3 } } [ { { 4 6 } { 3 8 } } anti-diagonal ] unit-test
 { { 1 2 3 4 } } [ { 1 2 3 4 } <diagonal-matrix> main-diagonal ] unit-test
 { { 1 2 3 4 } } [ { 1 2 3 4 } <diagonal-matrix> transpose main-diagonal ] unit-test
 
+! transposition
+{ t } [ 50 <box-matrix> dup transpose = ] unit-test
+{ t } [ 50 <identity-matrix> dup transpose = ] unit-test
+{ t } [ 50 <identity-matrix> dup transpose = ] unit-test
+
+SYMBOLS: A B C D E F G H I J K L M N O P ;
+{ { {
+    { E F G H }
+    { I J K L }
+    { M N O P }
+} {
+    { A B C D }
+    { I J K L }
+    { M N O P }
+} {
+    { A B C D }
+    { E F G H }
+    { M N O P }
+} {
+    { A B C D }
+    { E F G H }
+    { I J K L }
+} } } [
+    4 {
+        { A B C D }
+        { E F G H }
+        { I J K L }
+        { M N O P }
+    } <repetition>
+    [ rows-except ] map-index
+] unit-test
+
+{ { { 2 } } } [ { { 1 } { 2 } } 0 rows-except ] unit-test
+{ { { 1 } } } [ { { 1 } { 2 } } 1 rows-except ] unit-test
+{ { } } [ { { 1 } }       0 rows-except ] unit-test
+{ { { 1 } } } [ { { 1 } } 1 rows-except ] unit-test
+
+{ { {
+    { B C D }
+    { F G H }
+    { J K L }
+    { N O P }
+} {
+    { A C D }
+    { E G H }
+    { I K L }
+    { M O P }
+} {
+    { A B D }
+    { E F H }
+    { I J L }
+    { M N P }
+} {
+    { A B C }
+    { E F G }
+    { I J K }
+    { M N O }
+} } } [
+    4 {
+        { A B C D }
+        { E F G H }
+        { I J K L }
+        { M N O P }
+    } <repetition>
+    [ cols-except ] map-index
+] unit-test
+
+{ { } } [ { { 1 } { 2 } } 0 cols-except ] unit-test
+{ { { 1 } { 2 } } } [ { { 1 } { 2 } } 1 cols-except ] unit-test
+{ { } } [ { { 1 } }       0 cols-except ] unit-test
+{ { { 1 } } } [ { { 1 } } 1 cols-except ] unit-test
+{ { { 2 } { 4 } } } [ { { 1 2 } { 3 4 } } 0 cols-except ] unit-test
+{ { { 1 } { 3 } } } [ { { 1 2 } { 3 4 } } 1 cols-except ] unit-test
+
+{ { {
+    { F G H }
+    { J K L }
+    { N O P }
+} {
+    { A C D }
+    { I K L }
+    { M O P }
+} {
+    { A B D }
+    { E F H }
+    { M N P }
+} {
+    { A B C }
+    { E F G }
+    { I J K }
+} } } [
+    4 {
+        { A B C D }
+        { E F G H }
+        { I J K L }
+        { M N O P }
+    } <repetition>
+    [ dup 2array matrix-except ] map-index
+] unit-test
+
+{ 1 } [ { { 1 } } (1determinant) ] unit-test
+{ 1 } [ { { 1 } } 1 swap (ndeterminant) ] unit-test
+{ 1 } [ { { 1 } } determinant ] unit-test
+{ 0 } [ { { 0 } } determinant ] unit-test
+
+{ { 1 -2 3 -4 } } [ { 1 2 3 4 } t alternating-sign ] unit-test
+{ { -1 2 -3 4 } } [ { 1 2 3 4 } f alternating-sign ] unit-test
+
 { 14 } [ { { 4 6 } { 3 8 } }   (2determinant) ] unit-test
-{ 14 } [ { { 4 6 } { 3 8 } } 2 (ndeterminant) ] unit-test
+{ 14 } [ 2 { { 4 6 } { 3 8 } } (ndeterminant) ] unit-test
 { 14 } [ { { 4 6 } { 3 8 } }      determinant ] unit-test
 { -14 } [ { { 3 8 } { 4 6 } }   (2determinant) ] unit-test
-{ -14 } [ { { 3 8 } { 4 6 } } 2 (ndeterminant) ] unit-test
+{ -14 } [ 2 { { 3 8 } { 4 6 } } (ndeterminant) ] unit-test
 { -14 } [ { { 3 8 } { 4 6 } }      determinant ] unit-test
 
 { -11 } [ { { 2 5 } { 1 -3 } }   (2determinant) ] unit-test
-{ -11 } [ { { 2 5 } { 1 -3 } } 2 (ndeterminant) ] unit-test
+{ -11 } [ 2 { { 2 5 } { 1 -3 } } (ndeterminant) ] unit-test
 { -11 } [ { { 2 5 } { 1 -3 } }      determinant ] unit-test
 { 11 } [ { { 1 -3 } { 2 5 } }   (2determinant) ] unit-test
-{ 11 } [ { { 1 -3 } { 2 5 } } 2 (ndeterminant) ] unit-test
+{ 11 } [ 2 { { 1 -3 } { 2 5 } } (ndeterminant) ] unit-test
 { 11 } [ { { 1 -3 } { 2 5 } }      determinant ] unit-test
 
 { -44 } [ { { 3 0 -1 } { 2 -5 4 } { -3 1 3 } }   (3determinant) ] unit-test
-{ -44 } [ { { 3 0 -1 } { 2 -5 4 } { -3 1 3 } } 3 (ndeterminant) ] unit-test
+{ -44 } [ 3 { { 3 0 -1 } { 2 -5 4 } { -3 1 3 } } (ndeterminant) ] unit-test
 { -44 } [ { { 3 0 -1 } { 2 -5 4 } { -3 1 3 } }      determinant ] unit-test
 
 { -19 } [ { { 2 -3 1 } { 4 2 -1 } { -5 3 -2 } }   (3determinant) ] unit-test
-{ -19 } [ { { 2 -3 1 } { 4 2 -1 } { -5 3 -2 } } 3 (ndeterminant) ] unit-test
+{ -19 } [ 3 { { 2 -3 1 } { 4 2 -1 } { -5 3 -2 } } (ndeterminant) ] unit-test
 { -19 } [ { { 2 -3 1 } { 4 2 -1 } { -5 3 -2 } }      determinant ] unit-test
 
 { 65 } [ { { 5 1 -2 } { -1 0 4 } { 2 -3 3 } }   (3determinant) ] unit-test
-{ 65 } [ { { 5 1 -2 } { -1 0 4 } { 2 -3 3 } } 3 (ndeterminant) ] unit-test
+{ 65 } [ 3 { { 5 1 -2 } { -1 0 4 } { 2 -3 3 } } (ndeterminant) ] unit-test
 { 65 } [ { { 5 1 -2 } { -1 0 4 } { 2 -3 3 } }      determinant ] unit-test
+
+! {  } [ { { 1 2 3 } { 4 5 6 } { 7 8 9 } } 3 swap determinants-rest ] unit-test
 
 { t } [ {
     { -5  4 -3  2 }
     { -2  1  0 -1 }
     { -2 -3 -4 -5  }
     {  0  2  0  4 }
-} { [ 4 (ndeterminant) ] [ determinant ] [ -24 ] } 1&& ] unit-test
+} { [ 4 swap (ndeterminant) ] [ determinant ] [ drop -24 ] } [ call ] with map all-eq? ] unit-test
 
 { -306 } [ {
     { 6 1 1 }

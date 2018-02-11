@@ -365,10 +365,10 @@ DEFER: (ndeterminant)
 : (ndeterminant) ( n mat -- ndet )
     ! TODO? recurse for n < 3
     over 3 < [ (determinant) ] [
-        ! [ first t alternating-sign ] [ rest make-determinants ] bi
-        dup first t alternating-sign -rot rest make-determinants
+        [ nip first t alternating-sign ] [ rest make-determinants ] 2bi
         v* sum
-    ] if ;
+    ] if
+    ;
 
 ! switches on dimensions only
 : (determinant) ( n: integer matrix: matrix -- determinant ) over {
@@ -376,7 +376,7 @@ DEFER: (ndeterminant)
         { 2 [ nip (2determinant) ] }
         { 3 [ nip (3determinant) ] }
         [ drop (ndeterminant) ]
-    } case ; recursive
+    } case ;
 PRIVATE>
 
 ! determinant is undefined for m =/= n, unlike inverse

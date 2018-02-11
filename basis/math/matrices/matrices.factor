@@ -7,9 +7,32 @@ math.ranges math.statistics math.vectors math.vectors.private memoize
 sequences sequences.deep sequences.private summary ;
 IN: math.matrices
 
-DEFER: well-formed-matrix?
+: well-formed-matrix? ( matrix -- ? )
+    [ t ] [
+        dup first length
+        '[ length _ = ] all?
+    ] if-empty ;
+
+DEFER: dim
 PREDICATE: matrix < sequence
     { [ [ sequence? ] all? ] [ well-formed-matrix? ] } 1&& ;
+
+PREDICATE: square-matrix < matrix
+    { [ well-formed-matrix? ] [ dim all-eq? ] } 1&& ;
+
+! really truly empty
+PREDICATE: null-matrix < matrix
+    flatten empty? ;
+
+! just full of zeroes
+PREDICATE: zero-matrix < matrix
+    dup null-matrix? [ drop f ] [ flatten sum zero? ] if ; inline
+
+! just for fun
+PREDICATE: zero-square-matrix < matrix
+    { [ zero-matrix? ] [ square-matrix? ] } 1&& ;
+
+! TODO: triangular, etc
 
 ! if these are defined lower down we get a compiler error
 DEFER: dimension-range
@@ -251,8 +274,13 @@ PRIVATE>
 : gram-schmidt-normalize ( seq -- orthonormal )
     gram-schmidt [ normalize ] map ; inline
 
-: m^n ( m n -- n )
-    dup 0 >= [ (m^n) ] [ negative-power-matrix ] if ;
+DEFER: multiplicative-inverse
+! A^-1 is the inverse but other negative powers are nonsense
+: m^n ( m n -- n ) {
+      { [ dup -1 = ] [ drop multiplicative-inverse ] }
+      { [ dup 0 >= ] [ (m^n) ] }
+      [ negative-power-matrix ]
+    } cond ;
 
 : n^m ( n m -- n ) swap m^n ;
 
@@ -291,8 +319,6 @@ ALIAS: row-map matrix-map
 : lookup-rank ( matrix -- rank ) ;
 PRIVATE>
 
-DEFER: zero-matrix?
-DEFER: square-matrix?
 ! -------------------------------------------------
 ! numerical analysis of matrices follows
 : rank ( matrix -- rank ) {
@@ -313,7 +339,6 @@ DEFER: square-matrix?
 : anti-diagonal ( matrix -- vec )
     dup length 1 - '[ _ - abs swap nth ] map-index ; inline
 
-DEFER: dim
 : rows-except ( matrix n -- others )
     [ dup dim first <iota> ] dip
     '[ _ = ] { } reject-as swap rows ;
@@ -328,6 +353,8 @@ DEFER: dim
 
 ! implementation details of determinant and inverse
 <PRIVATE
+! the determinant of a 1x1 matrix is the value itself
+! this works for any-dimensional matrices too
 : (1determinant) ( matrix -- 1det ) flatten first ;
 
 : alternating-sign ( seq odd-elts? -- seq' )
@@ -354,13 +381,13 @@ DEFER: dim
     ! sum the resulting sequence
     sum ;
 
-DEFER: (determinant)
 DEFER: (ndeterminant)
 : make-determinants ( n mat -- seq )
     <repetition> [
         cols-except [ length ] keep (ndeterminant) ! recurses here
     ] map-index ;
 
+DEFER: (determinant)
 ! generalized to 4 and higher
 : (ndeterminant) ( n mat -- ndet )
     ! TODO? recurse for n < 3
@@ -386,6 +413,9 @@ PRIVATE>
       [ dim first2 non-square-determinant ]
     } cond ;
 
+: 1/det ( matrix -- 1/det )
+    determinant recip ; inline
+
 ! -----------------------------------------------------
 ! inverse operations and implementations follow
 ALIAS: additive-inverse mneg
@@ -402,12 +432,18 @@ ALIAS: additive-inverse mneg
 
 ! multiply a matrix by the inverse of its determinant
 : m*1/det ( matrix -- matrix' )
-    [ determinant recip ] keep n*m ;
+    [ 1/det ] keep n*m ; inline
 
 ! inverse implementation
 <PRIVATE
+! https://www.mathsisfun.com/algebra/matrix-inverse-minors-cofactors-adjugate.html
 : (square-inverse) ( square-matrix -- inverted )
-    >minors >cofactors transpose m*1/det ;
+    ! inverse of the determinant of the input matrix
+    [ 1/det ]
+    ! adjugate of the cofactors of the matrix of minors
+    [ >minors >cofactors transpose ]
+    ! adjugate * 1/det
+    bi n*m ;
 
 : (left-inverse) ( matrix -- left-invert )   ;
 : (right-inverse) ( matrix -- right-invert ) ;
@@ -466,20 +502,6 @@ ALIAS: cartesian-row-map cartesian-matrix-map
 
 : dimension-range ( matrix -- dim range )
     dim [ <coordinate-matrix> ] [ first [1,b] ] bi ;
-
-! really truly empty
-: null-matrix? ( matrix -- ? ) flatten empty? ; inline
-! just full of zeroes
-: zero-matrix? ( matrix -- ? ) dup null-matrix? [ drop f ] [ flatten sum zero? ] if ; inline
-
-: well-formed-matrix? ( matrix -- ? )
-    [ t ] [
-        dup first length
-        '[ length _ = ] all?
-    ] if-empty ;
-
-: square-matrix? ( matrix -- ? )
-    { [ well-formed-matrix? ] [ dim all-eq? ] } 1&& ;
 
 ! TODO: use the faster algorithm here
 : invertible-matrix? ( matrix -- ? )

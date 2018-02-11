@@ -37,7 +37,7 @@ IN: math.matrices.tests
     { 6 6 }
 } } [ { 5 6 } <square-cols> ] unit-test
 
-{  { { 0 } { 0 } { 0 } }  } [ 3 1 <zero-matrix> ] unit-test
+{ { { 0 } { 0 } { 0 } } f } [ 3 1 <zero-matrix> dup zero-square-matrix? ] unit-test
 
 { {
     { 1 0 0 }

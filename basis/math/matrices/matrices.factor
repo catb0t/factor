@@ -1,10 +1,14 @@
-! Copyright (C) 2005, 2010 Slava Pestov, Joe Groff, Cat Stevens.
+! Copyright (C) 2005, 2010, 2018 Slava Pestov, Joe Groff, and Cat Stevens.
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays columns combinators
 combinators.short-circuit combinators.smart formatting fry
 grouping kernel locals math math.bits math.functions math.order
-math.ranges math.statistics math.vectors math.vectors.private memoize
+math.ranges math.statistics math.vectors math.vectors.private
 sequences sequences.deep sequences.private summary ;
+USE: random
+USE: memory
+USE: tools.time
+USE: prettyprint
 IN: math.matrices
 
 : well-formed-matrix? ( matrix -- ? )
@@ -32,52 +36,61 @@ PREDICATE: zero-matrix < matrix
 PREDICATE: zero-square-matrix < matrix
     { [ zero-matrix? ] [ square-matrix? ] } 1&& ;
 
-! TODO: triangular, etc
+! TODO: triangular predicates, etc
 
-! if these are defined lower down we get a compiler error
-DEFER: dimension-range
-<PRIVATE ! implementation details of <lower-matrix> and <upper-matrix>
-: upper-matrix-indices ( matrix -- matrix' )
-    dimension-range <reversed> [ tail-slice* >array ] 2map concat ;
+ERROR: negative-power-matrix { m sequence } { n integer } ;
+ERROR: non-square-determinant { m integer } { n integer } ;
 
-: lower-matrix-indices ( matrix -- matrix' )
-    dimension-range [ head-slice >array ] 2map concat ;
-
+<PRIVATE
 : ordinal-suffix ( n -- suffix ) 10 mod abs {
         { 1 [ "st" ] }
         { 2 [ "nd" ] }
         { 3 [ "rd" ] }
         [ drop "th" ]
     } case ;
-PRIVATE>
-
-ERROR: negative-power-matrix { m sequence } { n integer } ;
-ERROR: non-square-determinant { m integer } { n integer } ;
 
 M: negative-power-matrix summary
     n>> dup ordinal-suffix "%s%s power of a matrix is undefined" sprintf ;
 M: non-square-determinant summary
     [ m>> ] [ n>> ] bi "%s x %s matrix is not square and has no determinant" sprintf ;
 
+: (nth-from-end) ( n seq -- n )
+    length 1 - swap - ; inline
+
+: nth-end ( n seq -- elt )
+    [ (nth-from-end) ] keep nth ; inline
+
+: set-nth-end ( elt n seq -- )
+    [ (nth-from-end) ] keep set-nth ; inline
+PRIVATE>
+
 ! Benign matrix constructors
+: <matrix> ( m n element -- matrix )
+    '[ _ _ <array> ] replicate ; inline
+
 : <matrix-by> ( m n quot: ( ... -- elt ) -- matrix )
     '[ _ _ replicate ] replicate ; inline
 
 : <matrix-by-indices> ( ... m n quot: ( ... m' n' -- ... elt ) -- ... matrix )
     [ [ <iota> ] bi@ ] dip cartesian-map ; inline
 
-: <matrix> ( m n element -- matrix )
-    '[ _ _ <array> ] replicate ; inline
-
 : <zero-matrix> ( m n -- matrix )
     0 <matrix> ; inline
 
 : <zero-square-matrix> ( n -- matrix )
-    dup 0 <matrix> ; inline
+    dup <zero-matrix> ; inline
 
+! main-diagonal matrix
+! running time is improved by 10% over the old implementation
 : <diagonal-matrix> ( diagonal-seq -- matrix )
-    [ length <zero-square-matrix> ] keep swap
-    [ '[ dup _ nth set-nth ] each-index ] keep ; inline
+    [ length <zero-square-matrix> ] keep over
+    '[ dup _ nth set-nth ] each-index ; inline
+
+! could be written: <diagonal-matrix> [ reverse ] map
+! but that's 3x slower because of iterating the matrix twice
+: <anti-diagonal-matrix> ( diagonal-seq -- matrix )
+    [ length <zero-square-matrix> ] keep over
+    '[ dup _ nth set-nth-end ] each-index ; inline
 
 : <identity-matrix> ( n -- matrix )
     1 <repetition> <diagonal-matrix> ; inline
@@ -110,6 +123,16 @@ DEFER: matrix-set-nths
 
 ! -------------------------------------------------------------
 ! end of the simple creators; here are the complex builders
+DEFER: dimension-range
+<PRIVATE ! implementation details of <lower-matrix> and <upper-matrix>
+: upper-matrix-indices ( matrix -- matrix' )
+    dimension-range <reversed> [ tail-slice* >array ] 2map concat ;
+
+: lower-matrix-indices ( matrix -- matrix' )
+    dimension-range [ head-slice >array ] 2map concat ;
+PRIVATE>
+
+! triangulars
 : <lower-matrix> ( object m n -- matrix )
     <zero-matrix> [ lower-matrix-indices ] [ matrix-set-nths ] [ ] tri ;
 
@@ -314,7 +337,25 @@ DEFER: multiplicative-inverse
 ! row-map would make sense compared to column-map
 ALIAS: row-map matrix-map
 
-! implementation details of (square-inverse), >minors etc
+! 0-based as you expect
+: matrix-nth ( pair matrix -- elt )
+    [ first2 swap ] dip nth nth ;
+
+: matrix-set-nth ( obj pair matrix -- )
+    [ first2 swap ] dip nth set-nth ; inline
+
+: matrix-set-nths ( obj sequence matrix -- )
+    '[ _ matrix-set-nth ] with each ; inline
+
+: cartesian-matrix-map ( matrix quot -- matrix' )
+    [ [ first length <cartesian-square-indices> ] keep ] dip
+    '[ _ @ ] matrix-map ; inline
+
+: cartesian-column-map ( matrix quot -- matrix' )
+    [ cols first2 ] prepose cartesian-matrix-map ; inline
+
+ALIAS: cartesian-row-map cartesian-matrix-map
+
 <PRIVATE
 : lookup-rank ( matrix -- rank ) ;
 PRIVATE>
@@ -322,10 +363,10 @@ PRIVATE>
 ! -------------------------------------------------
 ! numerical analysis of matrices follows
 : rank ( matrix -- rank ) {
-      { [ dup zero-matrix? ] [ drop 0 ] }
-      { [ dup square-matrix? ] [ ] }
-      [ lookup-rank ]
-  } cond ;
+          { [ dup zero-matrix? ] [ drop 0 ] }
+          { [ dup square-matrix? ] [ ] }
+          [ lookup-rank ]
+      } cond ;
 
 : nullity ( matrix -- nullity )
     ;
@@ -337,7 +378,7 @@ PRIVATE>
 ! well-defined for square matrices
 ! top right to bottom left; reverse the result if you expected it to start in the lower left
 : anti-diagonal ( matrix -- vec )
-    dup length 1 - '[ _ - abs swap nth ] map-index ; inline
+    [ swap nth-end ] map-index ; inline
 
 : rows-except ( matrix n -- others )
     [ dup dim first <iota> ] dip
@@ -349,16 +390,20 @@ PRIVATE>
 
 ! well-defined for any well-formed-matrix
 : matrix-except ( matrix exclude-pair -- submatrix )
-    dup [ first rows-except ] dip second cols-except ;
+    first2 [ rows-except ] dip cols-except ;
+
+:: matrix-except-all ( matrix-seq -- expansion )
+    matrix-seq dim [ <iota> ] map first2 cartesian-product
+    [ [ matrix-seq swap matrix-except ] map ] map ;
 
 ! implementation details of determinant and inverse
 <PRIVATE
+: alternating-sign ( seq odd-elts? -- seq' )
+    '[ 2 mod zero? _ = [ neg ] unless ] map-index ;
+
 ! the determinant of a 1x1 matrix is the value itself
 ! this works for any-dimensional matrices too
 : (1determinant) ( matrix -- 1det ) flatten first ;
-
-: alternating-sign ( seq odd-elts? -- seq' )
-    '[ 2 mod zero? _ = [ neg ] unless ] map-index ;
 
 ! optimized to find the determinant of a 2x2 matrix
 : (2determinant) ( matrix -- 2det )
@@ -423,8 +468,7 @@ ALIAS: additive-inverse mneg
 ! per element, find the determinant of all other elements except the element's row / col
 ! https://www.mathsisfun.com/algebra/matrix-inverse-minors-cofactors-adjugate.html
 : >minors ( matrix -- matrix' )
-    ! matrix-exclude-pair
-    [ drop ] map-index ;
+    matrix-except-all [ [ determinant ] map ] map ;
 
 ! alternately invert values of the matrix (see alternating-sign)
 : >cofactors ( matrix -- matrix' )
@@ -466,36 +510,6 @@ PRIVATE>
 ! -----------------------------
 ! end of inverse operations!
 
-! 0-based as you expect
-: matrix-nth ( pair matrix -- elt )
-    [ first2 swap ] dip nth nth ;
-
-! 1-based indexing like most of mathematics
-: matrix-nth+1 ( 1-based matrix -- elt )
-    [ [ 1 - ] map ] dip matrix-nth ;
-
-: matrix-set-nth ( obj pair matrix -- )
-    [ first2 swap ] dip nth set-nth ; inline
-
-: matrix-set-nths ( obj sequence matrix -- )
-    '[ _ matrix-set-nth ] with each ; inline
-
-: cartesian-matrix-map ( matrix quot -- matrix' )
-    [ [ first length <cartesian-square-indices> ] keep ] dip
-    '[ _ @ ] matrix-map ; inline
-
-: cartesian-column-map ( matrix quot -- matrix' )
-    [ cols first2 ] prepose cartesian-matrix-map ; inline
-
-ALIAS: cartesian-row-map cartesian-matrix-map
-
-: covariance-matrix-ddof ( matrix ddof -- cov )
-    '[ _ cov-ddof ] cartesian-column-map ; inline
-
-: covariance-matrix ( matrix -- cov ) 0 covariance-matrix-ddof ; inline
-
-: sample-covariance-matrix ( matrix -- cov ) 1 covariance-matrix-ddof ; inline
-
 : dim ( matrix -- pair/f )
     [ { 0 0 } ]
     [ [ length ] [ first length ] bi 2array ] if-empty ;
@@ -510,3 +524,10 @@ ALIAS: cartesian-row-map cartesian-matrix-map
     dup multiplicative-inverse m. = ;
 
 : linearly-independent-matrix? ( matrix -- ? ) ;
+
+: covariance-matrix-ddof ( matrix ddof -- cov )
+    '[ _ cov-ddof ] cartesian-column-map ; inline
+
+: covariance-matrix ( matrix -- cov ) 0 covariance-matrix-ddof ; inline
+
+: sample-covariance-matrix ( matrix -- cov ) 1 covariance-matrix-ddof ; inline

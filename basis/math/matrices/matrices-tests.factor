@@ -49,6 +49,8 @@ IN: math.matrices.tests
 { f } [ 0 dup <zero-matrix> zero-matrix? ] unit-test
 { f } [ 4 <identity-matrix> zero-matrix? ] unit-test
 { f } [ 4 <box-matrix> zero-matrix? ] unit-test
+! make sure we're not using the sum-to-zero strategy
+{ f } [ { { 0 -2 } { 1 -1 } } zero-matrix? ] unit-test
 
 { 3 } [ { 1 2 3 } 0 swap nth-end ] unit-test
 { 2 } [ { 1 2 3 } 1 swap nth-end ] unit-test
@@ -159,6 +161,29 @@ IN: math.matrices.tests
     { 5 5 }
     { 6 6 }
 } } [ { 5 6 } <square-cols> ] unit-test
+
+{  {
+    { 1 }
+} } [ {
+    { 1 2 }
+} <square-rows> ] unit-test
+
+{  {
+    { 1 2 }
+    { 3 4 }
+} } [ {
+    { 1 2 5 }
+    { 3 4 6 }
+} <square-rows> ] unit-test
+
+{  {
+    { 1 2 }
+    { 3 4 }
+} } [ {
+    { 1 2 }
+    { 3 4 }
+    { 5 6 }
+} <square-rows> ] unit-test
 
 { {
     { 2 0 0 }
@@ -499,13 +524,18 @@ CONSTANT: test-points {
 { { 6 3 } } [ { { 4 6 } { 3 8 } } anti-diagonal ] unit-test
 { { 1 2 3 } } [ { { 0 0 1 } { 0 2 0 } { 3 0 0 } } anti-diagonal ] unit-test
 { { 1 2 3 4 } } [ { 1 2 3 4 } <diagonal-matrix> main-diagonal ] unit-test
-{ { 1 2 3 4 } } [ { 1 2 3 4 } <diagonal-matrix> transpose main-diagonal ] unit-test
 
 ! transposition
+{ { 1 2 3 4 } } [ { 1 2 3 4 } <diagonal-matrix> transpose main-diagonal ] unit-test
 { t } [ 50 <box-matrix> dup transpose = ] unit-test
 { t } [ 50 <identity-matrix> dup transpose = ] unit-test
-{ t } [ 50 <identity-matrix> dup transpose = ] unit-test
 { { 4 3 2 1 } } [ { 1 2 3 4 } <anti-diagonal-matrix> transpose anti-diagonal ] unit-test
+
+! anti transposition
+{ { 1 2 3 4 } } [ { 1 2 3 4 } <anti-diagonal-matrix> anti-transpose anti-diagonal ] unit-test
+{ t } [ 50 <box-matrix> dup                  anti-transpose = ] unit-test
+{ t } [ 50 <iota> <anti-diagonal-matrix> dup anti-transpose = ] unit-test
+{ { 4 3 2 1 } } [ { 1 2 3 4 } <diagonal-matrix> anti-transpose main-diagonal ] unit-test
 
 SYMBOLS: A B C D E F G H I J K L M N O P ;
 { { {
@@ -856,6 +886,14 @@ SYMBOLS: A B C D E F G H I J K L M N O P ;
 ] unit-test
 
 { t } [ {
+    { 6 1 1 }
+    { 4 -2 5 }
+    { 2 8 7 }
+} { [ drop -306 ] [ (3determinant) ]  [ 3 swap (ndeterminant) ] [ determinant ] }
+    call-eq?
+] unit-test
+
+{ t } [ {
     { -5  4 -3  2 }
     { -2  1  0 -1 }
     { -2 -3 -4 -5  }
@@ -873,14 +911,6 @@ SYMBOLS: A B C D E F G H I J K L M N O P ;
     call-eq?
 ] unit-test
 
-{ t } [ {
-    { 6 1 1 }
-    { 4 -2 5 }
-    { 2 8 7 }
-} { [ drop -306 ] [ (3determinant) ]  [ 3 swap (ndeterminant) ] [ determinant ] }
-    call-eq?
-] unit-test
-
 { {
     { 2 2 2 }
     { -2 3 3 }
@@ -891,15 +921,16 @@ SYMBOLS: A B C D E F G H I J K L M N O P ;
     { 0 1 1 }
 } >minors ] unit-test
 
-{ {
-    { 1 -6 -13 }
-    { 0 0 0 }
-    { 1 -6 -13 }
-} } [ {
-    { 1 2 1 }
-    { 6 -1 0 }
-    { 1 -2 -1 }
-} >minors ] unit-test
+! i think this unit test is wrong
+! { {
+!     { 1 -6 -13 }
+!     { 0 0 0 }
+!     { 1 -6 -13 }
+! } } [ {
+!     { 1 2 1 }
+!     { 6 -1 0 }
+!     { 1 -2 -1 }
+! } >minors ] unit-test
 
 { {
     { 1 6 -13 }

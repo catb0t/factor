@@ -1,15 +1,13 @@
 ! Copyright (C) 2005, 2010, 2018 Slava Pestov, Joe Groff, and Cat Stevens.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: accessors arrays columns combinators
+USING: accessors arrays classes.singleton columns combinators
 combinators.short-circuit combinators.smart formatting fry
 grouping kernel locals math math.bits math.functions math.order
 math.ranges math.statistics math.vectors math.vectors.private
 sequences sequences.deep sequences.private summary ;
 IN: math.matrices
 
-ALIAS: transpose flip
-
-: well-formed-matrix? ( matrix -- ? )
+: well-formed-matrix? ( object -- ? )
     [ t ] [
         dup first length
         '[ length _ = ] all?
@@ -36,7 +34,7 @@ PREDICATE: null-matrix < matrix
 
 ! just full of zeroes
 PREDICATE: zero-matrix < matrix
-    dup null-matrix? [ drop f ] [ flatten sum zero? ] if ; inline
+    dup null-matrix? [ drop f ] [ flatten [ zero? ] all? ] if ;
 
 ! square and full of zeroes
 PREDICATE: zero-square-matrix < square-matrix
@@ -44,9 +42,16 @@ PREDICATE: zero-square-matrix < square-matrix
 
 ! TODO: triangular predicates, etc?
 
-ERROR: negative-power-matrix  { m sequence } { n integer } ;
-ERROR: non-square-determinant { m integer }  { n integer } ;
-ERROR: non-square-inverse     { m integer }  { n integer } ;
+! questionable implementation
+SINGLETONS:      +full-rank+ +half-rank+ +deficient-rank+ +uncalculated-rank+ ;
+UNION: rank-kind +full-rank+ +half-rank+ +deficient-rank+ +uncalculated-rank+ ;
+
+ERROR: negative-power-matrix
+    { m matrix } { n integer } ;
+ERROR: non-square-determinant
+    { m integer }  { n integer } ;
+ERROR: non-square-inverse
+    { m integer }  { n integer } { r rank-kind initial: +uncalculated-rank+ } ;
 
 <PRIVATE
 : ordinal-suffix ( n -- suffix ) 10 mod abs {
@@ -60,6 +65,8 @@ M: negative-power-matrix summary
     n>> dup ordinal-suffix "%s%s power of a matrix is undefined" sprintf ;
 M: non-square-determinant summary
     [ m>> ] [ n>> ] bi "%s x %s matrix is not square and has no determinant" sprintf ;
+M: non-square-inverse summary
+    [ m>> ] [ n>> ] [ r>> name>> ] tri "%s x %s matrix with rank %s has no inverse" sprintf ;
 
 : (nth-from-end) ( n seq -- n )
     length 1 - swap - ; inline
@@ -116,15 +123,35 @@ PRIVATE>
 : <coordinate-matrix> ( dim -- coordinates )
   first2 [ <iota> ] bi@ cartesian-product ; inline
 
+DEFER: rows
+DEFER: cols
+DEFER: transpose
 GENERIC: <square-rows> ( desc -- matrix )
 M: integer <square-rows> <iota> <square-rows> ;
+
+M: square-matrix <square-rows> ;
+! could no-method here but coercing to square is more useful
+M: matrix <square-rows>
+    [ dim first2 ] keep 2over < [
+        ! rows < cols
+        nip [ <iota> ] dip cols transpose
+    ] [ ! rows > cols
+        swapd nip [ <iota> ] dip rows
+    ] if ;
+
 M: sequence <square-rows>
     [ length ] keep >array '[ _ clone ] { } replicate-as ;
 
 GENERIC: <square-cols> ( desc -- matrix )
 M: integer <square-cols> <iota> <square-cols> ;
+
+M: square-matrix <square-cols> ;
+M: matrix <square-cols>
+    <square-rows> ;
+
 M: sequence <square-cols>
     <square-rows> flip ;
+
 
 ! -------------------------------------------------------------
 ! end of the simple creators; here are the complex builders
@@ -164,6 +191,7 @@ DEFER: matrix-set-nths
 : <vandermonde-matrix> ( u n -- matrix )
     <iota> [ v^n ] with map reverse flip ;
 
+! Transformation matrices
 :: <rotation-matrix3> ( axis theta -- matrix )
     theta cos :> c
     theta sin :> s
@@ -239,6 +267,49 @@ PRIVATE>
         { 0.0 0.0 0.0 1.0 }
     } ;
 
+! element- and sequence-wise operations, getters and setters
+: stitch ( m -- m' )
+    [ ] [ [ append ] 2map ] map-reduce ;
+
+: row ( n matrix -- row )
+    nth ; inline
+
+: rows ( seq matrix -- rows )
+    '[ _ row ] map ; inline
+
+: col ( n matrix -- col )
+    swap '[ _ swap nth ] map ; inline
+
+: cols ( seq matrix -- cols )
+    '[ _ col ] map ; inline
+
+: matrix-map ( matrix quot -- )
+    '[ _ map ] map ; inline
+
+: column-map ( matrix quot -- seq )
+    [ [ first length <iota> ] keep ] dip '[ _ col @ ] map ; inline
+
+! row-map would make sense compared to column-map
+ALIAS: row-map matrix-map
+
+: cartesian-matrix-map ( matrix quot -- matrix' )
+    [ [ first length <cartesian-square-indices> ] keep ] dip
+    '[ _ @ ] matrix-map ; inline
+
+: cartesian-column-map ( matrix quot -- matrix' )
+    [ cols first2 ] prepose cartesian-matrix-map ; inline
+
+ALIAS: cartesian-row-map cartesian-matrix-map
+
+: matrix-nth ( pair matrix -- elt )
+    [ first2 swap ] dip nth nth ;
+
+: matrix-set-nth ( obj pair matrix -- )
+    [ first2 swap ] dip nth set-nth ; inline
+
+: matrix-set-nths ( obj sequence matrix -- )
+    '[ _ matrix-set-nth ] with each ; inline
+
 ! -------------------------------------------
 ! simple math of matrices follows
 : mneg ( m -- m ) [ vneg ] map ;
@@ -284,7 +355,6 @@ PRIVATE>
 : perp ( v u -- w )
     dupd proj v- ;
 
-! more math and utilities
 ! implementation details of slightly complicated math like gram schmidt
 <PRIVATE
 : (gram-schmidt) ( v seq -- newseq )
@@ -311,61 +381,19 @@ DEFER: multiplicative-inverse
 
 : n^m ( n m -- n ) swap m^n ;
 
-: stitch ( m -- m' )
-    [ ] [ [ append ] 2map ] map-reduce ;
-
 : kronecker-product ( m1 m2 -- m )
     '[ [ _ n*m  ] map ] map stitch stitch ;
 
 : outer-product ( u v -- m )
     '[ _ n*v ] map ;
 
-: row ( n matrix -- row )
-    nth ; inline
-
-: rows ( seq matrix -- rows )
-    '[ _ row ] map ; inline
-
-: col ( n matrix -- col )
-    swap '[ _ swap nth ] map ; inline
-
-: cols ( seq matrix -- cols )
-    '[ _ col ] map ; inline
-
-: matrix-map ( matrix quot -- )
-    '[ _ map ] map ; inline
-
-: column-map ( matrix quot -- seq )
-    [ [ first length <iota> ] keep ] dip '[ _ col @ ] map ; inline
-
-! row-map would make sense compared to column-map
-ALIAS: row-map matrix-map
-
-: matrix-nth ( pair matrix -- elt )
-    [ first2 swap ] dip nth nth ;
-
-: matrix-set-nth ( obj pair matrix -- )
-    [ first2 swap ] dip nth set-nth ; inline
-
-: matrix-set-nths ( obj sequence matrix -- )
-    '[ _ matrix-set-nth ] with each ; inline
-
-: cartesian-matrix-map ( matrix quot -- matrix' )
-    [ [ first length <cartesian-square-indices> ] keep ] dip
-    '[ _ @ ] matrix-map ; inline
-
-: cartesian-column-map ( matrix quot -- matrix' )
-    [ cols first2 ] prepose cartesian-matrix-map ; inline
-
-ALIAS: cartesian-row-map cartesian-matrix-map
-
-<PRIVATE
-: lookup-rank ( matrix -- rank ) ;
-PRIVATE>
-
 ! -------------------------------------------------
 ! numerical analysis of matrices follows
-GENERIC: rank ( matrix -- rank )
+<PRIVATE
+: lookup-rank ( matrix -- rank-class ) ;
+PRIVATE>
+
+GENERIC: rank ( matrix -- rank-class )
 M: zero-matrix rank
     drop 0 ;
 
@@ -377,14 +405,19 @@ M: matrix rank
 
 GENERIC: nullity ( matrix -- nullity )
 
-! well-defined for square matrices
+! well-defined for square matrices; but works on nonsquare too
 : main-diagonal ( matrix -- vec )
     [ swap nth ] map-index ; inline
 
-! well-defined for square matrices
 ! top right to bottom left; reverse the result if you expected it to start in the lower left
 : anti-diagonal ( matrix -- vec )
     [ swap nth-end ] map-index ; inline
+
+ALIAS: transpose flip
+
+! VERY slow implementation
+: anti-transpose ( matrix -- newmatrix )
+    [ reverse ] map transpose [ reverse ] map ;
 
 : rows-except ( matrix n -- others )
     [ dup dim first <iota> ] dip
@@ -409,12 +442,12 @@ GENERIC: nullity ( matrix -- nullity )
 
 ! the determinant of a 1x1 matrix is the value itself
 ! this works for any-dimensional matrices too
-: (1determinant) ( matrix -- 1det ) flatten first ;
+: (1determinant) ( matrix -- 1det ) flatten first ; inline
 
 ! optimized to find the determinant of a 2x2 matrix
 : (2determinant) ( matrix -- 2det )
     ! multiply the diagonals and subtract
-    [ main-diagonal ] [ anti-diagonal ] bi [ 1 [ * ] reduce ] bi@ - ;
+    [ main-diagonal ] [ anti-diagonal ] bi [ first2 * ] bi@ - ; inline
 
 ! optimized for 3x3
 ! https://www.mathsisfun.com/algebra/matrix-determinant.html
@@ -425,8 +458,8 @@ GENERIC: nullity ( matrix -- nullity )
     matrix-seq rest transpose
     ! get the lower sub-matrices in reverse order of a b c columns
     [ rest ] [ [ first ] [ third ] bi 2array ] [ 1 head* ] tri 3array
-    ! transpose and find determinants
-    [ transpose (2determinant) ] map
+    ! find determinants
+    [ (2determinant) ] map
     ! negate odd elements of a b c and multiply by the new determinants
     { a b c } t alternating-sign v*
     ! sum the resulting sequence
@@ -499,6 +532,7 @@ ALIAS: additive-inverse mneg
     ! adjugate * 1/det
     bi n*m ;
 
+! TODO
 : (left-inverse) ( matrix -- left-invert )   ;
 : (right-inverse) ( matrix -- right-invert ) ;
 
@@ -528,7 +562,7 @@ M: matrix multiplicative-inverse
     (specialized-inverse) ;
 
 ! -----------------------------
-! end of inverse operations!
+! end of inverse operations !
 
 : dim ( matrix -- pair/f )
     [ { 0 0 } ]

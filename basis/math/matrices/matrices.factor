@@ -241,7 +241,7 @@ PRIVATE>
         { 0.0 0.0 0.0 1.0 }
     } ;
 
-: <ortho-matrix4> ( dim -- matrix )
+: <ortho-matrix4> ( factors -- matrix )
     [ recip ] map <scale-matrix4> ;
 
 :: <frustum-matrix4> ( xy-dim near far -- matrix )

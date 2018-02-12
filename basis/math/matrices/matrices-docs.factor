@@ -2,6 +2,18 @@
 USING: arrays help.markup help.syntax kernel math opengl.gl sequences prettyprint urls ;
 IN: math.matrices
 
+<PRIVATE
+: $2d-only-note ( children -- )
+    drop
+    "This word is intended for use with 2-dimensional matrices. Using it with matrices of 3 or more dimensions may lead to unexpected results."
+    $notes ;
+
+: $2d-only-note ( children -- )
+
+    "This word is intended for use with matrices whose elemnts are supported by %s."
+    sprintf $notes ;
+PRIVATE>
+
 ABOUT: "math.matrices"
 
 ARTICLE: "math.matrices" "Matrix operations"
@@ -557,6 +569,23 @@ HELP: <scale-matrix4>
     }
 } ;
 
+HELP: <ortho-matrix4>
+{ $values { "factors" sequence } { "matrix" matrix } }
+{ $description "Creates a " { $link <scale-matrix4> } ", with the scale factors inverted." }
+{ $notes "Only the first three values from " { $snippet "factors" } " are used." }
+{ $examples
+    { $example
+        "USING: kernel math.matrices prettyprint ;"
+        "{ -9.3 100 1/2 } <ortho-matrix4> ."
+"{
+    { -0.1075268817204301 0.0 0.0 0.0 }
+    { 0.0 1/100 0.0 0.0 }
+    { 0.0 0.0 2 0.0 }
+    { 0.0 0.0 0.0 1.0 }
+}"
+    }
+} ;
+
 HELP: <frustum-matrix4>
 { $values { "xy-dim" pair } { "near" number } { "far" number } { "matrix" matrix } }
 { $description "Make a " { $snippet "4 x 4" } " matrix suitable for representing an occlusion frustum. A viewing or occlusion frustum is the three-dimensional region of a three-dimensional object which is visible on the screen. See " { $url URL" https://en.wikipedia.org/wiki/Frustum" "frustum on Wikipedia" } "." }
@@ -578,23 +607,6 @@ HELP: <frustum-matrix4>
     }
 } ;
 { <frustum-matrix4> glFrustum } related-words
-
-HELP: <ortho-matrix4>
-{ $values { "dim" pair } { "matrix" matrix } }
-{ $description "Create a " { $snippet "4 x 4" } " orthogonal matrix. Each element in " { $snippet "dim" } " is converted to its reciprocal (" { $link recip } "), and a " { $link <scale-matrix4> } " is created with the inverted sequence." }
-{ $notes "Only the first three values from " { $snippet "dim" } " are used." }
-{ $examples
-    { $example
-        "USING: kernel math.matrices prettyprint ;"
-        "{ -9.3 100 1/2 } <ortho-matrix4> ."
-"{
-    { -0.1075268817204301 0.0 0.0 0.0 }
-    { 0.0 1/100 0.0 0.0 }
-    { 0.0 0.0 2 0.0 }
-    { 0.0 0.0 0.0 1.0 }
-}"
-    }
-} ;
 
 HELP: stitch
 { $values { "m" matrix } { "m'" matrix } }
@@ -896,7 +908,7 @@ HELP: mmin
 
 HELP: mmax
 { $values { "m" matrix } { "n" object } }
-{ $description "Calculate the maximum value of all elements in the matrix." }
+{ $description "Determine the maximum value of the matrix." }
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
@@ -907,7 +919,7 @@ HELP: mmax
 
 HELP: mnorm
 { $values { "m" matrix } { "m'" object } }
-{ $description "Calculate the normal value of each element in the matrix. This makes the maximum value in the sequence " { $snippet "1/1" } ", and computes other elements as fractions of this maximum. The output is a matrix, containing each original element as a fraction of the maximum." }
+{ $description "Calculate the relative normal value of each element in the matrix. Each element is computed as a fraction of the maximum element in the matrix. The maximum element becomes " { $snippet "1/1" } "." }
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"

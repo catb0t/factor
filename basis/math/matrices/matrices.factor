@@ -5,11 +5,9 @@ combinators.short-circuit combinators.smart formatting fry
 grouping kernel locals math math.bits math.functions math.order
 math.ranges math.statistics math.vectors math.vectors.private
 sequences sequences.deep sequences.private summary ;
-USE: random
-USE: memory
-USE: tools.time
-USE: prettyprint
 IN: math.matrices
+
+ALIAS: transpose flip
 
 : well-formed-matrix? ( matrix -- ? )
     [ t ] [
@@ -17,10 +15,18 @@ IN: math.matrices
         '[ length _ = ] all?
     ] if-empty ;
 
+
+! the MRO (class linearization) is performed in the order the predicates appear here
+! except that null-matrix is last (but it is relied upon by zero-matrix)
+! in other words:
+! sequence > matrix > zero-matrix > square-matrix > zero-square-matrix > null-matrix
+
 DEFER: dim
 PREDICATE: matrix < sequence
     { [ [ sequence? ] all? ] [ well-formed-matrix? ] } 1&& ;
 
+! can't define dim using this predicate for this reason,
+! unless we are going to write two versions of dim, one of which is generic
 PREDICATE: square-matrix < matrix
     { [ well-formed-matrix? ] [ dim all-eq? ] } 1&& ;
 
@@ -32,14 +38,15 @@ PREDICATE: null-matrix < matrix
 PREDICATE: zero-matrix < matrix
     dup null-matrix? [ drop f ] [ flatten sum zero? ] if ; inline
 
-! just for fun
-PREDICATE: zero-square-matrix < matrix
+! square and full of zeroes
+PREDICATE: zero-square-matrix < square-matrix
     { [ zero-matrix? ] [ square-matrix? ] } 1&& ;
 
-! TODO: triangular predicates, etc
+! TODO: triangular predicates, etc?
 
-ERROR: negative-power-matrix { m sequence } { n integer } ;
-ERROR: non-square-determinant { m integer } { n integer } ;
+ERROR: negative-power-matrix  { m sequence } { n integer } ;
+ERROR: non-square-determinant { m integer }  { n integer } ;
+ERROR: non-square-inverse     { m integer }  { n integer } ;
 
 <PRIVATE
 : ordinal-suffix ( n -- suffix ) 10 mod abs {
@@ -117,9 +124,7 @@ M: sequence <square-rows>
 GENERIC: <square-cols> ( desc -- matrix )
 M: integer <square-cols> <iota> <square-cols> ;
 M: sequence <square-cols>
-    [ length ] keep [ <array> ] with { } map-as ;
-
-DEFER: matrix-set-nths
+    <square-rows> flip ;
 
 ! -------------------------------------------------------------
 ! end of the simple creators; here are the complex builders
@@ -133,6 +138,7 @@ DEFER: dimension-range
 PRIVATE>
 
 ! triangulars
+DEFER: matrix-set-nths
 : <lower-matrix> ( object m n -- matrix )
     <zero-matrix> [ lower-matrix-indices ] [ matrix-set-nths ] [ ] tri ;
 
@@ -278,8 +284,6 @@ PRIVATE>
 : perp ( v u -- w )
     dupd proj v- ;
 
-ALIAS: transpose flip
-
 ! more math and utilities
 ! implementation details of slightly complicated math like gram schmidt
 <PRIVATE
@@ -300,9 +304,9 @@ PRIVATE>
 DEFER: multiplicative-inverse
 ! A^-1 is the inverse but other negative powers are nonsense
 : m^n ( m n -- n ) {
-      { [ dup -1 = ] [ drop multiplicative-inverse ] }
-      { [ dup 0 >= ] [ (m^n) ] }
-      [ negative-power-matrix ]
+        { [ dup -1 = ] [ drop multiplicative-inverse ] }
+        { [ dup 0 >= ] [ (m^n) ] }
+        [ negative-power-matrix ]
     } cond ;
 
 : n^m ( n m -- n ) swap m^n ;
@@ -337,7 +341,6 @@ DEFER: multiplicative-inverse
 ! row-map would make sense compared to column-map
 ALIAS: row-map matrix-map
 
-! 0-based as you expect
 : matrix-nth ( pair matrix -- elt )
     [ first2 swap ] dip nth nth ;
 
@@ -362,14 +365,17 @@ PRIVATE>
 
 ! -------------------------------------------------
 ! numerical analysis of matrices follows
-: rank ( matrix -- rank ) {
-          { [ dup zero-matrix? ] [ drop 0 ] }
-          { [ dup square-matrix? ] [ ] }
-          [ lookup-rank ]
-      } cond ;
+GENERIC: rank ( matrix -- rank )
+M: zero-matrix rank
+    drop 0 ;
 
-: nullity ( matrix -- nullity )
-    ;
+M: square-matrix rank
+    drop 0 ;
+
+M: matrix rank
+    lookup-rank ;
+
+GENERIC: nullity ( matrix -- nullity )
 
 ! well-defined for square matrices
 : main-diagonal ( matrix -- vec )
@@ -427,23 +433,23 @@ PRIVATE>
     sum ;
 
 DEFER: (ndeterminant)
-: make-determinants ( n mat -- seq )
+: make-determinants ( n matrix -- seq )
     <repetition> [
         cols-except [ length ] keep (ndeterminant) ! recurses here
     ] map-index ;
 
 DEFER: (determinant)
 ! generalized to 4 and higher
-: (ndeterminant) ( n mat -- ndet )
+: (ndeterminant) ( n matrix -- ndet )
     ! TODO? recurse for n < 3
-    over 3 < [ (determinant) ] [
+    over 4 < [ (determinant) ] [
         [ nip first t alternating-sign ] [ rest make-determinants ] 2bi
         v* sum
-    ] if
-    ;
+    ] if ;
 
 ! switches on dimensions only
-: (determinant) ( n: integer matrix: matrix -- determinant ) over {
+: (determinant) ( n matrix -- determinant )
+    over {
         { 1 [ nip (1determinant) ] }
         { 2 [ nip (2determinant) ] }
         { 3 [ nip (3determinant) ] }
@@ -451,12 +457,16 @@ DEFER: (determinant)
     } case ;
 PRIVATE>
 
+GENERIC: determinant ( matrix -- determinant )
+M: zero-square-matrix determinant
+    drop 0 ;
+
+M: square-matrix determinant
+    [ length ] keep (determinant) ;
+
 ! determinant is undefined for m =/= n, unlike inverse
-: determinant ( matrix -- determinant ) {
-      { [ dup zero-matrix? ] [ drop 0 ] }
-      { [ dup square-matrix? ] [ [ length ] keep (determinant) ] }
-      [ dim first2 non-square-determinant ]
-    } cond ;
+M: matrix determinant
+    dim first2 non-square-determinant ;
 
 : 1/det ( matrix -- 1/det )
     determinant recip ; inline
@@ -497,15 +507,25 @@ ALIAS: additive-inverse mneg
 ! https://en.wikipedia.org/wiki/Invertible_matrix
 : (specialized-inverse) ( rect-matrix -- inverted )
     dup [ rank ] [ dim ] bi [ = ] with map {
-      { { t f } [ (left-inverse) ] }
-      { { f t } [ (right-inverse) ] }
-      [ no-case ]
+        { { t f } [ (left-inverse) ] }
+        { { f t } [ (right-inverse) ] }
+        [ no-case ]
     } case ;
 PRIVATE>
 
 ! A^-1
-: multiplicative-inverse ( matrix -- inverse )
-    dup square-matrix? [ (square-inverse) ] [ (specialized-inverse) ] if ;
+GENERIC: multiplicative-inverse ( matrix -- inverse )
+M: zero-square-matrix multiplicative-inverse
+    length <zero-square-matrix> ;
+
+M: square-matrix multiplicative-inverse
+    (square-inverse) ;
+
+M: zero-matrix multiplicative-inverse
+    dim first2 <zero-matrix> ; ! TODO: error based on rankiness
+
+M: matrix multiplicative-inverse
+    (specialized-inverse) ;
 
 ! -----------------------------
 ! end of inverse operations!
@@ -528,6 +548,8 @@ PRIVATE>
 : covariance-matrix-ddof ( matrix ddof -- cov )
     '[ _ cov-ddof ] cartesian-column-map ; inline
 
-: covariance-matrix ( matrix -- cov ) 0 covariance-matrix-ddof ; inline
+: covariance-matrix ( matrix -- cov )
+    0 covariance-matrix-ddof ; inline
 
-: sample-covariance-matrix ( matrix -- cov ) 1 covariance-matrix-ddof ; inline
+: sample-covariance-matrix ( matrix -- cov )
+    1 covariance-matrix-ddof ; inline

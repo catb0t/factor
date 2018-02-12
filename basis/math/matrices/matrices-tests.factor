@@ -1,7 +1,10 @@
 ! Copyright (C) 2005, 2010, 2018 Slava Pestov, Joe Groff, and Cat Stevens.
 USING: arrays combinators.short-circuit grouping kernel math math.matrices math.matrices.private
-math.vectors sequences sequences.deep sets tools.test ;
+math.statistics math.vectors sequences sequences.deep sets tools.test ;
 IN: math.matrices.tests
+
+: call-eq? ( obj quots -- ? )
+    [ call( x -- x ) ] with map all-eq? ; !  inline
 
 ! ------------------------
 ! predicates
@@ -502,6 +505,7 @@ CONSTANT: test-points {
 { t } [ 50 <box-matrix> dup transpose = ] unit-test
 { t } [ 50 <identity-matrix> dup transpose = ] unit-test
 { t } [ 50 <identity-matrix> dup transpose = ] unit-test
+{ { 4 3 2 1 } } [ { 1 2 3 4 } <anti-diagonal-matrix> transpose anti-diagonal ] unit-test
 
 SYMBOLS: A B C D E F G H I J K L M N O P ;
 { { {
@@ -689,6 +693,9 @@ SYMBOLS: A B C D E F G H I J K L M N O P ;
 ! going to test 3x3 inputs
 
 ! the input had 9 elements, the output has 9 2-matrices across 3 arrays
+! every element from the input is represented 4 times in the output
+! the number of copies of each element found in the output is the side length of the next smaller square matrix
+! 3x3 input gives 4 copies of each element; (N-1) ^ 2 = 4 where N=3
 ! the permutations of indices 0 1 2 are: 0 0, 0 1, 0 2; 1 0, 1 1, 1 2; 2 0, 2 1, 2 2
 {
     { ! output array
@@ -737,86 +744,142 @@ SYMBOLS: A B C D E F G H I J K L M N O P ;
             }
         }
     }
+    t ! note this
 } [ {
     { 0 1 2 }
     { 3 4 5 }
     { 6 7 8 }
-} matrix-except-all ] unit-test
+} matrix-except-all dup flatten sorted-histogram [ second ] map
+    { [ length 9 = ] [ [ 4 = ] all? ] }
+    1&&
+] unit-test
+
+! going to test 4x4 inputs
 
 ! don't feel like handwriting this right now, so a sanity check test instead
+! the input contains 4 rows and 4 columns for 16 elements
+! 4x4 input gives 9 copies of each element; (N-1) ^ 2 = 9 where N = 4
 { t } [ {
     { 0 1 2 3 }
     { 4 5 6 7 }
     { 8 9 10 11 }
     { 12 13 14 15 }
-} matrix-except-all flatten 16 <iota> set= ] unit-test
-
-{ 1 } [ { { 1 } } (1determinant) ] unit-test
-{ 1 } [ { { 1 } } 1 swap (ndeterminant) ] unit-test
-{ 1 } [ { { 1 } } determinant ] unit-test
-{ 0 } [ { { 0 } } determinant ] unit-test
+} matrix-except-all flatten sorted-histogram [ second ] map
+    { [ length 16 = ] [ [ 9 = ] all? ] }
+    1&&
+] unit-test
 
 { { 1 -2 3 -4 } } [ { 1 2 3 4 } t alternating-sign ] unit-test
 { { -1 2 -3 4 } } [ { 1 2 3 4 } f alternating-sign ] unit-test
 
-{ 14 } [ { { 4 6 } { 3 8 } }   (2determinant) ] unit-test
-{ 14 } [ 2 { { 4 6 } { 3 8 } } (ndeterminant) ] unit-test
-{ 14 } [ { { 4 6 } { 3 8 } }      determinant ] unit-test
-{ -14 } [ { { 3 8 } { 4 6 } }   (2determinant) ] unit-test
-{ -14 } [ 2 { { 3 8 } { 4 6 } } (ndeterminant) ] unit-test
-{ -14 } [ { { 3 8 } { 4 6 } }      determinant ] unit-test
+{ t } [ { { 1 } }
+    { [ drop 1 ] [ (1determinant) ] [ 1 swap (ndeterminant) ] [ determinant ] }
+    call-eq?
+] unit-test
 
-{ -11 } [ { { 2 5 } { 1 -3 } }   (2determinant) ] unit-test
-{ -11 } [ 2 { { 2 5 } { 1 -3 } } (ndeterminant) ] unit-test
-{ -11 } [ { { 2 5 } { 1 -3 } }      determinant ] unit-test
-{ 11 } [ { { 1 -3 } { 2 5 } }   (2determinant) ] unit-test
-{ 11 } [ 2 { { 1 -3 } { 2 5 } } (ndeterminant) ] unit-test
-{ 11 } [ { { 1 -3 } { 2 5 } }      determinant ] unit-test
+{ 0 } [ { { 0 } } determinant ] unit-test
 
-{ -44 } [ { { 3 0 -1 } { 2 -5 4 } { -3 1 3 } }   (3determinant) ] unit-test
-{ -44 } [ 3 { { 3 0 -1 } { 2 -5 4 } { -3 1 3 } } (ndeterminant) ] unit-test
-{ -44 } [ { { 3 0 -1 } { 2 -5 4 } { -3 1 3 } }      determinant ] unit-test
+{ t } [ {
+    { 4 6 } ! order is significant
+    { 3 8 }
+} { [ drop 14 ] [ (2determinant) ] [ 2 swap (ndeterminant) ] [ determinant ] }
+    call-eq?
+] unit-test
 
-{ -19 } [ { { 2 -3 1 } { 4 2 -1 } { -5 3 -2 } }   (3determinant) ] unit-test
-{ -19 } [ 3 { { 2 -3 1 } { 4 2 -1 } { -5 3 -2 } } (ndeterminant) ] unit-test
-{ -19 } [ { { 2 -3 1 } { 4 2 -1 } { -5 3 -2 } }      determinant ] unit-test
+{ t } [ {
+    { 3 8 }
+    { 4 6 }
+} { [ drop -14 ] [ (2determinant) ] [ 2 swap (ndeterminant) ] [ determinant ] }
+    call-eq?
+] unit-test
 
-{ 65 } [ { { 5 1 -2 } { -1 0 4 } { 2 -3 3 } }   (3determinant) ] unit-test
-{ 65 } [ 3 { { 5 1 -2 } { -1 0 4 } { 2 -3 3 } } (ndeterminant) ] unit-test
-{ 65 } [ { { 5 1 -2 } { -1 0 4 } { 2 -3 3 } }      determinant ] unit-test
+{ t } [ {
+    { 2 5 }
+    { 1 -3 }
+} { [ drop -11 ] [ (2determinant) ] [ 2 swap (ndeterminant) ] [ determinant ] }
+    call-eq?
+] unit-test
+
+{ t } [ {
+    { 1 -3 }
+    { 2 5 }
+} { [ drop 11 ] [ (2determinant) ] [ 2 swap (ndeterminant) ] [ determinant ] }
+    call-eq?
+] unit-test
+
+{ t } [ {
+    { 3 0 -1 }
+    { 2 -5 4 }
+    { -3 1 3 }
+} { [ drop -44 ] [ (3determinant) ] [ 3 swap (ndeterminant) ] [ determinant ] }
+    call-eq?
+] unit-test
+
+{ t } [ {
+    { 3 0 -1 }
+    { -3 1 3 }
+    { 2 -5 4 }
+} { [ drop 44 ] [ (3determinant) ] [ 3 swap (ndeterminant) ] [ determinant ] }
+    call-eq?
+] unit-test
+
+{ t } [ {
+    { 2 -3 1 }
+    { 4 2 -1 }
+    { -5 3 -2 }
+} { [ drop -19 ] [ (3determinant) ] [ 3 swap (ndeterminant) ] [ determinant ] }
+    call-eq?
+] unit-test
+
+{ t } [ {
+    { 2 -3 1 }
+    { -5 3 -2 }
+    { 4 2 -1 }
+} { [ drop 19 ] [ (3determinant) ] [ 3 swap (ndeterminant) ] [ determinant ] }
+    call-eq?
+] unit-test
+
+{ t } [ {
+    { 4 2 -1 }
+    { 2 -3 1 }
+    { -5 3 -2 }
+} { [ drop 19 ] [ (3determinant) ] [ 3 swap (ndeterminant) ] [ determinant ] }
+    call-eq?
+] unit-test
+
+{ t } [ {
+    { 5 1 -2 }
+    { -1 0 4 }
+    { 2 -3 3 }
+} { [ drop 65 ] [ (3determinant) ] [ 3 swap (ndeterminant) ] [ determinant ] }
+    call-eq?
+] unit-test
 
 { t } [ {
     { -5  4 -3  2 }
     { -2  1  0 -1 }
     { -2 -3 -4 -5  }
     {  0  2  0  4 }
-} {
-    [ 4 swap (ndeterminant) ]
-    [ determinant ]
-    [ drop -24 ]
-} [ call ] with map all-eq? ] unit-test
+} { [ drop -24 ] [ 4 swap (ndeterminant) ] [ determinant ] }
+    call-eq?
+] unit-test
 
 { t } [ {
     { 2 4 2 2 }
     { 5 1 -6 10 }
     { 4 3 -1 7 }
     { 9 8 7 3 }
-} {
-    [ 4 swap (ndeterminant) ]
-    [ determinant ]
-    [ drop 272 ]
-} [ call ] with map all-eq? ] unit-test
+} { [ drop 272 ] [ 4 swap (ndeterminant) ] [ determinant ] }
+    call-eq?
+] unit-test
 
-{ -306 } [ {
+{ t } [ {
     { 6 1 1 }
     { 4 -2 5 }
     { 2 8 7 }
-} (3determinant) ] unit-test
-{ -306 } [ {
-    { 6 1 1 }
-    { 4 -2 5 }
-    { 2 8 7 }
-} determinant ] unit-test
+} { [ drop -306 ] [ (3determinant) ]  [ 3 swap (ndeterminant) ] [ determinant ] }
+    call-eq?
+] unit-test
 
 { {
     { 2 2 2 }

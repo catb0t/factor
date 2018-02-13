@@ -1,17 +1,35 @@
 ! Copyright (C) 2005, 2010, 2018 Slava Pestov, Joe Groff, Cat Stevens.
-USING: arrays help.markup help.syntax kernel math opengl.gl sequences prettyprint urls ;
+USING: accessors arrays formatting help.markup help.syntax io
+kernel math math.functions math.order opengl.gl prettyprint
+sequences urls ;
 IN: math.matrices
 
 <PRIVATE
+: $subs-nobl ( children -- )
+    [ $subsection* ] each ;
+
 : $2d-only-note ( children -- )
     drop
-    "This word is intended for use with 2-dimensional matrices. Using it with matrices of 3 or more dimensions may lead to unexpected results."
-    $notes ;
+    {
+        "This word is intended for use with 2-dimensional matrices. "
+        "Using it with matrices of 3 or more dimensions may lead to unexpected results."
+    }
+    print-element ;
 
-: $2d-only-note ( children -- )
+: $matrix-scalar-note ( children -- )
+    \ $subs-nobl prefix
+    "This word assumes that elements of the input matrix are compatible with the following words:"
+    swap 2array
+    print-element ;
 
-    "This word is intended for use with matrices whose elemnts are supported by %s."
-    sprintf $notes ;
+: $swapped-word ( children -- )
+    [ "This word is the swapped equivalent of " ] dip
+    \ $link prefix
+    "."
+    3array print-element ;
+
+: $notelist ( children -- )
+    \ $list prefix $notes ;
 PRIVATE>
 
 ABOUT: "math.matrices"
@@ -142,7 +160,7 @@ $nl
 }
 
 "Errors thrown by this vocabulary:"
-{ $subsections negative-power-matrix non-square-determinant non-square-inverse }
+{ $subsections negative-power-matrix non-square-determinant undefined-inverse }
 ;
 
 ! PREDICATE CLASSES
@@ -222,9 +240,9 @@ HELP: non-square-determinant
 { $description "Throws a " { $link non-square-determinant } " error." }
 { $error-description { $link determinant } " was used with a non-square matrix whose dimensions are " { $snippet "m x n" } ". It is not generally possible to find the determinant of a non-square matrix." } ;
 
-HELP: non-square-inverse
+HELP: undefined-inverse
 { $values { "m" integer } { "n" integer } { "r" "rank" } }
-{ $description "Throws a " { $link non-square-inverse } " error." }
+{ $description "Throws a " { $link undefined-inverse } " error." }
 { $error-description { $link multiplicative-inverse } " was used with a non-square matrix of rank " { $snippet "rank" } " whose dimensions are " { $snippet "m x n" } ". It is not generally possible to find the determinant of a rank-deficient non-square matrix." } ;
 
 ! BUILDERS
@@ -686,11 +704,16 @@ HELP: matrix-set-nths ;
 
 HELP: additive-inverse
 { $values { "m" matrix } { "m'" matrix } }
-{ $description "An alias for " { $link mneg } " which serves as the companion to " { $link multiplicative-inverse } "." } ;
+{ $description "An alias for " { $link mneg } " which serves as the companion to " { $link multiplicative-inverse } "." }
+{ $notelist $2d-only-note { $matrix-scalar-note neg } } ;
 
 HELP: mneg
 { $values { "m" matrix } { "m'" matrix } }
 { $description "Negate (invert the sign) of all elements in the matrix." }
+{ $notelist
+    $2d-only-note
+    { $matrix-scalar-note neg }
+}
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
@@ -702,7 +725,11 @@ HELP: mneg
 HELP: n+m
 { $values { "n" object } { "m" matrix }  }
 { $description { $snippet "n" } " is treated as a scalar and added to each element of the matrix " { $snippet "m" } "." }
-{ $notes "This word is the swapped equivalent of " { $link m+n } "." }
+{ $notelist
+    { $swapped-word m+n }
+    $2d-only-note
+    { $matrix-scalar-note + }
+}
 { $examples
     { $example
         "USING: kernel math.matrices prettyprint ;"
@@ -714,7 +741,11 @@ HELP: n+m
 HELP: m+n
 { $values { "n" object } { "m" matrix }  }
 { $description { $snippet "n" } " is treated as a scalar and added to each element of the matrix " { $snippet "m" } "." }
-{ $notes "This word is the swapped equivalent of " { $link n+m } "." }
+{ $notelist
+    { $swapped-word n+m }
+    $2d-only-note
+    { $matrix-scalar-note + }
+}
 { $examples
     { $example
         "USING: kernel math.matrices prettyprint ;"
@@ -726,7 +757,11 @@ HELP: m+n
 HELP: n-m
 { $values { "n" object } { "m" matrix }  }
 { $description { $snippet "n" } " is treated as a scalar and subtracted from each element of the matrix " { $snippet "m" } "." }
-{ $notes "This word is the swapped equivalent of " { $link m-n } "." }
+{ $notelist
+    { $swapped-word m-n }
+    $2d-only-note
+    { $matrix-scalar-note - }
+}
 { $examples
     { $example
         "USING: kernel math.matrices prettyprint ;"
@@ -738,7 +773,11 @@ HELP: n-m
 HELP: m-n
 { $values { "n" object } { "m" matrix }  }
 { $description { $snippet "n" } " is treated as a scalar and subtracted from each element of the matrix " { $snippet "m" } "." }
-{ $notes "This word is the swapped equivalent of " { $link n-m } "." }
+{ $notelist
+    { $swapped-word n-m }
+    $2d-only-note
+    { $matrix-scalar-note - }
+}
 { $examples
     { $example
         "USING: kernel math.matrices prettyprint ;"
@@ -750,7 +789,11 @@ HELP: m-n
 HELP: n*m
 { $values { "n" object } { "m" matrix }  }
 { $description "Every element in the input matrix " { $snippet "m" } " is multiplied by the scalar "{ $snippet "n" } ". The output has the same shape as the input." }
-{ $notes "This word is the swapped equivalent of " { $link m*n } "." }
+{ $notelist
+    { $swapped-word m*n }
+    $2d-only-note
+    { $matrix-scalar-note * }
+}
 { $examples
     { $example
         "USING: kernel math.matrices prettyprint ;"
@@ -762,7 +805,12 @@ HELP: n*m
 HELP: m*n
 { $values { "n" object } { "m" matrix }  }
 { $description "Every element in the input matrix " { $snippet "m" } " is multiplied by the scalar "{ $snippet "n" } ". The output has the same shape as the input." }
-{ $notes "This word is the swapped equivalent of " { $link n*m } "." }
+{ $notelist
+    { $swapped-word n*m }
+    $2d-only-note
+    { $matrix-scalar-note * }
+}
+
 { $examples
     { $example
         "USING: kernel math.matrices prettyprint ;"
@@ -774,7 +822,11 @@ HELP: m*n
 HELP: n/m
 { $values { "n" object } { "m" matrix }  }
 { $description "Every element in the input matrix " { $snippet "m" } " is divided by the scalar "{ $snippet "n" } ". The output has the same shape as the input." }
-{ $notes "This word is the swapped equivalent of " { $link m/n } "." }
+{ $notelist
+    { $swapped-word m/n }
+    $2d-only-note
+    { $matrix-scalar-note / }
+}
 { $examples
     { $example
         "USING: kernel math.matrices prettyprint ;"
@@ -792,7 +844,11 @@ HELP: n/m
 HELP: m/n
 { $values { "n" object } { "m" matrix }  }
 { $description "Every element in the input matrix " { $snippet "m" } " is divided by the scalar "{ $snippet "n" } ". The output has the same shape as the input." }
-{ $notes "This word is the swapped equivalent of " { $link n/m } "." }
+{ $notelist
+    { $swapped-word n/m }
+    $2d-only-note
+    { $matrix-scalar-note / }
+}
 { $examples
     { $example
         "USING: kernel math.matrices prettyprint ;"
@@ -810,6 +866,10 @@ HELP: m/n
 HELP: m+
 { $values { "m1" matrix } { "m2" matrix } { "m" matrix } }
 { $description "Adds two matrices element-wise." }
+{ $notelist
+    $2d-only-note
+    { $matrix-scalar-note + }
+}
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
@@ -821,6 +881,10 @@ HELP: m+
 HELP: m-
 { $values { "m1" matrix } { "m2" matrix } { "m" matrix } }
 { $description "Subtracts two matrices element-wise." }
+{ $notelist
+    $2d-only-note
+    { $matrix-scalar-note - }
+}
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
@@ -832,6 +896,10 @@ HELP: m-
 HELP: m*
 { $values { "m1" matrix } { "m2" matrix } { "m" matrix } }
 { $description "Multiplies two matrices element-wise." }
+{ $notelist
+    $2d-only-note
+    { $matrix-scalar-note * }
+}
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
@@ -843,6 +911,10 @@ HELP: m*
 HELP: m/
 { $values { "m1" matrix } { "m2" matrix } { "m" matrix } }
 { $description "Divides two matrices element-wise." }
+{ $notelist
+    $2d-only-note
+    { $matrix-scalar-note / }
+}
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
@@ -854,6 +926,11 @@ HELP: m/
 HELP: m.v
 { $values { "m" matrix } { "v" sequence } { "p" matrix } }
 { $description "Computes the dot product of a matrix and a vector." }
+{ $notelist
+    { $swapped-word v.m }
+    $2d-only-note
+    { $matrix-scalar-note * + }
+}
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
@@ -865,6 +942,11 @@ HELP: m.v
 HELP: v.m
 { $values { "m" matrix } { "v" sequence } { "p" matrix } }
 { $description "Computes the dot product of a vector and a matrix." }
+{ $notelist
+    { $swapped-word m.v }
+    $2d-only-note
+    { $matrix-scalar-note * + }
+}
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
@@ -876,6 +958,10 @@ HELP: v.m
 HELP: m.
 { $values { "m" matrix } }
 { $description "Computes the dot product of two matrices, i.e multiplies them." }
+{ $notelist
+    $2d-only-note
+    { $matrix-scalar-note * + }
+}
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
@@ -887,6 +973,10 @@ HELP: m.
 HELP: m~
 { $values { "m1" matrix } { "m2" matrix } { "epsilon" number } { "?" boolean } }
 { $description "Compares the matrices using the " { $snippet "epsilon" } "." }
+{ $notelist
+    $2d-only-note
+    { $matrix-scalar-note ~ }
+}
 { $examples
     { $example
         "USING: kernel math math.matrices prettyprint ;"
@@ -898,6 +988,10 @@ HELP: m~
 HELP: mmin
 { $values { "m" matrix } { "n" object } }
 { $description "Calculate the minimum value of all elements in the matrix." }
+{ $notelist
+    $2d-only-note
+    { $matrix-scalar-note min }
+}
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
@@ -909,6 +1003,10 @@ HELP: mmin
 HELP: mmax
 { $values { "m" matrix } { "n" object } }
 { $description "Determine the maximum value of the matrix." }
+{ $notelist
+    $2d-only-note
+    { $matrix-scalar-note max }
+}
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
@@ -920,6 +1018,10 @@ HELP: mmax
 HELP: mnorm
 { $values { "m" matrix } { "m'" object } }
 { $description "Calculate the relative normal value of each element in the matrix. Each element is computed as a fraction of the maximum element in the matrix. The maximum element becomes " { $snippet "1/1" } "." }
+{ $notelist
+    $2d-only-note
+    { $matrix-scalar-note max abs / }
+}
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
@@ -930,6 +1032,29 @@ HELP: mnorm
 
 HELP: gram-schmidt ;
 HELP: gram-schmidt-normalize ;
+
+HELP: m^n
+{ $values { "n" object } { "m" matrix } }
+{ $description "Compute the " { $snippet "nth" } " power of the input matrix. If " { $snippet "n" } " is " { $snippet "-1" } ", the inverse of the matrix is calculated (but see " { $link multiplicative-inverse } " for pitfalls)." }
+{ $errors
+    { $link negative-power-matrix } " if " { $snippet "n" } " is a negative number other than " { $snippet "-1" } "."
+    $nl
+    { $link undefined-inverse } " if the " { $link multiplicative-inverse } " of " { $snippet "m" } " is undefined."
+}
+{ $notelist
+    { $swapped-word n^m }
+    $2d-only-note
+    { $matrix-scalar-note max abs / }
+} ;
+
+HELP: n^m
+{ $values { "n" object } { "m" matrix } }
+{ $description "Because it is nonsensical to raise a number to the power of a matrix, this word exists to save typing " { $snippet "swap m^n" } ". See " { $link m^n } " for more information." }
+{ $notelist
+    { $swapped-word n^m }
+    $2d-only-note
+    { $matrix-scalar-note max abs / }
+} ;
 
 HELP: kronecker-product
 { $values { "m1" matrix } { "m2" matrix } { "m" matrix } }
@@ -986,20 +1111,49 @@ HELP: anti-transpose
     }
 } ;
 
-HELP: rows-except ;
-HELP: cols-except ;
-HELP: matrix-except ;
-HELP: matrix-except-all ;
+HELP: rows-except
+{ $values { "matrix" matrix } { "desc" { $or integer sequence } } { "others" matrix } } ;
+HELP: cols-except
+{ $values { "matrix" matrix } { "desc" { $or integer sequence } } { "others" matrix } } ;
+HELP: matrix-except
+{ $values { "matrix" matrix } { "exclude-pair" pair } { "submatrix" matrix } } ;
+HELP: matrix-except-all
+{ $values { "matrix-seq" matrix } { "submatrix" matrix } } ;
 
-HELP: determinant ;
-HELP: 1/det ;
-HELP: m*1/det ;
+HELP: determinant
+{ $values { "matrix" square-matrix } { "determinant" number } }
+{ $contract "Compute the determinant of the input matrix. Generally, the determinant of a matrix is a scaling factor of the transformation described by the matrix." }
+{ $notelist
+    $2d-only-note
+    { $matrix-scalar-note max - * }
+}
+{ $examples } ;
+
+HELP: 1/det
+{ $values { "matrix" square-matrix } { "1/det" number } }
+{ $description "Find the inverse (" { $link recip } ") of the " { $link determinant } " of the input matrix." }
+{ $notelist
+    $2d-only-note
+    { $matrix-scalar-note max recip }
+} ;
+
+HELP: m*1/det
+{ $values { "matrix" square-matrix } { "matrix'" square-matrix } }
+{ $description "Multiply the input matrix by the inverse (" { $link recip } ") of its " { $link determinant } "." }
+{ $notelist
+    { "This word is used to implement " { $link multiplicative-inverse } "." }
+    $2d-only-note
+    { $matrix-scalar-note max * - recip }
+} ;
 
 HELP: >minors ;
 HELP: >cofactors ;
 HELP: multiplicative-inverse ;
 
-HELP: dim ;
+HELP: dim
+{ $values { "matrix" matrix } { "pair/f" { $maybe pair } } }
+{ $description "Find the dimensions of the input matrix, in the order of " { $snippet "{ rows cols }"} "." } ;
+
 HELP: dimension-range ;
 
 HELP: covariance-matrix ;

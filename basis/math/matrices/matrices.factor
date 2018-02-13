@@ -50,7 +50,7 @@ ERROR: negative-power-matrix
     { m matrix } { n integer } ;
 ERROR: non-square-determinant
     { m integer }  { n integer } ;
-ERROR: non-square-inverse
+ERROR: undefined-inverse
     { m integer }  { n integer } { r rank-kind initial: +uncalculated-rank+ } ;
 
 <PRIVATE
@@ -65,7 +65,7 @@ M: negative-power-matrix summary
     n>> dup ordinal-suffix "%s%s power of a matrix is undefined" sprintf ;
 M: non-square-determinant summary
     [ m>> ] [ n>> ] bi "%s x %s matrix is not square and has no determinant" sprintf ;
-M: non-square-inverse summary
+M: undefined-inverse summary
     [ m>> ] [ n>> ] [ r>> name>> ] tri "%s x %s matrix with rank %s has no inverse" sprintf ;
 
 : (nth-from-end) ( n seq -- n )
@@ -390,6 +390,11 @@ DEFER: multiplicative-inverse
 ! -------------------------------------------------
 ! numerical analysis of matrices follows
 <PRIVATE
+: (rows-iota) ( matrix -- matrix rows )
+    dup dim first <iota> ;
+: (cols-iota) ( matrix -- matrix cols )
+    dup dim second <iota> ;
+
 : lookup-rank ( matrix -- rank-class ) ;
 PRIVATE>
 
@@ -419,13 +424,23 @@ ALIAS: transpose flip
 : anti-transpose ( matrix -- newmatrix )
     [ reverse ] map transpose [ reverse ] map ;
 
-: rows-except ( matrix n -- others )
-    [ dup dim first <iota> ] dip
+GENERIC: rows-except ( matrix desc -- others )
+M: integer rows-except
+    [ (rows-iota) ] dip
     '[ _ = ] { } reject-as swap rows ;
 
-: cols-except ( matrix n -- others )
-    [ dup dim second <iota> ] dip
+M: sequence rows-except
+    [ (rows-iota) ] dip
+    '[ _ member? ] reject swap rows ;
+
+GENERIC: cols-except ( matrix desc -- others )
+M: integer cols-except
+    [ (cols-iota) ] dip
     '[ _ = ] { } reject-as swap cols transpose ; ! need to un-transpose
+
+M: sequence cols-except
+    [ (cols-iota) ] dip
+    '[ _ member? ] reject swap cols transpose ;
 
 ! well-defined for any well-formed-matrix
 : matrix-except ( matrix exclude-pair -- submatrix )

@@ -8,12 +8,13 @@ sequences sequences.deep sequences.private summary ;
 IN: math.matrices
 
 ! omitting the defer gives you a compiler error
-DEFER: well-formed-matrix?
+! DEFER: well-formed-matrix?
 : well-formed-matrix? ( object -- ? )
     [ t ] [
         dup first length
         '[ length _ = ] all?
     ] if-empty ;
+
 
 ! the MRO (class linearization) is performed in the order the predicates appear here
 ! except that null-matrix is last (but it is relied upon by zero-matrix)
@@ -48,7 +49,7 @@ SINGLETONS:      +full-rank+ +half-rank+ +deficient-rank+ +uncalculated-rank+ ;
 UNION: rank-kind +full-rank+ +half-rank+ +deficient-rank+ +uncalculated-rank+ ;
 
 ERROR: negative-power-matrix
-    { m matrix } { n integer } ;
+    { m sequence } { n integer } ;
 ERROR: non-square-determinant
     { m integer }  { n integer } ;
 ERROR: undefined-inverse

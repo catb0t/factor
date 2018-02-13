@@ -1,33 +1,47 @@
 ! Copyright (C) 2005, 2010, 2018 Slava Pestov, Joe Groff, Cat Stevens.
-USING: accessors arrays formatting help.markup help.syntax io
+USING: accessors arrays formatting locals help.markup help.syntax io
 kernel math math.functions math.order opengl.gl prettyprint
-sequences urls ;
+sequences sequences.generalizations urls ;
 IN: math.matrices
 
 <PRIVATE
+! like $subsections but skip the extra blank line
 : $subs-nobl ( children -- )
     [ $subsection* ] each ;
 
+! swapped and n-matrix variants
+: $equiv-word-note ( children -- )
+    [ "This word is the " ] dip
+    first2
+    " variant of " swap
+    [ { $link } ] dip suffix
+    "."
+    5 narray print-element ;
+
+! words like <scale-matrix3> which have an array of inputs
+: $finite-input-note ( children -- )
+    [ "Only the first " ] dip
+    first2
+    " values in " swap
+    [ { $snippet } ] dip suffix
+    " are used."
+    5 narray print-element ;
+
+! a note for when a word assumes a 2d matrix
 : $2d-only-note ( children -- )
-    drop
-    {
-        "This word is intended for use with 2-dimensional matrices. "
-        "Using it with matrices of 3 or more dimensions may lead to unexpected results."
+    drop { "This word is intended for use with flat (2-dimensional) matrices. "
+      ! "Using it with matrices of 3 or more dimensions may lead to unexpected results."
     }
     print-element ;
 
+! a note for numeric-specific operations
 : $matrix-scalar-note ( children -- )
     \ $subs-nobl prefix
     "This word assumes that elements of the input matrix are compatible with the following words:"
     swap 2array
     print-element ;
 
-: $swapped-word ( children -- )
-    [ "This word is the swapped equivalent of " ] dip
-    \ $link prefix
-    "."
-    3array print-element ;
-
+! so that we don't end up with multiple $notes calls leading to multiple Notes sections
 : $notelist ( children -- )
     \ $list prefix $notes ;
 PRIVATE>
@@ -41,6 +55,7 @@ $nl
 $nl
 "Matrices are classified their mathematical properties, and by predicate words."
 $nl
+! split up intentionally
 { $subsections
     matrix
     square-matrix
@@ -48,6 +63,7 @@ $nl
     zero-square-matrix
     null-matrix
 
+} { $subsections
     well-formed-matrix?
     matrix?
     square-matrix?
@@ -55,6 +71,7 @@ $nl
     zero-square-matrix?
     null-matrix?
 
+} { $subsections
     invertible-matrix?
     linearly-independent-matrix?
 }
@@ -64,6 +81,8 @@ $nl
     <matrix>
     <matrix-by>
     <matrix-by-indices>
+
+} { $subsections
     <zero-matrix>
     <zero-square-matrix>
     <diagonal-matrix>
@@ -71,6 +90,7 @@ $nl
     <identity-matrix>
     <simple-eye>
     <eye>
+} { $subsections
     <coordinate-matrix>
     <square-rows>
     <square-cols>
@@ -114,14 +134,17 @@ $nl
     dim dimension-range transpose
     matrix-nth matrix-set-nth matrix-set-nths
 
+} { $subsections
     row rows rows-except
     col cols cols-except
 
+} { $subsections
     matrix-except matrix-except-all
 
+} { $subsections
     matrix-map column-map row-map
     stitch
-
+} { $subsections
     cartesian-matrix-map
     cartesian-column-map
     cartesian-row-map
@@ -143,9 +166,11 @@ $nl
     rank
     nullity
 
+} { $subsections
     main-diagonal
     anti-diagonal
 
+} { $subsections
     determinant 1/det m*1/det
     >minors >cofactors
     additive-inverse
@@ -188,7 +213,7 @@ HELP: null-matrix
 
 HELP: well-formed-matrix?
 { $values { "object" object } { "?" boolean } }
-{ $description "Tests if the object is a well-formed " { $link matrix } ". A well-formed matrix has an equal number of elements in every row, and an equal number of elements in every column, such that there are no empty slots." }
+{ $description "Tests if the object is a well-formed " { $link matrix } ". A well-formed matrix is a sequence, which has an equal number of elements in every row, and an equal number of elements in every column, such that there are no empty slots." }
 { $notes "The " { $link null-matrix } " is considered well-formed, because of semantic requirements of the matrix implementation." }
 { $examples
     "The example is a poorly formed matrix, because the rows have an unequal number of elements."
@@ -242,7 +267,7 @@ HELP: non-square-determinant
 
 HELP: undefined-inverse
 { $values { "m" integer } { "n" integer } { "r" "rank" } }
-{ $description "Throws a " { $link undefined-inverse } " error." }
+{ $description "Throws an " { $link undefined-inverse } " error." }
 { $error-description { $link multiplicative-inverse } " was used with a non-square matrix of rank " { $snippet "rank" } " whose dimensions are " { $snippet "m x n" } ". It is not generally possible to find the determinant of a rank-deficient non-square matrix." } ;
 
 ! BUILDERS
@@ -570,10 +595,33 @@ HELP: <box-matrix>
 
 } ;
 
+HELP: <scale-matrix3>
+{ $values { "factors" sequence } { "matrix" matrix } }
+{ $description "Make a " { $snippet "3 x 3" } " scaling matrix, used to scale an object in 3 dimensions. See " { $url URL" https://en.wikipedia.org/wiki/Scaling_(geometry)#Matrix_representation" "scaling matrix on Wikipedia" } "." }
+{ $notelist
+    { $finite-input-note "three" "factors" }
+    { $equiv-word-note "3-matrix" <scale-matrix4> }
+}
+{ $examples
+    { $example
+        "USING: kernel math.matrices prettyprint ;"
+        "{ 22 33 -44 } <scale-matrix4> ."
+"{
+    { 22 0.0 0.0 0.0 }
+    { 0.0 33 0.0 0.0 }
+    { 0.0 0.0 -44 0.0 }
+    { 0.0 0.0 0.0 1.0 }
+}"
+    }
+} ;
+
 HELP: <scale-matrix4>
 { $values { "factors" sequence } { "matrix" matrix } }
 { $description "Make a " { $snippet "4 x 4" } " scaling matrix, used to scale an object in 3 or more dimensions. See " { $url URL" https://en.wikipedia.org/wiki/Scaling_(geometry)#Matrix_representation" "scaling matrix on Wikipedia" } "." }
-{ $notes "Only the first three values in " { $snippet "factors" } " are used." }
+{ $notelist
+    { $finite-input-note "three" "factors" }
+    { $equiv-word-note "4-matrix" <scale-matrix3> }
+}
 { $examples
     { $example
         "USING: kernel math.matrices prettyprint ;"
@@ -589,8 +637,11 @@ HELP: <scale-matrix4>
 
 HELP: <ortho-matrix4>
 { $values { "factors" sequence } { "matrix" matrix } }
-{ $description "Creates a " { $link <scale-matrix4> } ", with the scale factors inverted." }
-{ $notes "Only the first three values from " { $snippet "factors" } " are used." }
+{ $description "Create a " { $link <scale-matrix4> } ", with the scale factors inverted." }
+{ $notelist
+    { $finite-input-note "three" "factors" }
+    { $equiv-word-note "inverse" <scale-matrix4> }
+}
 { $examples
     { $example
         "USING: kernel math.matrices prettyprint ;"
@@ -607,11 +658,7 @@ HELP: <ortho-matrix4>
 HELP: <frustum-matrix4>
 { $values { "xy-dim" pair } { "near" number } { "far" number } { "matrix" matrix } }
 { $description "Make a " { $snippet "4 x 4" } " matrix suitable for representing an occlusion frustum. A viewing or occlusion frustum is the three-dimensional region of a three-dimensional object which is visible on the screen. See " { $url URL" https://en.wikipedia.org/wiki/Frustum" "frustum on Wikipedia" } "." }
-{ $notes
-    "Only the first two values from " { $snippet "xy-dim" } " are used."
-    $nl
-    "Though the domain is technically unlimited, for unexpected inputs the range may be undefined."
-}
+{ $notes { $finite-input-note "two" "xy-dim" } }
 { $examples
     { $example
         "USING: kernel math.matrices prettyprint ;"
@@ -726,7 +773,7 @@ HELP: n+m
 { $values { "n" object } { "m" matrix }  }
 { $description { $snippet "n" } " is treated as a scalar and added to each element of the matrix " { $snippet "m" } "." }
 { $notelist
-    { $swapped-word m+n }
+    { $equiv-word-note "swapped" m+n }
     $2d-only-note
     { $matrix-scalar-note + }
 }
@@ -742,7 +789,7 @@ HELP: m+n
 { $values { "n" object } { "m" matrix }  }
 { $description { $snippet "n" } " is treated as a scalar and added to each element of the matrix " { $snippet "m" } "." }
 { $notelist
-    { $swapped-word n+m }
+    { $equiv-word-note "swapped" n+m }
     $2d-only-note
     { $matrix-scalar-note + }
 }
@@ -758,7 +805,7 @@ HELP: n-m
 { $values { "n" object } { "m" matrix }  }
 { $description { $snippet "n" } " is treated as a scalar and subtracted from each element of the matrix " { $snippet "m" } "." }
 { $notelist
-    { $swapped-word m-n }
+    { $equiv-word-note "swapped" m-n }
     $2d-only-note
     { $matrix-scalar-note - }
 }
@@ -774,7 +821,7 @@ HELP: m-n
 { $values { "n" object } { "m" matrix }  }
 { $description { $snippet "n" } " is treated as a scalar and subtracted from each element of the matrix " { $snippet "m" } "." }
 { $notelist
-    { $swapped-word n-m }
+    { $equiv-word-note "swapped" n-m }
     $2d-only-note
     { $matrix-scalar-note - }
 }
@@ -790,7 +837,7 @@ HELP: n*m
 { $values { "n" object } { "m" matrix }  }
 { $description "Every element in the input matrix " { $snippet "m" } " is multiplied by the scalar "{ $snippet "n" } ". The output has the same shape as the input." }
 { $notelist
-    { $swapped-word m*n }
+    { $equiv-word-note "swapped" m*n }
     $2d-only-note
     { $matrix-scalar-note * }
 }
@@ -806,7 +853,7 @@ HELP: m*n
 { $values { "n" object } { "m" matrix }  }
 { $description "Every element in the input matrix " { $snippet "m" } " is multiplied by the scalar "{ $snippet "n" } ". The output has the same shape as the input." }
 { $notelist
-    { $swapped-word n*m }
+    { $equiv-word-note "swapped" n*m }
     $2d-only-note
     { $matrix-scalar-note * }
 }
@@ -823,7 +870,7 @@ HELP: n/m
 { $values { "n" object } { "m" matrix }  }
 { $description "Every element in the input matrix " { $snippet "m" } " is divided by the scalar "{ $snippet "n" } ". The output has the same shape as the input." }
 { $notelist
-    { $swapped-word m/n }
+    { $equiv-word-note "swapped" m/n }
     $2d-only-note
     { $matrix-scalar-note / }
 }
@@ -845,7 +892,7 @@ HELP: m/n
 { $values { "n" object } { "m" matrix }  }
 { $description "Every element in the input matrix " { $snippet "m" } " is divided by the scalar "{ $snippet "n" } ". The output has the same shape as the input." }
 { $notelist
-    { $swapped-word n/m }
+    { $equiv-word-note "swapped" n/m }
     $2d-only-note
     { $matrix-scalar-note / }
 }
@@ -927,7 +974,7 @@ HELP: m.v
 { $values { "m" matrix } { "v" sequence } { "p" matrix } }
 { $description "Computes the dot product of a matrix and a vector." }
 { $notelist
-    { $swapped-word v.m }
+    { $equiv-word-note "swapped" v.m }
     $2d-only-note
     { $matrix-scalar-note * + }
 }
@@ -943,7 +990,7 @@ HELP: v.m
 { $values { "m" matrix } { "v" sequence } { "p" matrix } }
 { $description "Computes the dot product of a vector and a matrix." }
 { $notelist
-    { $swapped-word m.v }
+    { $equiv-word-note "swapped" m.v }
     $2d-only-note
     { $matrix-scalar-note * + }
 }
@@ -972,12 +1019,13 @@ HELP: m.
 
 HELP: m~
 { $values { "m1" matrix } { "m2" matrix } { "epsilon" number } { "?" boolean } }
-{ $description "Compares the matrices using the " { $snippet "epsilon" } "." }
+{ $description "Compares the matrices like " { $link ~ } ", using the " { $snippet "epsilon" } "." }
 { $notelist
     $2d-only-note
     { $matrix-scalar-note ~ }
 }
 { $examples
+    { "In the example, only " { $snippet ".01" } " was added to each element, so the new matrix is within the epsilon " { $snippet ".1" } "of the original." }
     { $example
         "USING: kernel math math.matrices prettyprint ;"
         "{ { 5 9 } { 15 17 } } dup [ .01 + ] matrix-map .1 m~ ."
@@ -987,7 +1035,7 @@ HELP: m~
 
 HELP: mmin
 { $values { "m" matrix } { "n" object } }
-{ $description "Calculate the minimum value of all elements in the matrix." }
+{ $description "Calculate the maximum value of the matrix." }
 { $notelist
     $2d-only-note
     { $matrix-scalar-note min }
@@ -1016,8 +1064,8 @@ HELP: mmax
 } ;
 
 HELP: mnorm
-{ $values { "m" matrix } { "m'" object } }
-{ $description "Calculate the relative normal value of each element in the matrix. Each element is computed as a fraction of the maximum element in the matrix. The maximum element becomes " { $snippet "1/1" } "." }
+{ $values { "m" matrix } { "m'" matrix } }
+{ $description "Normalize a matrix. Each element from the input matrix is computed as a fraction of the maximum element. The maximum element becomes " { $snippet "1/1" } "." }
 { $notelist
     $2d-only-note
     { $matrix-scalar-note max abs / }
@@ -1042,7 +1090,7 @@ HELP: m^n
     { $link undefined-inverse } " if the " { $link multiplicative-inverse } " of " { $snippet "m" } " is undefined."
 }
 { $notelist
-    { $swapped-word n^m }
+    { $equiv-word-note "swapped" n^m }
     $2d-only-note
     { $matrix-scalar-note max abs / }
 } ;
@@ -1051,7 +1099,7 @@ HELP: n^m
 { $values { "n" object } { "m" matrix } }
 { $description "Because it is nonsensical to raise a number to the power of a matrix, this word exists to save typing " { $snippet "swap m^n" } ". See " { $link m^n } " for more information." }
 { $notelist
-    { $swapped-word n^m }
+    { $equiv-word-note "swapped" n^m }
     $2d-only-note
     { $matrix-scalar-note max abs / }
 } ;
@@ -1104,10 +1152,16 @@ HELP: anti-transpose
 { $values { "matrix" matrix } { "newmatrix" matrix } }
 { $description "Like " { $link transpose } " except that the matrix is transposed over the " { $link anti-diagonal } "." }
 { $examples
-    { $examples
+    { $example
         "USING: math.matrices sequences prettyprint ;"
         "5 <iota> <diagonal-matrix> anti-transpose ."
-        ""
+"{
+    { 4 0 0 0 0 }
+    { 0 3 0 0 0 }
+    { 0 0 2 0 0 }
+    { 0 0 0 1 0 }
+    { 0 0 0 0 0 }
+}"
     }
 } ;
 

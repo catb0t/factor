@@ -1,0 +1,11 @@
+I have rather accidentally (almost!) completely rewritten math.matrices. There are many new features, which will make mathematical matrix operations in Factor a breeze. 
+
+* Matrix kinds are now predicate classes, so you can ask `matrix?` `square-matrix?` and so on. 
+* 
+
+I originally only wanted to add documentation for every word -- seriously, that was all I initially wanted to do. I wrote quite a lot of documentation before realising that a lot of the words could use re-naming and re-organising, so I made some minor re-organisations to the implementation. 
+
+Then I started splitting words up and adding functionality, and I decided to implement new functionality, and give new meaning to existing functionality. 
+
+Now we have predicate classes, more errors, a union class, and 120 total words. Suddenly, we have over 1,000 lines of tests and over 1,000 lines of docs for like 700 lines of actual code.
+

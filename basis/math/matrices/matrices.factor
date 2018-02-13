@@ -7,12 +7,13 @@ math.ranges math.statistics math.vectors math.vectors.private
 sequences sequences.deep sequences.private summary ;
 IN: math.matrices
 
+! omitting the defer gives you a compiler error
+DEFER: well-formed-matrix?
 : well-formed-matrix? ( object -- ? )
     [ t ] [
         dup first length
         '[ length _ = ] all?
     ] if-empty ;
-
 
 ! the MRO (class linearization) is performed in the order the predicates appear here
 ! except that null-matrix is last (but it is relied upon by zero-matrix)

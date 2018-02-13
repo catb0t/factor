@@ -49,7 +49,7 @@ SINGLETONS:      +full-rank+ +half-rank+ +deficient-rank+ +uncalculated-rank+ ;
 UNION: rank-kind +full-rank+ +half-rank+ +deficient-rank+ +uncalculated-rank+ ;
 
 ERROR: negative-power-matrix
-    { m sequence } { n integer } ;
+    { m matrix } { n integer } ;
 ERROR: non-square-determinant
     { m integer }  { n integer } ;
 ERROR: undefined-inverse

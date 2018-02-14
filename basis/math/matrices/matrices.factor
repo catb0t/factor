@@ -7,8 +7,8 @@ math.ranges math.statistics math.vectors math.vectors.private
 sequences sequences.deep sequences.private summary ;
 IN: math.matrices
 
-! omitting the defer gives you a compiler error
-! DEFER: well-formed-matrix?
+! defined here because of issue #1943
+DEFER: well-formed-matrix?
 : well-formed-matrix? ( object -- ? )
     [ t ] [
         dup first length

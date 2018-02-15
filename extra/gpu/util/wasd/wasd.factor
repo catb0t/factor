@@ -69,7 +69,7 @@ CONSTANT: fov 0.7
     loc world dim>> [ /f 0.5 - 2.0 * ] 2map
     world wasd-fov-vector v*
     first2 neg -1.0 0.0 4array
-    world wasd-mv-inv-matrix swap m.v ;
+    world wasd-mv-inv-matrix swap mdotv ;
 
 : set-wasd-view ( world location yaw pitch -- world )
     [ >>location ] [ >>yaw ] [ >>pitch ] tri* ;
@@ -85,7 +85,7 @@ CONSTANT: fov 0.7
     cosy         0.0       siny        neg  3array
     siny sinp *  cosp      cosy sinp *      3array
     siny cosp *  sinp neg  cosy cosp *      3array 3array
-    v swap v.m ;
+    v swap vdotm ;
 
 : ?pitch ( world -- pitch )
     dup wasd-fly-vertically? [ pitch>> ] [ drop 0.0 ] if ;

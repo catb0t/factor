@@ -328,8 +328,8 @@ IN: math.matrices.tests
     m-
 ] unit-test
 
-{ { 3 4 } } [ { { 1 0 } { 0 1 } } { 3 4 } m.v ] unit-test
-{ { 4 3 } } [ { { 0 1 } { 1 0 } } { 3 4 } m.v ] unit-test
+{ { 3 4 } } [ { { 1 0 } { 0 1 } } { 3 4 } mdotv ] unit-test
+{ { 4 3 } } [ { { 0 1 } { 1 0 } } { 3 4 } mdotv ] unit-test
 
 { { { 6 } } } [ { { 3 } } { { 2 } } mdot ] unit-test
 { { { 11 } } } [ { { 1 3 } } { { 5 } { 2 } } mdot ] unit-test

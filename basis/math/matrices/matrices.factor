@@ -332,7 +332,7 @@ ALIAS: cartesian-row-map cartesian-matrix-map
 
 : vdotm ( v m -- p ) flip [ vdot ] with map ;
 : mdotv ( m v -- p ) [ vdot ] curry map ;
-: mdot ( m m -- m ) flip [ swap m.v ] curry map ;
+: mdot ( m m -- m ) flip [ swap mdotv ] curry map ;
 
 : m~  ( m1 m2 epsilon -- ? ) [ v~ ] curry 2all? ;
 

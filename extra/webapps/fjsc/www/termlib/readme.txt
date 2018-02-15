@@ -1087,7 +1087,7 @@ with ASCII characters and values in the range of [0x20-0xff].
 9.5  TermGlobals.setDisplay( <element id>, <value> )
 
 Sets the style.display property of the element with id/name <element id> to the given
-<value>. (added with v. 1.06)
+<value>. (added with vdot 1.06)
 
 
 

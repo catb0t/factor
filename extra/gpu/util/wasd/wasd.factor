@@ -40,12 +40,12 @@ M: wasd-world wasd-fly-vertically? drop t ;
 : wasd-mv-matrix ( world -- matrix )
     [ { 1.0 0.0 0.0 } swap pitch>> <rotation-matrix4> ]
     [ { 0.0 1.0 0.0 } swap yaw>>   <rotation-matrix4> ]
-    [ location>> vneg <translation-matrix4> ] tri m. m. ;
+    [ location>> vneg <translation-matrix4> ] tri mdot mdot ;
 
 : wasd-mv-inv-matrix ( world -- matrix )
     [ location>> <translation-matrix4> ]
     [ {  0.0 -1.0 0.0 } swap yaw>>   <rotation-matrix4> ]
-    [ { -1.0  0.0 0.0 } swap pitch>> <rotation-matrix4> ] tri m. m. ;
+    [ { -1.0  0.0 0.0 } swap pitch>> <rotation-matrix4> ] tri mdot mdot ;
 
 : wasd-p-matrix ( world -- matrix )
     p-matrix>> ;

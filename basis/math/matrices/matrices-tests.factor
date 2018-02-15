@@ -331,13 +331,13 @@ IN: math.matrices.tests
 { { 3 4 } } [ { { 1 0 } { 0 1 } } { 3 4 } m.v ] unit-test
 { { 4 3 } } [ { { 0 1 } { 1 0 } } { 3 4 } m.v ] unit-test
 
-{ { { 6 } } } [ { { 3 } } { { 2 } } m. ] unit-test
-{ { { 11 } } } [ { { 1 3 } } { { 5 } { 2 } } m. ] unit-test
+{ { { 6 } } } [ { { 3 } } { { 2 } } mdot ] unit-test
+{ { { 11 } } } [ { { 1 3 } } { { 5 } { 2 } } mdot ] unit-test
 
 { { { 28 } } } [
     { { 2 4 6 } }
     { { 1 } { 2 } { 3 } }
-    m.
+    mdot
 ] unit-test
 
 { {

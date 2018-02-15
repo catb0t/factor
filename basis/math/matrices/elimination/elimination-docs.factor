@@ -9,7 +9,7 @@ HELP: inverse
   "A matrix multiplied by its inverse is the identity matrix."
   { $example
     "USING: kernel math.matrices math.matrices.elimination prettyprint ;"
-    "{ { 3 4 } { 7 9 } } dup inverse m. 2 <identity-matrix> = ."
+    "{ { 3 4 } { 7 9 } } dup inverse mdot 2 <identity-matrix> = ."
     "t"
   }
 } ;

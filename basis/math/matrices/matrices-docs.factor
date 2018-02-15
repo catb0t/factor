@@ -1,5 +1,5 @@
 ! Copyright (C) 2005, 2010, 2018 Slava Pestov, Joe Groff, Cat Stevens.
-USING: accessors arrays formatting locals help.markup help.syntax io
+USING: accessors arrays assocs formatting locals help.markup help.syntax io
 kernel math math.functions math.order opengl.gl prettyprint
 sequences sequences.generalizations urls ;
 IN: math.matrices
@@ -29,7 +29,7 @@ IN: math.matrices
 
 ! a note for when a word assumes a 2d matrix
 : $2d-only-note ( children -- )
-    drop { "This word is intended for use with flat (2-dimensional) matrices. "
+    drop { "This word is intended for use with \"flat\" (2-dimensional) matrices. "
       ! "Using it with matrices of 3 or more dimensions may lead to unexpected results."
     }
     print-element ;
@@ -269,7 +269,7 @@ HELP: non-square-determinant
 HELP: undefined-inverse
 { $values { "m" integer } { "n" integer } { "r" "rank" } }
 { $description "Throws an " { $link undefined-inverse } " error." }
-{ $error-description { $link multiplicative-inverse } " was used with a non-square matrix of rank " { $snippet "rank" } " whose dimensions are " { $snippet "m x n" } ". It is not generally possible to find the determinant of a rank-deficient non-square matrix." } ;
+{ $error-description { $link multiplicative-inverse } " was used with a non-square matrix of rank " { $snippet "rank" } " whose dimensions are " { $snippet "m x n" } ". It is not generally possible to find the invere of a rank-deficient non-square matrix." } ;
 
 ! BUILDERS
 HELP: <matrix>
@@ -746,9 +746,48 @@ HELP: cartesian-matrix-map ;
 HELP: cartesian-column-map ;
 HELP: cartesian-row-map ;
 
-HELP: matrix-nth ;
-HELP: matrix-set-nth ;
-HELP: matrix-set-nths ;
+HELP: matrix-nth
+{ $values { "pair" pair } { "matrix" matrix } }
+{ $description "Find the element in the matrix at the 2D index given by " { $snippet "pair" } ". Like all matrix operations, the pair is considered zero-indexed, and in the order " { $snippet "row, column" } "." }
+{ $notelist { $equiv-word-note "two-dimensional" nth } $2d-only-note }
+{ $errors { $list
+    { { $link bounds-error } " if the first element in " { $snippet "pair" } " is greater than the maximum row index in " { $snippet "matrix" } }
+    { { $link bounds-error } " if the second element in " { $snippet "pair" } " is greater than the maximum column index in " { $snippet "matrix" } }
+} }
+{ $examples
+    "Get the entry at row 1, column 0."
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ 1 0 } { { 0 1 } { 2 3 } } matrix-nth ."
+        "2"
+    }
+} ;
+
+HELP: matrix-set-nth
+{ $values { "obj" object } { "pair" pair } { "matrix" matrix } }
+{ $description "Set the element at the 2D index given by " { $snippet "pair" } " to " { $snippet "obj" } ". This operation is destructive." }
+{ $side-effects "matrix" }
+{ $notelist { $equiv-word-note "two-dimensional" set-nth } $2d-only-note  }
+{ $examples
+    { $example
+        "USING: math.matrices kernel prettyprint ;"
+        "{ { 0 1 } { 2 3 } } \"a\" { 1 0 } pick matrix-set-nth ."
+        "{ { 0 1 } { \"a\" 3 } }"
+    }
+} ;
+
+HELP: matrix-set-nths
+{ $values { "obj" object } { "pairs" assoc } { "matrix" matrix } }
+{ $description "Applies " { $link matrix-set-nth } " over the sequence of index pairs, setting each given index to " { $snippet "obj" } "." }
+{ $notelist { $equiv-word-note "multiplexing" matrix-set-nth } $2d-only-note }
+{ $side-effects "matrix" }
+{ $examples
+    { $example
+        "USING: math.matrices kernel prettyprint ;"
+        "{ { 0 1 } { 2 3 } } \"a\" { { 1 0 } { 1 1 } } pick matrix-set-nths ."
+        "{ { 0 1 } { \"a\" \"a\" } }"
+    }
+} ;
 
 HELP: additive-inverse
 { $values { "m" matrix } { "m'" matrix } }
@@ -1036,7 +1075,7 @@ HELP: m~
 
 HELP: mmin
 { $values { "m" matrix } { "n" object } }
-{ $description "Calculate the maximum value of the matrix." }
+{ $description "Determine the minimum value of the matrix." }
 { $notelist
     $2d-only-note
     { $matrix-scalar-note min }
@@ -1201,13 +1240,14 @@ HELP: m*1/det
     { $matrix-scalar-note max * - recip }
 } ;
 
-HELP: >minors ;
+HELP: >minors
+{ $values { "matrix" matrix } } ;
 HELP: >cofactors ;
 HELP: multiplicative-inverse ;
 
 HELP: dim
 { $values { "matrix" matrix } { "pair/f" { $maybe pair } } }
-{ $description "Find the dimensions of the input matrix, in the order of " { $snippet "{ rows cols }"} "." } ;
+{ $description "Find the dimensions of the input matrix, in the order of " { $snippet "rows, columns "} "." } ;
 
 HELP: dimension-range ;
 

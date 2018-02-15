@@ -309,7 +309,7 @@ ALIAS: cartesian-row-map cartesian-matrix-map
 : matrix-set-nth ( obj pair matrix -- )
     [ first2 swap ] dip nth set-nth ; inline
 
-: matrix-set-nths ( obj sequence matrix -- )
+: matrix-set-nths ( obj pairs matrix -- )
     '[ _ matrix-set-nth ] with each ; inline
 
 ! -------------------------------------------
@@ -437,7 +437,7 @@ M: sequence rows-except
 GENERIC: cols-except ( matrix desc -- others )
 M: integer cols-except
     [ (cols-iota) ] dip
-    '[ _ = ] { } reject-as swap cols transpose ; ! need to un-transpose
+    '[ _ = ] { } reject-as swap cols transpose ; ! need to un-transpose the result of cols
 
 M: sequence cols-except
     [ (cols-iota) ] dip
@@ -454,7 +454,7 @@ M: sequence cols-except
 ! implementation details of determinant and inverse
 <PRIVATE
 : alternating-sign ( seq odd-elts? -- seq' )
-    '[ 2 mod zero? _ = [ neg ] unless ] map-index ;
+    '[ even? _ = [ neg ] unless ] map-index ;
 
 ! the determinant of a 1x1 matrix is the value itself
 ! this works for any-dimensional matrices too
@@ -531,7 +531,7 @@ ALIAS: additive-inverse mneg
 
 ! alternately invert values of the matrix (see alternating-sign)
 : >cofactors ( matrix -- matrix' )
-    [ 2 mod zero? alternating-sign ] map-index ;
+    [ even? alternating-sign ] map-index ;
 
 ! multiply a matrix by the inverse of its determinant
 : m*1/det ( matrix -- matrix' )

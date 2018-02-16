@@ -133,7 +133,7 @@ $nl
 "Transformations and elements of matrices:"
 { $subsections
     dim dimension-range transpose
-    matrix-nth matrix-set-nth matrix-set-nths
+    matrix-nth matrix-nths matrix-set-nth matrix-set-nths
 
 } { $subsections
     row rows rows-except
@@ -718,7 +718,7 @@ HELP: rows
 
 HELP: col
 { $values { "n" integer } { "matrix" matrix } { "col" sequence } }
-{ $description "Get the nth column of the matrix." }
+{ $description "Get the " { $snippet "n" } "th column of the matrix." }
 { $notes "Like most Factor sequences, indexing is 0-based. The first column is given by " { $snippet "m 0 col" } "." }
 { $examples
     { $example
@@ -739,16 +739,31 @@ HELP: cols
     }
 } ;
 
-HELP: matrix-map ;
-HELP: column-map ;
+HELP: matrix-map
+{ $values { "quot" { $quotation ( ... elt -- ... elt' ) } } { "matrix" matrix } { "matrix'" matrix } }
+{ $description "Apply the quotation to every element of the matrix." }
+{ $notelist $2d-only-note }
+{ $examples
+    { $example
+        "USING: math.matrices kernel math prettyprint ;"
+        "3 <identity-matrix> [ zero? 15 -8 ? ] matrix-map ."
+        "{ { -8 15 15 } { 15 -8 15 } { 15 15 -8 } }"
+    }
+} ;
+
+HELP: column-map
+{ $values { "quot" { $quotation ( ... elt -- ... elt' ) } } { "matrix" matrix } { "matrix'" matrix } }
+{ $description "Apply the quotation to every column of the matrix." }
+{ $notelist $2d-only-note { $equiv-word-note "transpose" row-map } } ;
+
 HELP: row-map ;
 HELP: cartesian-matrix-map ;
 HELP: cartesian-column-map ;
 HELP: cartesian-row-map ;
 
 HELP: matrix-nth
-{ $values { "pair" pair } { "matrix" matrix } }
-{ $description "Find the element in the matrix at the 2D index given by " { $snippet "pair" } ". Like all matrix operations, the pair is considered zero-indexed, and in the order " { $snippet "row, column" } "." }
+{ $values { "pair" pair } { "matrix" matrix } { "elt" object } }
+{ $description "Retrieve the element in the matrix at the zero-indexed " { $snippet "row, column" } " pair." }
 { $notelist { $equiv-word-note "two-dimensional" nth } $2d-only-note }
 { $errors { $list
     { { $link bounds-error } " if the first element in " { $snippet "pair" } " is greater than the maximum row index in " { $snippet "matrix" } }
@@ -763,12 +778,34 @@ HELP: matrix-nth
     }
 } ;
 
+HELP: matrix-nths
+{ $values { "pairs" assoc } { "matrix" matrix } { "elts" sequence } }
+{ $description "Retrieve all the elements in the matrix at each of the zero-indexed " { $snippet "row, column" } " pairs in " { $snippet "pairs" } "." }
+{ $notelist { $equiv-word-note "two-dimensional" nths } $2d-only-note }
+{ $errors { $list
+    { { $link bounds-error } " if the first element of a pair in " { $snippet "pairs" } " is greater than the maximum row index in " { $snippet "matrix" } }
+    { { $link bounds-error } " if the second element of a pair in " { $snippet "pairs" } " is greater than the maximum column index in " { $snippet "matrix" } }
+} }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ { 1 0 } { 1 1 } } { { 0 1 } { 2 3 } } matrix-nths ."
+        "{ 2 3 }"
+    }
+} ;
+
 HELP: matrix-set-nth
 { $values { "obj" object } { "pair" pair } { "matrix" matrix } }
-{ $description "Set the element at the 2D index given by " { $snippet "pair" } " to " { $snippet "obj" } ". This operation is destructive." }
+{ $description "Set the element in the matrix at the 2D index given by " { $snippet "pair" } " to " { $snippet "obj" } ". This operation is destructive." }
 { $side-effects "matrix" }
 { $notelist { $equiv-word-note "two-dimensional" set-nth } $2d-only-note  }
+{ $errors { $list
+    { { $link bounds-error } " if the first element of a pair in " { $snippet "pairs" } " is greater than the maximum row index in " { $snippet "matrix" } }
+    { { $link bounds-error } " if the second element of a pair in " { $snippet "pairs" } " is greater than the maximum column index in " { $snippet "matrix" } }
+    "Throws an error if the sequence cannot hold elements of the given type."
+} }
 { $examples
+    "Change the entry at row 1, column 0."
     { $example
         "USING: math.matrices kernel prettyprint ;"
         "{ { 0 1 } { 2 3 } } \"a\" { 1 0 } pick matrix-set-nth ."
@@ -778,10 +815,16 @@ HELP: matrix-set-nth
 
 HELP: matrix-set-nths
 { $values { "obj" object } { "pairs" assoc } { "matrix" matrix } }
-{ $description "Applies " { $link matrix-set-nth } " over the sequence of index pairs, setting each given index to " { $snippet "obj" } "." }
-{ $notelist { $equiv-word-note "multiplexing" matrix-set-nth } $2d-only-note }
+{ $description "Applies " { $link matrix-set-nth } " to " { $snippet "matrix" } " for each " { $snippet "row, column" } " pair in " { $snippet "pairs" } ", setting the elements to " { $snippet "obj" } "." }
 { $side-effects "matrix" }
+{ $notelist { $equiv-word-note "multiplexing" matrix-set-nth } $2d-only-note }
+{ $errors { $list
+    { { $link bounds-error } " if the first element of a pair in " { $snippet "pairs" } " is greater than the maximum row index in " { $snippet "matrix" } }
+    { { $link bounds-error } " if the second element of a pair in " { $snippet "pairs" } " is greater than the maximum column index in " { $snippet "matrix" } }
+    "Throws an error if the sequence cannot hold elements of the given type."
+} }
 { $examples
+    "Change both entries on row 0."
     { $example
         "USING: math.matrices kernel prettyprint ;"
         "{ { 0 1 } { 2 3 } } \"a\" { { 1 0 } { 1 1 } } pick matrix-set-nths ."

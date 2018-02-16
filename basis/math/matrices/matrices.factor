@@ -154,7 +154,6 @@ M: matrix <square-cols>
 M: sequence <square-cols>
     <square-rows> flip ;
 
-
 ! -------------------------------------------------------------
 ! end of the simple creators; here are the complex builders
 DEFER: dimension-range
@@ -285,26 +284,30 @@ PRIVATE>
 : cols ( seq matrix -- cols )
     '[ _ col ] map ; inline
 
-: matrix-map ( matrix quot -- )
+: matrix-map ( matrix quot: ( ... elt -- ... elt' ) -- matrix' )
     '[ _ map ] map ; inline
 
-: column-map ( matrix quot -- seq )
-    [ [ first length <iota> ] keep ] dip '[ _ col @ ] map ; inline
+: column-map ( matrix quot: ( ... elt -- ... elt' ) -- matrix' )
+    [ transpose ] dip map transpose ; inline
+    ! [ [ first length <iota> ] keep ] dip '[ _ col @ ] map ; inline
 
 ! row-map would make sense compared to column-map
-ALIAS: row-map matrix-map
+ALIAS: row-map map
 
-: cartesian-matrix-map ( matrix quot -- matrix' )
+: cartesian-matrix-map ( matrix quot: ( ... pair elt -- ... elt' ) -- )
     [ [ first length <cartesian-square-indices> ] keep ] dip
     '[ _ @ ] matrix-map ; inline
 
-: cartesian-column-map ( matrix quot -- matrix' )
+: cartesian-column-map ( matrix quot: ( ... pair elt -- ... elt' ) -- )
     [ cols first2 ] prepose cartesian-matrix-map ; inline
 
 ALIAS: cartesian-row-map cartesian-matrix-map
 
 : matrix-nth ( pair matrix -- elt )
-    [ first2 swap ] dip nth nth ;
+    [ first2 swap ] dip nth nth ; inline
+
+: matrix-nths ( pairs matrix -- elts )
+    '[ _ matrix-nth ] map ; inline
 
 : matrix-set-nth ( obj pair matrix -- )
     [ first2 swap ] dip nth set-nth ; inline

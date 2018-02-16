@@ -287,18 +287,18 @@ PRIVATE>
 : matrix-map ( matrix quot: ( ... elt -- ... elt' ) -- matrix' )
     '[ _ map ] map ; inline
 
-: column-map ( matrix quot: ( ... elt -- ... elt' ) -- matrix' )
+: column-map ( matrix quot: ( ... col -- ... col' ) -- matrix' )
     [ transpose ] dip map transpose ; inline
     ! [ [ first length <iota> ] keep ] dip '[ _ col @ ] map ; inline
 
 ! row-map would make sense compared to column-map
 ALIAS: row-map map
 
-: cartesian-matrix-map ( matrix quot: ( ... pair elt -- ... elt' ) -- )
+: cartesian-matrix-map ( matrix quot: ( ... pair elt -- ... elt' ) -- matrix' )
     [ [ first length <cartesian-square-indices> ] keep ] dip
     '[ _ @ ] matrix-map ; inline
 
-: cartesian-column-map ( matrix quot: ( ... pair elt -- ... elt' ) -- )
+: cartesian-column-map ( matrix quot: ( ... pair elt -- ... elt' ) -- matrix' )
     [ cols first2 ] prepose cartesian-matrix-map ; inline
 
 ALIAS: cartesian-row-map cartesian-matrix-map
@@ -319,19 +319,19 @@ ALIAS: cartesian-row-map cartesian-matrix-map
 ! simple math of matrices follows
 : mneg ( m -- m ) [ vneg ] map ;
 
-: n+m  ( n m -- m ) [ n+v ] with map ;
-: m+n  ( m n -- m ) [ v+n ] curry map ;
-: n-m  ( n m -- m ) [ n-v ] with map ;
-: m-n  ( m n -- m ) [ v-n ] curry map ;
+: n+m ( n m -- m ) [ n+v ] with map ;
+: m+n ( m n -- m ) [ v+n ] curry map ;
+: n-m ( n m -- m ) [ n-v ] with map ;
+: m-n ( m n -- m ) [ v-n ] curry map ;
 : n*m ( n m -- m ) [ n*v ] with map ;
 : m*n ( m n -- m ) [ v*n ] curry map ;
 : n/m ( n m -- m ) [ n/v ] with map ;
 : m/n ( m n -- m ) [ v/n ] curry map ;
 
-: m+   ( m1 m2 -- m ) [ v+ ] 2map ;
-: m-   ( m1 m2 -- m ) [ v- ] 2map ;
-: m*   ( m1 m2 -- m ) [ v* ] 2map ;
-: m/   ( m1 m2 -- m ) [ v/ ] 2map ;
+: m+  ( m1 m2 -- m ) [ v+ ] 2map ;
+: m-  ( m1 m2 -- m ) [ v- ] 2map ;
+: m*  ( m1 m2 -- m ) [ v* ] 2map ;
+: m/  ( m1 m2 -- m ) [ v/ ] 2map ;
 
 : vdotm ( v m -- p ) flip [ vdot ] with map ;
 : mdotv ( m v -- p ) [ vdot ] curry map ;
@@ -369,10 +369,10 @@ ALIAS: cartesian-row-map cartesian-matrix-map
     [ [ dupd mdot ] when [ dup mdot ] dip ] reduce nip ;
 PRIVATE>
 
-: gram-schmidt ( seq -- orthogonal )
-    V{ } clone [ over (gram-schmidt) suffix! ] reduce ;
+: gram-schmidt ( matrix -- orthogonal )
+    [ V{ } clone [ over (gram-schmidt) suffix! ] reduce ] keep like ;
 
-: gram-schmidt-normalize ( seq -- orthonormal )
+: gram-schmidt-normalize ( matrix -- orthonormal )
     gram-schmidt [ normalize ] map ; inline
 
 DEFER: multiplicative-inverse

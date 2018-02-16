@@ -1,6 +1,6 @@
 ! Copyright (C) 2005, 2010, 2018 Slava Pestov, Joe Groff, Cat Stevens.
 USING: accessors arrays assocs formatting locals help.markup help.syntax io
-kernel math math.functions math.order opengl.gl prettyprint
+kernel math math.functions math.order math.ratios math.vectors opengl.gl prettyprint
 sequences sequences.generalizations urls ;
 IN: math.matrices
 
@@ -53,7 +53,7 @@ ARTICLE: "math.matrices" "Matrix operations"
 $nl
 "In this vocabulary's documentation, " { $snippet "m" } " and " { $snippet "matrix" } " are the conventional names used for a given matrix object. " { $snippet "m" } " may refer to a number."
 $nl
-"Matrices are classified their mathematical properties, and by predicate words."
+"Matrices are classified their mathematical properties, and by predicate words:"
 $nl
 ! split up intentionally
 { $subsections
@@ -143,8 +143,8 @@ $nl
     matrix-except matrix-except-all
 
 } { $subsections
-    matrix-map column-map row-map
-    stitch
+    matrix-map column-map row-map stitch
+
 } { $subsections
     cartesian-matrix-map
     cartesian-column-map
@@ -269,7 +269,7 @@ HELP: non-square-determinant
 HELP: undefined-inverse
 { $values { "m" integer } { "n" integer } { "r" "rank" } }
 { $description "Throws an " { $link undefined-inverse } " error." }
-{ $error-description { $link multiplicative-inverse } " was used with a non-square matrix of rank " { $snippet "rank" } " whose dimensions are " { $snippet "m x n" } ". It is not generally possible to find the invere of a rank-deficient non-square matrix." } ;
+{ $error-description { $link multiplicative-inverse } " was used with a non-square matrix of rank " { $snippet "rank" } " whose dimensions are " { $snippet "m x n" } ". It is not generally possible to find the inverse of a rank-deficient non-square matrix." } ;
 
 ! BUILDERS
 HELP: <matrix>
@@ -708,6 +708,7 @@ HELP: row
 HELP: rows
 { $values { "seq" sequence } { "matrix" matrix } { "rows" sequence } }
 { $description "Get the rows from " { $snippet "matrix" } " listed by " { $snippet "seq" } "." }
+{ $notelist { $equiv-word-note "multiplexing" row } }
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
@@ -752,14 +753,38 @@ HELP: matrix-map
 } ;
 
 HELP: column-map
-{ $values { "quot" { $quotation ( ... elt -- ... elt' ) } } { "matrix" matrix } { "matrix'" matrix } }
-{ $description "Apply the quotation to every column of the matrix." }
-{ $notelist $2d-only-note { $equiv-word-note "transpose" row-map } } ;
+{ $values { "quot" { $quotation ( ... col -- ... col' ) } } { "matrix" matrix } { "matrix'" { $maybe sequence matrix } } }
+{ $description "Apply the quotation to every column of the matrix. The output of the quotation must be a sequence." }
+{ $notelist $2d-only-note { $equiv-word-note "transpose" row-map } }
+{ $examples
+    { $example
+        "USING: sequences math.matrices prettyprint ;"
+        "3 <identity-matrix> [ reverse ] column-map ."
+        "{ { 0 0 1 } { 0 1 0 } { 1 0 0 } }"
+    }
+} ;
 
-HELP: row-map ;
-HELP: cartesian-matrix-map ;
-HELP: cartesian-column-map ;
-HELP: cartesian-row-map ;
+HELP: row-map
+{ $values { "quot" { $quotation ( ... col -- ... col' ) } } { "matrix" matrix } { "matrix'" { $maybe sequence matrix } } }
+{ $description "Apply the quotation to every row of the matrix. The output of the quotation must be a sequence." }
+{ $notelist $2d-only-note { $equiv-word-note "transpose" column-map } { $equiv-word-note "aliased" map } }
+{ $examples
+    { $example
+        "USING: sequences math.matrices prettyprint ;"
+        "3 <identity-matrix> [ reverse ] row-map ."
+        "{ { 0 0 1 } { 0 1 0 } { 1 0 0 } }"
+    }
+} ;
+
+HELP: cartesian-matrix-map
+{ $values { "matrix" matrix } { "quot" { $quotation ( ... pair elt -- ... elt' ) } } { "matrix'" matrix } }
+{ $notelist { $equiv-word-note "orthogonal" cartesian-column-map } { $equiv-word-note "two-dimensional" map-index } $2d-only-note }
+;
+
+HELP: cartesian-column-map
+{ $values { "matrix" matrix } { "quot" { $quotation ( ... pair elt -- ... elt' ) } } { "matrix'" matrix } }
+{ $notelist { $equiv-word-note "orthogonal" cartesian-matrix-map } $2d-only-note }
+;
 
 HELP: matrix-nth
 { $values { "pair" pair } { "matrix" matrix } { "elt" object } }
@@ -1161,8 +1186,31 @@ HELP: mnorm
     }
 } ;
 
-HELP: gram-schmidt ;
-HELP: gram-schmidt-normalize ;
+HELP: gram-schmidt
+{ $values { "matrix" matrix } { "orthogonal" matrix } }
+{ $description "Apply a Gram-Schmidt transform on the matrix." }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ { 1 2 } { 3 4 } { 5 6 } } gram-schmidt ."
+        "{ { 1 2 } { 4/5 -2/5 } { 0 0 } }"
+    }
+} ;
+
+HELP: gram-schmidt-normalize
+{ $values { "matrix" matrix } { "orthogonal" matrix } }
+{ $description "Apply a Gram-Schmidt transform on the matrix, and " { $link normalize } " each row of the result." }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ { 1 2 } { 3 4 } { 5 6 } } gram-schmidt-normalize ."
+"{
+    { 0.4472135954999579 0.8944271909999159 }
+    { 0.894427190999916 -0.447213595499958 }
+    { NAN: 8000000000000 NAN: 8000000000000 }
+}"
+    }
+} ;
 
 HELP: m^n
 { $values { "n" object } { "m" matrix } }
@@ -1170,21 +1218,40 @@ HELP: m^n
 { $errors
     { $link negative-power-matrix } " if " { $snippet "n" } " is a negative number other than " { $snippet "-1" } "."
     $nl
-    { $link undefined-inverse } " if the " { $link multiplicative-inverse } " of " { $snippet "m" } " is undefined."
+    { $link undefined-inverse } " if " { $snippet "n" } " is " { $snippet "-1" } " and the " { $link multiplicative-inverse } " of " { $snippet "m" } " is undefined."
 }
 { $notelist
     { $equiv-word-note "swapped" n^m }
     $2d-only-note
     { $matrix-scalar-note max abs / }
+}
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ { 1 2 } { 3 4 } } 2 m^n ."
+        "{ { 7 10 } { 15 22 } }"
+    }
 } ;
 
 HELP: n^m
 { $values { "n" object } { "m" matrix } }
 { $description "Because it is nonsensical to raise a number to the power of a matrix, this word exists to save typing " { $snippet "swap m^n" } ". See " { $link m^n } " for more information." }
+{ $errors
+    { $link negative-power-matrix } " if " { $snippet "n" } " is a negative number other than " { $snippet "-1" } "."
+    $nl
+    { $link undefined-inverse } " if " { $snippet "n" } " is " { $snippet "-1" } " and the " { $link multiplicative-inverse } " of " { $snippet "m" } " is undefined."
+}
 { $notelist
-    { $equiv-word-note "swapped" n^m }
+    { $equiv-word-note "swapped" m^n }
     $2d-only-note
     { $matrix-scalar-note max abs / }
+}
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "2 { { 1 2 } { 3 4 } } n^m ."
+        "{ { 7 10 } { 15 22 } }"
+    }
 } ;
 
 HELP: kronecker-product
@@ -1264,7 +1331,18 @@ HELP: determinant
     $2d-only-note
     { $matrix-scalar-note max - * }
 }
-{ $examples } ;
+{ $errors { $link non-square-determinant } " if the input matrix is not a " { $link square-matrix } "." }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+"{
+    {  3  0 -1 }
+    { -3  1  3 }
+    {  2 -5  4 }
+} determinant ."
+        "44"
+    }
+} ;
 
 HELP: 1/det
 { $values { "matrix" square-matrix } { "1/det" number } }
@@ -1272,7 +1350,12 @@ HELP: 1/det
 { $notelist
     $2d-only-note
     { $matrix-scalar-note max recip }
-} ;
+}
+{ $errors
+    { $link non-square-determinant } " if the input matrix is not a " { $link square-matrix } "."
+    $nl
+    { $link division-by-zero } " if the " { $link determinant } " of the input matrix is " { $snippet "0" } "."
+ } ;
 
 HELP: m*1/det
 { $values { "matrix" square-matrix } { "matrix'" square-matrix } }

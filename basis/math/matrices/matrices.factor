@@ -4,7 +4,7 @@ USING: accessors arrays classes.singleton columns combinators
 combinators.short-circuit combinators.smart formatting fry
 grouping kernel locals math math.bits math.functions math.order
 math.ranges math.statistics math.vectors math.vectors.private
-sequences sequences.deep sequences.private summary ;
+random sequences sequences.deep sequences.private summary ;
 IN: math.matrices
 
 ! defined here because of issue #1943
@@ -78,6 +78,10 @@ M: undefined-inverse summary
 
 : set-nth-end ( elt n seq -- )
     [ (nth-from-end) ] keep set-nth ; inline
+
+DEFER: alternating-sign
+: finish-randomizing-matrix ( matrix -- matrix' )
+    [ f alternating-sign randomize ] map randomize ; inline
 PRIVATE>
 
 ! Benign matrix constructors
@@ -89,6 +93,20 @@ PRIVATE>
 
 : <matrix-by-indices> ( ... m n quot: ( ... m' n' -- ... elt ) -- ... matrix )
     [ [ <iota> ] bi@ ] dip cartesian-map ; inline
+
+: <random-integer-matrix> ( m n max -- matrix )
+    '[ _ _ random-integers ] replicate
+    finish-randomizing-matrix ; inline
+
+: <square-random-integer-matrix> ( n max -- matrix )
+    dupd <random-integer-matrix> ; inline
+
+: <random-unit-matrix> ( m n max -- matrix )
+    '[ _ random-units [ _ random * ] map ] replicate
+    finish-randomizing-matrix ; inline
+
+: <square-random-unit-matrix> ( n max -- matrix )
+    dupd <random-unit-matrix> ; inline
 
 : <zero-matrix> ( m n -- matrix )
     0 <matrix> ; inline
@@ -318,6 +336,7 @@ ALIAS: cartesian-row-map cartesian-matrix-map
 ! -------------------------------------------
 ! simple math of matrices follows
 : mneg ( m -- m ) [ vneg ] map ;
+: mabs ( m -- m ) [ vabs ] map ;
 
 : n+m ( n m -- m ) [ n+v ] with map ;
 : m+n ( m n -- m ) [ v+n ] curry map ;
@@ -431,20 +450,20 @@ ALIAS: transpose flip
 GENERIC: rows-except ( matrix desc -- others )
 M: integer rows-except
     [ (rows-iota) ] dip
-    '[ _ = ] { } reject-as swap rows ;
+    '[ _ = ] pick reject-as swap rows ;
 
 M: sequence rows-except
     [ (rows-iota) ] dip
-    '[ _ member? ] reject swap rows ;
+    '[ _ member? ] pick reject-as swap rows ;
 
 GENERIC: cols-except ( matrix desc -- others )
 M: integer cols-except
     [ (cols-iota) ] dip
-    '[ _ = ] { } reject-as swap cols transpose ; ! need to un-transpose the result of cols
+    '[ _ = ] pick reject-as swap cols transpose ; ! need to un-transpose the result of cols
 
 M: sequence cols-except
     [ (cols-iota) ] dip
-    '[ _ member? ] reject swap cols transpose ;
+    '[ _ member? ] pick reject-as swap cols transpose ;
 
 ! well-defined for any well-formed-matrix
 : matrix-except ( matrix exclude-pair -- submatrix )

@@ -568,6 +568,15 @@ SYMBOLS: A B C D E F G H I J K L M N O P ;
 { { { 1 } } } [ { { 1 } { 2 } } 1 rows-except ] unit-test
 { { } } [ { { 1 } }       0 rows-except ] unit-test
 { { { 1 } } } [ { { 1 } } 1 rows-except ] unit-test
+{ {
+    { 2 7 12 2 } ! 0
+    { 1 3 3 5 }  ! 2
+} } [ {
+    { 2 7 12 2 }
+    { 8 9 10 0 }
+    { 1 3 3 5 }
+    { 8 13 7 12 }
+} { 1 3 } rows-except ] unit-test
 
 { { {
     { B C D }
@@ -605,6 +614,17 @@ SYMBOLS: A B C D E F G H I J K L M N O P ;
 { { { 1 } } } [ { { 1 } } 1 cols-except ] unit-test
 { { { 2 } { 4 } } } [ { { 1 2 } { 3 4 } } 0 cols-except ] unit-test
 { { { 1 } { 3 } } } [ { { 1 2 } { 3 4 } } 1 cols-except ] unit-test
+{ {
+    { 2 12 }
+    { 8 10 }
+    { 1 3 }
+    { 8 7 }
+} } [ {
+    { 2 7 12 2 }
+    { 8 9 10 0 }
+    { 1 3 3 5 }
+    { 8 13 7 12 }
+} { 1 3 } cols-except ] unit-test
 
 { { {
     { F G H }

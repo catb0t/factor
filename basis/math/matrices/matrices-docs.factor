@@ -1316,7 +1316,16 @@ HELP: anti-transpose
 } ;
 
 HELP: rows-except
-{ $values { "matrix" matrix } { "desc" { $or integer sequence } } { "others" matrix } } ;
+{ $values { "matrix" matrix } { "desc" { $or integer sequence } } { "others" matrix } }
+{ $contract "Get all the rows from " { $snippet "matrix" } " " { $emphasis "not" } " described by " { $snippet "desc" } "." }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ { 2 7 12 2 } { 8 9 10 0 } { 1 3 3 5 } { 8 13 7 12 } } { 1 3 } rows-except ."
+        "{ { 2 7 12 2 } { 1 3 3 5 } }"
+    }
+} ;
+
 HELP: cols-except
 { $values { "matrix" matrix } { "desc" { $or integer sequence } } { "others" matrix } } ;
 HELP: matrix-except
@@ -1342,6 +1351,19 @@ HELP: determinant
 } determinant ."
         "44"
     }
+    { $example
+        "USING: math.matrices prettyprint ;"
+"{
+    { -8 -8 13 11 10 -5 -14 }
+    { 3 -11 -8 3 -7 -3 4 }
+    { 10 4 -5 3 0 -6 -12 }
+    { -14 0 -3 -8 10 0 10 }
+    { 3 -6 1 -10 -9 10 0 }
+    { 5 -12 -14 6 5 -1 -7 }
+    { -9 -14 -8 5 2 2 -2 }
+} determinant ."
+        "-103488155"
+    }
 } ;
 
 HELP: 1/det
@@ -1355,7 +1377,19 @@ HELP: 1/det
     { $link non-square-determinant } " if the input matrix is not a " { $link square-matrix } "."
     $nl
     { $link division-by-zero } " if the " { $link determinant } " of the input matrix is " { $snippet "0" } "."
- } ;
+}
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+"{
+    { 0 10 -12 4 }
+    { -9 6 -11 9 }
+    { -5 -10 0 2 }
+    { -7 -11 10 11 }
+} 1/det ."
+        "-1/9086"
+    }
+} ;
 
 HELP: m*1/det
 { $values { "matrix" square-matrix } { "matrix'" square-matrix } }
@@ -1364,7 +1398,25 @@ HELP: m*1/det
     { "This word is used to implement " { $link multiplicative-inverse } "." }
     $2d-only-note
     { $matrix-scalar-note max * - recip }
-} ;
+}
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+"{
+    { -14 0 -13 7 }
+    { -4 11 7 -12 }
+    { -3 2 9 -14 }
+    { 3 -5 10 -2 }
+} m*1/det ."
+"{
+    { 7/6855 0 13/13710 -7/13710 }
+    { 2/6855 -11/13710 -7/13710 2/2285 }
+    { 1/4570 -1/6855 -3/4570 7/6855 }
+    { -1/4570 1/2742 -1/1371 1/6855 }
+}"
+    }
+}
+;
 
 HELP: >minors
 { $values { "matrix" matrix } } ;

@@ -420,6 +420,61 @@ HELP: <simple-eye>
     }
 } ;
 
+HELP: <coordinate-matrix>
+{ $values { "dim" pair } { "coordinates" matrix } }
+{ $description "Create a matrix in which each element is its own coordinate pair, also called a " { $link cartesian-product } "." }
+{ $notelist
+    { $equiv-word-note "non-square" <cartesian-square-indices> }
+    { $finite-input-note "two" "dim" }
+}
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ 2 4 } <coordinate-matrix> ."
+"{
+    { { 0 0 } { 0 1 } { 0 2 } { 0 3 } }
+    { { 1 0 } { 1 1 } { 1 2 } { 1 3 } }
+}"
+    }
+} ;
+
+HELP: <cartesian-indices>
+{ $values { "dim" pair } { "coordinates" matrix } }
+{ $description "An alias for " { $link <coordinate-matrix> } " which serves as the logical non-square companion to " { $link <cartesian-square-indices> } "." }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ 2 4 } <cartesian-indices> ."
+"{
+    { { 0 0 } { 0 1 } { 0 2 } { 0 3 } }
+    { { 1 0 } { 1 1 } { 1 2 } { 1 3 } }
+}"
+    }
+} ;
+
+HELP: <cartesian-square-indices>
+{ $values { "n" integer } { "matrix" square-matrix } }
+{ $description "Create a " { $link square-matrix } " full of " { $link cartesian-product } "s. See " { $url URL" https://en.wikipedia.org/wiki/Cartesian_product" "cartesian product" } "." }
+{ $notes
+    { $equiv-word-note "square" <cartesian-indices> }
+}
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "1 <cartesian-square-indices> ."
+        "{ { { 0 0 } } }"
+    }
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "3 <cartesian-square-indices> ."
+"{
+    { { 0 0 } { 0 1 } { 0 2 } }
+    { { 1 0 } { 1 1 } { 1 2 } }
+    { { 2 0 } { 2 1 } { 2 2 } }
+}"
+    }
+} ;
+
 HELP: <square-rows>
 { $values { "desc" { $or sequence integer matrix } } { "matrix" matrix } }
 { $contract "Generate a " { $link square-matrix } " from a descriptor." }
@@ -488,26 +543,6 @@ HELP: <upper-matrix>
     }
 } ;
 
-HELP: <cartesian-square-indices>
-{ $values { "n" integer } { "matrix" matrix } }
-{ $description "Create a square matrix full of cartesian products. See " { $url URL" https://en.wikipedia.org/wiki/Cartesian_product" "cartesian product" } "." }
-{ $examples
-    { $example
-        "USING: math.matrices prettyprint ;"
-        "1 <cartesian-square-indices> ."
-        "{ { { 0 0 } } }"
-    }
-    { $example
-        "USING: math.matrices prettyprint ;"
-        "3 <cartesian-square-indices> ."
-"{
-    { { 0 0 } { 0 1 } { 0 2 } }
-    { { 1 0 } { 1 1 } { 1 2 } }
-    { { 2 0 } { 2 1 } { 2 2 } }
-}"
-    }
-} ;
-
 HELP: <hankel-matrix>
 { $values { "n" integer } { "matrix" matrix } }
 { $description
@@ -567,7 +602,7 @@ HELP: <toeplitz-matrix>
 
 HELP: <box-matrix>
 { $values { "r" integer } { "matrix" matrix } }
-{ $description "Create a box matrix (a " { $link square-matrix } ") with the dimensions of " { $snippet "r x r" } ", filled with ones. The number of elements in the output scales linearly (" { $snippet "(r*2)+1" } ") with the magnitude of " { $snippet "r" } "." }
+{ $description "Create a box matrix (a " { $link square-matrix } ") with the dimensions of " { $snippet "r x r" } ", filled with ones. The number of elements in the output scales linearly (" { $snippet "(r*2)+1" } ") with " { $snippet "r" } "." }
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
@@ -864,16 +899,33 @@ HELP: additive-inverse
 
 HELP: mneg
 { $values { "m" matrix } { "m'" matrix } }
-{ $description "Negate (invert the sign) of all elements in the matrix." }
+{ $description "Negate (invert the sign) of every element in the matrix." }
 { $notelist
+    { $equiv-word-note "companion" mabs }
     $2d-only-note
     { $matrix-scalar-note neg }
 }
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
-        "{ { 5 9 } { 15 17 } } mneg ."
-        "{ { -5 -9 } { -15 -17 } }"
+        "{ { 5 9 } { 15 -17 } } mneg ."
+        "{ { -5 -9 } { -15 17 } }"
+    }
+} ;
+
+HELP: mabs
+{ $values { "m" matrix } { "m'" matrix } }
+{ $description "Compute the absolute value (" { $link abs } ") of each element in the matrix." }
+{ $notelist
+    { $equiv-word-note "companion" mneg }
+    $2d-only-note
+    { $matrix-scalar-note abs }
+}
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ { -5 -9 } { -15 17 } } mabs ."
+        "{ { 5 9 } { 15 17 } }"
     }
 } ;
 
@@ -1256,12 +1308,28 @@ HELP: n^m
 
 HELP: kronecker-product
 { $values { "m1" matrix } { "m2" matrix } { "m" matrix } }
-{ $description "Calculates the " { $url URL" http://enwp.org/Kronecker_product" "Kronecker product" } " of two matrices." }
+{ $description "Calculates the " { $url URL" http://enwp.org/Kronecker_product" "Kronecker product" } " of two matrices. This product can be described as a generalization of the vector-based " { $link outer-product } " to matrices. The Kronecker product gives the matrix of the tensor product with respect to a standard choice of basis." }
+{ $notelist
+    { $equiv-word-note "matrix" outer-product }
+    $2d-only-note
+    { $matrix-scalar-note * }
+}
 { $examples
-    { $example
+    { $unchecked-example
         "USING: math.matrices prettyprint ;"
-        "{ { 1 2 } { 3 4 } } { { 0 5 } { 6 7 } } kronecker-product ."
-        "{ { 0 5 0 10 } { 6 7 12 14 } { 0 15 0 20 } { 18 21 24 28 } }" }
+"{
+    { 1 2 }
+    { 3 4 }
+} {
+    { 0 5 }
+    { 6 7 }
+} kronecker-product ."
+"{
+    { 0 5 0 10 }
+    { 6 7 12 14 }
+    { 0 15 0 20 }
+    { 18 21 24 28 }
+}" }
 } ;
 
 HELP: outer-product
@@ -1277,13 +1345,78 @@ HELP: outer-product
 HELP: rank ;
 HELP: nullity ;
 
-HELP: main-diagonal ;
-HELP: anti-diagonal ;
+HELP: main-diagonal
+{ $values { "matrix" matrix } { "seq" sequence } }
+{ $description "Find the main diagonal of a matrix." $nl "This diagonal begins in the upper left of the matrix at index " { $snippet "{ 0 0 }" } ", continuing downward and rightward for all indices " { $snippet "{ n n }" } " in the " { $link square-matrix } " subset of the input (see " { $link <square-rows> } ")." }
+{ $notelist
+    { "If the number of rows in the square subset of the input is even, then this diagonal will not contain elements found in the " { $link anti-diagonal } ". However, if the size of the square subset is odd, then this diagonal will share at most one element with " { $link anti-diagonal } "." }
+    { "This diagonal is sometimes called the " { $emphasis "first diagonal" } "." }
+    { $equiv-word-note "opposite" anti-diagonal }
+}
+{ $examples
+    { "The operation is simple on a " { $link square-matrix } ":" }
+    { $example
+        "USING: math.matrices prettyprint ;"
+"{
+    { 7 2 11 }
+    { 9 7 7 }
+    { 1 8 0 }
+} main-diagonal ."
+        "{ 7 7 0 }"
+    }
+    "The square subset of the following input matrix consists of all rows but the last. The main diagonal does not include the last row because it has no fourth element."
+    { $example
+        "USING: math.matrices prettyprint ;"
+"{
+    { 6 5 0 }
+    { 7 2 6 }
+    { 4 3 9 }
+    { 3 3 3 }
+} main-diagonal ."
+        "{ 6 2 9 }"
+    }
+} ;
+
+HELP: anti-diagonal
+{ $values { "matrix" matrix } { "seq" sequence } }
+{ $description "Find the anti-diagonal of a matrix." $nl "This diagonal begins in the upper right of the matrix, continuing downward and leftward for all indices in the " { $link square-matrix } " subset of the input (see " { $link <square-rows> } ")." }
+{ $notelist
+    { "If the number of rows in the square subset of the input is even, then this diagonal will not contain elements found in the " { $link main-diagonal } ". However, if the size of the square subset is odd, then this diagonal will share at most one element with " { $link main-diagonal } "." }
+    { "This diagonal is sometimes called the " { $emphasis "second diagonal" } "." }
+    { $equiv-word-note "opposite" main-diagonal }
+}
+{ $examples
+    { "The operation is simple on a " { $link square-matrix } ":" }
+    { $example
+        "USING: math.matrices prettyprint ;"
+"{
+    { 7 2 11 }
+    { 9 7 7 }
+    { 1 8 0 }
+} anti-diagonal ."
+        "{ 11 7 1 }"
+    }
+    "The square subset of the following input matrix consists of all rows but the last. The anti-diagonal does not include the last row because it has no fourth element."
+    { $example
+        "USING: math.matrices prettyprint ;"
+"{
+    { 6 5 0 }
+    { 7 2 6 }
+    { 4 3 9 }
+    { 3 3 3 }
+} anti-diagonal ."
+        "{ 0 2 4 }"
+    }
+} ;
+
 
 HELP: transpose
 { $values { "matrix" matrix } { "newmatrix" matrix } }
 { $description "Transpose the input matrix over its " { $link main-diagonal } ". The main diagonal itself is left untouched, whereas the anti-diagonal is reversed." }
-{ $notes "This word is an alias for " { $link flip } ", so that it may be recognised as the common mathematical operation." }
+{ $notelist
+    { "This word is an alias for " { $link flip } ", so that it may be recognised as the common mathematical operation." }
+    { $equiv-word-note "opposite" anti-transpose }
+}
 { $examples
     { $example
         "USING: math.matrices sequences prettyprint ;"
@@ -1301,6 +1434,7 @@ HELP: transpose
 HELP: anti-transpose
 { $values { "matrix" matrix } { "newmatrix" matrix } }
 { $description "Like " { $link transpose } " except that the matrix is transposed over the " { $link anti-diagonal } "." }
+{ $notes { $equiv-word-note "opposite" transpose } }
 { $examples
     { $example
         "USING: math.matrices sequences prettyprint ;"
@@ -1321,7 +1455,12 @@ HELP: rows-except
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
-        "{ { 2 7 12 2 } { 8 9 10 0 } { 1 3 3 5 } { 8 13 7 12 } } { 1 3 } rows-except ."
+"{
+    { 2 7 12 2 }
+    { 8 9 10 0 }
+    { 1 3 3 5 }
+    { 8 13 7 12 }
+} { 1 3 } rows-except ."
         "{ { 2 7 12 2 } { 1 3 3 5 } }"
     }
 } ;

@@ -143,34 +143,33 @@ PRIVATE>
 : <coordinate-matrix> ( dim -- coordinates )
   first2 [ <iota> ] bi@ cartesian-product ; inline
 
+ALIAS: <cartesian-indices> <coordinate-matrix>
+
+: <cartesian-square-indices> ( n -- matrix )
+    dup 2array <cartesian-indices> ; inline
+
 DEFER: rows
 DEFER: cols
 DEFER: transpose
+DEFER: >square-matrix
 GENERIC: <square-rows> ( desc -- matrix )
-M: integer <square-rows> <iota> <square-rows> ;
-
-M: square-matrix <square-rows> ;
-! could no-method here but coercing to square is more useful
-M: matrix <square-rows>
-    [ dim first2 ] keep 2over < [
-        ! rows < cols
-        nip [ <iota> ] dip cols transpose
-    ] [ ! rows > cols
-        swapd nip [ <iota> ] dip rows
-    ] if ;
-
+M: integer <square-rows>
+    <iota> <square-rows> ;
 M: sequence <square-rows>
     [ length ] keep >array '[ _ clone ] { } replicate-as ;
 
+M: square-matrix <square-rows> ;
+M: matrix <square-rows> >square-matrix ; ! could no-method here but coercing to square is more useful
+
 GENERIC: <square-cols> ( desc -- matrix )
-M: integer <square-cols> <iota> <square-cols> ;
+M: integer <square-cols>
+    <iota> <square-cols> ;
+M: sequence <square-cols>
+    <square-rows> flip ;
 
 M: square-matrix <square-cols> ;
 M: matrix <square-cols>
-    <square-rows> ;
-
-M: sequence <square-cols>
-    <square-rows> flip ;
+    >square-matrix ;
 
 ! -------------------------------------------------------------
 ! end of the simple creators; here are the complex builders
@@ -190,9 +189,6 @@ DEFER: matrix-set-nths
 
 : <upper-matrix> ( object m n -- matrix )
     <zero-matrix> [ upper-matrix-indices ] [ matrix-set-nths ] [ ] tri ;
-
-: <cartesian-square-indices> ( n -- matrix )
-    <iota> dup cartesian-product ; inline
 
 ! Special matrix constructors follow
 : <hankel-matrix> ( n -- matrix )
@@ -335,8 +331,8 @@ ALIAS: cartesian-row-map cartesian-matrix-map
 
 ! -------------------------------------------
 ! simple math of matrices follows
-: mneg ( m -- m ) [ vneg ] map ;
-: mabs ( m -- m ) [ vabs ] map ;
+: mneg ( m -- m' ) [ vneg ] map ;
+: mabs ( m -- m' ) [ vabs ] map ;
 
 : n+m ( n m -- m ) [ n+v ] with map ;
 : m+n ( m n -- m ) [ v+n ] curry map ;
@@ -413,10 +409,21 @@ DEFER: multiplicative-inverse
 ! -------------------------------------------------
 ! numerical analysis of matrices follows
 <PRIVATE
-: (rows-iota) ( matrix -- matrix rows )
-    dup dim first <iota> ;
-: (cols-iota) ( matrix -- matrix cols )
-    dup dim second <iota> ;
+: (rows-iota) ( matrix -- rows-iota )
+    dim first <iota> ;
+: (cols-iota) ( matrix -- cols-iota )
+    dim second <iota> ;
+
+: simple-rows-except ( matrix desc quot -- others )
+    curry [ dup (rows-iota) ] dip
+    pick reject-as swap rows ; inline
+
+: simple-cols-except ( matrix desc quot -- others )
+    curry [ dup (cols-iota) ] dip
+    pick reject-as swap cols transpose ; inline ! need to un-transpose the result of cols
+
+CONSTANT: scalar-except-quot [ = ]
+CONSTANT: sequence-except-quot [ member? ]
 
 : lookup-rank ( matrix -- rank-class ) ;
 PRIVATE>
@@ -433,13 +440,21 @@ M: matrix rank
 
 GENERIC: nullity ( matrix -- nullity )
 
+: >square-matrix ( matrix -- square-matrix )
+    [ dim first2 ] keep 2over < [
+        ! rows < cols
+        nip [ <iota> ] dip cols transpose
+    ] [ ! rows > cols
+        swapd nip [ <iota> ] dip rows
+    ] if ;
+
 ! well-defined for square matrices; but works on nonsquare too
-: main-diagonal ( matrix -- vec )
-    [ swap nth ] map-index ; inline
+: main-diagonal ( matrix -- seq )
+    >square-matrix [ swap nth ] map-index ; inline
 
 ! top right to bottom left; reverse the result if you expected it to start in the lower left
-: anti-diagonal ( matrix -- vec )
-    [ swap nth-end ] map-index ; inline
+: anti-diagonal ( matrix -- seq )
+    >square-matrix [ swap nth-end ] map-index ; inline
 
 ALIAS: transpose flip
 
@@ -448,22 +463,12 @@ ALIAS: transpose flip
     [ reverse ] map transpose [ reverse ] map ;
 
 GENERIC: rows-except ( matrix desc -- others )
-M: integer rows-except
-    [ (rows-iota) ] dip
-    '[ _ = ] pick reject-as swap rows ;
-
-M: sequence rows-except
-    [ (rows-iota) ] dip
-    '[ _ member? ] pick reject-as swap rows ;
+M: integer rows-except  scalar-except-quot   simple-rows-except ;
+M: sequence rows-except sequence-except-quot simple-rows-except ;
 
 GENERIC: cols-except ( matrix desc -- others )
-M: integer cols-except
-    [ (cols-iota) ] dip
-    '[ _ = ] pick reject-as swap cols transpose ; ! need to un-transpose the result of cols
-
-M: sequence cols-except
-    [ (cols-iota) ] dip
-    '[ _ member? ] pick reject-as swap cols transpose ;
+M: integer cols-except  scalar-except-quot   simple-cols-except ;
+M: sequence cols-except sequence-except-quot simple-cols-except ;
 
 ! well-defined for any well-formed-matrix
 : matrix-except ( matrix exclude-pair -- submatrix )

@@ -45,8 +45,8 @@ PREDICATE: zero-square-matrix < square-matrix
 ! TODO: triangular predicates, etc?
 
 ! questionable implementation
-SINGLETONS:      +full-rank+ +half-rank+ +deficient-rank+ +uncalculated-rank+ ;
-UNION: rank-kind +full-rank+ +half-rank+ +deficient-rank+ +uncalculated-rank+ ;
+SINGLETONS:      +full-rank+ +half-rank+ +zero-rank+ +deficient-rank+ +uncalculated-rank+ ;
+UNION: rank-kind +full-rank+ +half-rank+ +zero-rank+ +deficient-rank+ +uncalculated-rank+ ;
 
 ERROR: negative-power-matrix
     { m matrix } { n integer } ;
@@ -95,14 +95,14 @@ PRIVATE>
     [ [ <iota> ] bi@ ] dip cartesian-map ; inline
 
 : <random-integer-matrix> ( m n max -- matrix )
-    '[ _ _ random-integers ] replicate
+    '[ _ _ 1 + random-integers ] replicate
     finish-randomizing-matrix ; inline
 
 : <square-random-integer-matrix> ( n max -- matrix )
     dupd <random-integer-matrix> ; inline
 
 : <random-unit-matrix> ( m n max -- matrix )
-    '[ _ random-units [ _ random * ] map ] replicate
+    '[ _ random-units [ _ * ] map ] replicate
     finish-randomizing-matrix ; inline
 
 : <square-random-unit-matrix> ( n max -- matrix )
@@ -173,8 +173,10 @@ M: matrix <square-cols>
 
 ! -------------------------------------------------------------
 ! end of the simple creators; here are the complex builders
-DEFER: dimension-range
 <PRIVATE ! implementation details of <lower-matrix> and <upper-matrix>
+: dimension-range ( matrix -- dim range )
+    dim [ <coordinate-matrix> ] [ first [1,b] ] bi ;
+
 : upper-matrix-indices ( matrix -- matrix' )
     dimension-range <reversed> [ tail-slice* >array ] 2map concat ;
 
@@ -235,8 +237,11 @@ DEFER: matrix-set-nths
     } ;
 
 <PRIVATE
-: >scale-factors ( number/sequence -- x y z )
-    dup number? [ dup dup ] [ first3 ] if ;
+GENERIC: >scale-factors ( object -- x y z )
+M: number >scale-factors
+    dup dup ;
+M: sequence >scale-factors
+    first3 ;
 PRIVATE>
 
 :: <scale-matrix3> ( factors -- matrix )
@@ -425,28 +430,28 @@ DEFER: multiplicative-inverse
 CONSTANT: scalar-except-quot [ = ]
 CONSTANT: sequence-except-quot [ member? ]
 
-: lookup-rank ( matrix -- rank-class ) ;
+: square-rank ( square-matrix -- rank ) ;
+: nonsquare-rank ( matrix -- rank ) ;
 PRIVATE>
 
-GENERIC: rank ( matrix -- rank-class )
+GENERIC: rank ( matrix -- rank )
 M: zero-matrix rank
-    drop 0 ;
+    drop +zero-rank+ ;
 
 M: square-matrix rank
-    drop 0 ;
+    square-rank ;
 
 M: matrix rank
-    lookup-rank ;
+    nonsquare-rank ;
 
 GENERIC: nullity ( matrix -- nullity )
 
-: >square-matrix ( matrix -- square-matrix )
-    [ dim first2 ] keep 2over < [
-        ! rows < cols
-        nip [ <iota> ] dip cols transpose
-    ] [ ! rows > cols
-        swapd nip [ <iota> ] dip rows
-    ] if ;
+:: >square-matrix ( m -- subset )
+    m dim :> ( x y ) {
+        { [ x y = ] [ m ] }
+        { [ x y < ] [ x <iota> cols transpose ] }
+        { [ x y > ] [ y <iota> rows ] }
+    } cond ;
 
 ! well-defined for square matrices; but works on nonsquare too
 : main-diagonal ( matrix -- seq )
@@ -607,12 +612,9 @@ M: matrix multiplicative-inverse
 ! -----------------------------
 ! end of inverse operations !
 
-: dim ( matrix -- pair/f )
+: dim ( matrix -- dimensions )
     [ { 0 0 } ]
     [ [ length ] [ first length ] bi 2array ] if-empty ;
-
-: dimension-range ( matrix -- dim range )
-    dim [ <coordinate-matrix> ] [ first [1,b] ] bi ;
 
 ! TODO: use the faster algorithm here
 : invertible-matrix? ( matrix -- ? )

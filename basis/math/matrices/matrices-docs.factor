@@ -1,7 +1,7 @@
 ! Copyright (C) 2005, 2010, 2018 Slava Pestov, Joe Groff, Cat Stevens.
-USING: accessors arrays assocs formatting locals help.markup help.syntax io
+USING: accessors arrays assocs generic.single formatting locals help.markup help.markup.private help.syntax io
 kernel math math.functions math.order math.ratios math.vectors opengl.gl prettyprint
-sequences sequences.generalizations urls ;
+sequences sequences.generalizations random urls ;
 IN: math.matrices
 
 <PRIVATE
@@ -40,6 +40,12 @@ IN: math.matrices
     "This word assumes that elements of the input matrix are compatible with the following words:"
     swap 2array
     print-element ;
+
+: $keep-shape-note ( children -- )
+    drop { "The shape of the input matrix is preserved in the output." } print-element ;
+
+: $link2 ( children -- )
+    first2 swap [ write-link ] topic-span ;
 
 ! so that we don't end up with multiple $notes calls leading to multiple Notes sections
 : $notelist ( children -- )
@@ -92,6 +98,12 @@ $nl
     <eye>
 
 } { $subsections
+    <random-integer-matrix>
+    <square-random-integer-matrix>
+    <random-unit-matrix>
+    <square-random-unit-matrix>
+
+} { $subsections
     <coordinate-matrix>
     <square-rows>
     <square-cols>
@@ -132,7 +144,7 @@ $nl
 
 "Transformations and elements of matrices:"
 { $subsections
-    dim dimension-range transpose
+    dim transpose
     matrix-nth matrix-nths matrix-set-nth matrix-set-nths
 
 } { $subsections
@@ -249,10 +261,12 @@ HELP: +full-rank+
 { $class-description "A " { $link rank-kind } " describing a matrix of full rank." } ;
 HELP: +half-rank+
 { $class-description "A " { $link rank-kind } " describing a matrix of half rank." } ;
+HELP: +zero-rank+
+{ $class-description "A " { $link rank-kind } " describing a matrix of zero rank." } ;
 HELP: +deficient-rank+
 { $class-description "A " { $link rank-kind } " describing a matrix of deficient rank." } ;
 HELP: +uncalculated-rank+
-{ $class-description "A " { $link rank-kind } " describing a matrix whose rank is not known." } ;
+{ $class-description "A " { $link rank-kind } " describing a matrix whose rank is not (yet) known." } ;
 
 ! ERRORS
 
@@ -305,7 +319,7 @@ HELP: <matrix-by>
 
 HELP: <matrix-by-indices>
 { $values { "m" integer } { "n" integer } { "quot" { $quotation ( ... m' n' -- ... elt ) } } { "matrix" matrix } }
-{ $description "Creates an " { $snippet "m x n" } " matrix using elements given by " { $snippet "quot" } " . This word differs from " { $link <matrix-by> } " in that the indices are placed on the stack (in the same order) before " { $snippet "quot" } " runs. The output of the quotation will be the element at the given position in the matrix." }
+{ $description "Creates an " { $snippet "m x n" } " " { $link matrix } " using elements given by " { $snippet "quot" } " . This word differs from " { $link <matrix-by> } " in that the indices are placed on the stack (in the same order) before " { $snippet "quot" } " runs. The output of the quotation will be the element at the given position in the matrix." }
 { $notes "The following are equivalent:"
   { $code "m n [ 2drop foo ] <matrix-by-indices>" }
   { $code "m n [ foo ] <matrix-by>" }
@@ -318,6 +332,80 @@ HELP: <matrix-by-indices>
     }
 } ;
 
+HELP: <random-integer-matrix>
+{ $values { "m" integer } { "n" integer } { "max" integer } { "matrix" matrix } }
+{ $description "Creates a " { $snippet "m x n" } " " { $link matrix } " full of random, possibly signed " { $link integer } "s whose absolute values are less than or equal to " { $snippet "max" } ", as given by " { $link random-integers } "." }
+{ $notelist
+    { "The signedness of the numbers in the resulting matrix will be randomized. Use " { $link mabs } " with this word to generate a matrix of random positive integers." }
+    { $equiv-word-note "integral" <random-unit-matrix> }
+    { $equiv-word-note "non-square" <square-random-integer-matrix> }
+}
+{ $errors { $link no-method } " if " { $snippet "max"} " is not an " { $link integer } "." }
+{ $examples
+    { $unchecked-example
+        "USING: math.matrices prettyprint ;"
+        "2 4 15 <random-integer-matrix> ."
+        "{ { -9 -9 1 3 } { -14 -8 14 10 } }"
+    }
+} ;
+
+HELP: <square-random-integer-matrix>
+{ $values { "n" integer } { "max" integer } { "matrix" square-matrix } }
+{ $description "Creates a " { $link square-matrix } " of size " { $snippet "n" } " full of random, possibly signed " { $link integer } "s whose absolute values are less than or equal to " { $snippet "max" } ", as given by " { $link random-integers } "." }
+{ $notelist
+    { "The signedness of the numbers in the resulting matrix will be randomized. Use " { $link mabs } " with this word to generate a matrix of random positive integers." }
+    { $equiv-word-note "integral" <square-random-unit-matrix> }
+    { $equiv-word-note "square" <random-integer-matrix> }
+}
+{ $errors { $link no-method } " if " { $snippet "max"} " is not an " { $link integer } "." }
+{ $examples
+    { $unchecked-example
+        "USING: math.matrices prettyprint ;"
+        "2 15 <square-random-integer-matrix> ."
+        "{ { 5 -10 } { -2 8 } }"
+    }
+} ;
+
+HELP: <random-unit-matrix>
+{ $values { "m" integer } { "n" integer } { "max" number } { "matrix" matrix } }
+{ $description "Creates a " { $snippet "m x n" } " " { $link matrix } " full of random, possibly signed " { $link float } "s  as a fraction of " { $snippet "max" } "." }
+{ $notelist
+    { "The signedness of the numbers in the resulting matrix will be randomized. Use " { $link mabs } " with this word to generate a matrix of random positive numbers." }
+    { $equiv-word-note "real" <random-integer-matrix> }
+    { $equiv-word-note "non-square" <square-random-unit-matrix> }
+    { "This word is implemented by generating sub-integral floats through " { $link random-units } " and multiplying by random integers less than or equal to " { $snippet "max" } "." }
+}
+{ $examples
+    { $unchecked-example
+        "USING: math.matrices prettyprint ;"
+        "4 2 15 <random-unit-matrix> ."
+"{
+    { -3.713295909201797 3.815787135075961 }
+    { -2.460506890603817 1.535222788710546 }
+    { 3.692213981267878 -1.462963244399762 }
+    { 13.8967592095433 -6.688509969360172 }
+}"
+    }
+} ;
+
+HELP: <square-random-unit-matrix>
+{ $values { "n" integer } { "max" number } { "matrix" matrix } }
+{ $description "Creates a " { $link square-matrix } " of size " { $snippet "n" } " full of random, possibly signed " { $link float } "s as a fraction of " { $snippet "max" } "." }
+{ $notelist
+    { "The signedness of the numbers in the resulting matrix will be randomized. Use " { $link mabs } " with this word to generate a matrix of random positive numbers." }
+    { $equiv-word-note "real" <random-integer-matrix> }
+    { $equiv-word-note "square" <random-unit-matrix> }
+}
+{ $examples
+    { $unchecked-example
+        "USING: math.matrices prettyprint ;"
+        "2 15 <square-random-unit-matrix> ."
+"{
+    { 3.258939507472367 -9.66528421670419 }
+    { 0.6103578496692134 -2.688503238985181 }
+}"
+    }
+} ;
 
 HELP: <zero-matrix>
 { $values { "m" integer } { "n" integer } { "matrix" matrix } }
@@ -995,8 +1083,9 @@ HELP: m-n
 
 HELP: n*m
 { $values { "n" object } { "m" matrix }  }
-{ $description "Every element in the input matrix " { $snippet "m" } " is multiplied by the scalar "{ $snippet "n" } ". The output has the same shape as the input." }
+{ $description "Every element in the input matrix " { $snippet "m" } " is multiplied by the scalar "{ $snippet "n" } "." }
 { $notelist
+    $keep-shape-note
     { $equiv-word-note "swapped" m*n }
     $2d-only-note
     { $matrix-scalar-note * }
@@ -1011,8 +1100,9 @@ HELP: n*m
 
 HELP: m*n
 { $values { "n" object } { "m" matrix }  }
-{ $description "Every element in the input matrix " { $snippet "m" } " is multiplied by the scalar "{ $snippet "n" } ". The output has the same shape as the input." }
+{ $description "Every element in the input matrix " { $snippet "m" } " is multiplied by the scalar "{ $snippet "n" } "." }
 { $notelist
+    $keep-shape-note
     { $equiv-word-note "swapped" n*m }
     $2d-only-note
     { $matrix-scalar-note * }
@@ -1028,8 +1118,9 @@ HELP: m*n
 
 HELP: n/m
 { $values { "n" object } { "m" matrix }  }
-{ $description "Every element in the input matrix " { $snippet "m" } " is divided by the scalar "{ $snippet "n" } ". The output has the same shape as the input." }
+{ $description "Every element in the input matrix " { $snippet "m" } " is divided by the scalar "{ $snippet "n" } "." }
 { $notelist
+    $keep-shape-note
     { $equiv-word-note "swapped" m/n }
     $2d-only-note
     { $matrix-scalar-note / }
@@ -1050,8 +1141,9 @@ HELP: n/m
 
 HELP: m/n
 { $values { "n" object } { "m" matrix }  }
-{ $description "Every element in the input matrix " { $snippet "m" } " is divided by the scalar "{ $snippet "n" } ". The output has the same shape as the input." }
+{ $description "Every element in the input matrix " { $snippet "m" } " is divided by the scalar "{ $snippet "n" } "." }
 { $notelist
+    $keep-shape-note
     { $equiv-word-note "swapped" n/m }
     $2d-only-note
     { $matrix-scalar-note / }
@@ -1345,6 +1437,17 @@ HELP: outer-product
 HELP: rank ;
 HELP: nullity ;
 
+HELP: >square-matrix
+{ $values { "m" matrix } { "subset" square-matrix } }
+{ $description "Find only the " { $link2 square-matrix "square" } " subset of the input matrix." }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ { 0 2 4 6 } { 1 3 5 7 } } >square-matrix ."
+        "{ { 0 2 } { 1 3 } }"
+    }
+} ;
+
 HELP: main-diagonal
 { $values { "matrix" matrix } { "seq" sequence } }
 { $description "Find the main diagonal of a matrix." $nl "This diagonal begins in the upper left of the matrix at index " { $snippet "{ 0 0 }" } ", continuing downward and rightward for all indices " { $snippet "{ n n }" } " in the " { $link square-matrix } " subset of the input (see " { $link <square-rows> } ")." }
@@ -1510,7 +1613,7 @@ HELP: 1/det
 { $description "Find the inverse (" { $link recip } ") of the " { $link determinant } " of the input matrix." }
 { $notelist
     $2d-only-note
-    { $matrix-scalar-note max recip }
+    { $matrix-scalar-note determinant recip }
 }
 { $errors
     { $link non-square-determinant } " if the input matrix is not a " { $link square-matrix } "."
@@ -1536,7 +1639,7 @@ HELP: m*1/det
 { $notelist
     { "This word is used to implement " { $link multiplicative-inverse } "." }
     $2d-only-note
-    { $matrix-scalar-note max * - recip }
+    { $matrix-scalar-note determinant recip }
 }
 { $examples
     { $example
@@ -1558,15 +1661,100 @@ HELP: m*1/det
 ;
 
 HELP: >minors
-{ $values { "matrix" matrix } } ;
-HELP: >cofactors ;
-HELP: multiplicative-inverse ;
+{ $values { "matrix" square-matrix } { "matrix'" square-matrix } }
+{ $description "Calculate the " { $emphasis "matrix of minors" } " of the input matrix. See " { $url URL" https://en.wikipedia.org/wiki/Minor_(linear_algebra)" "minor on Wikipedia" } "." }
+{ $notelist
+    $keep-shape-note
+    $2d-only-note
+    { $matrix-scalar-note determinant }
+}
+{ $errors { $link non-square-determinant } " if the input matrix is not a " { $link square-matrix } "." }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+"{
+    { -8 0 7 -11 }
+    { 15 0 -3 -11 }
+    { 1 -10 -4 6 }
+    { 11 -15 3 -15 }
+} >minors ."
+"{
+    { 1710 -130 2555 -1635 }
+    { -690 -286 -2965 1385 }
+    { 1650 -754 3795 -1215 }
+    { 1100 416 2530 -810 }
+}"
+    }
+} ;
+
+HELP: >cofactors
+{ $values { "matrix" matrix } { "matrix'" matrix } }
+{ $description "Calculate the " { $emphasis "matrix of cofactors" } " of the input matrix. See " { $url URL" https://en.wikipedia.org/wiki/Minor_(linear_algebra)#Inverse_of_a_matrix" "matrix of cofactors on Wikipedia" } ". Alternating elements of the input matrix have their signs inverted." $nl "On odd rows, the even elements have their signs inverted. On even rows, odd elements have their signs inverted." }
+{ $notelist
+    $keep-shape-note
+    $2d-only-note
+    { $matrix-scalar-note neg }
+}
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+"{
+    { 8 0 7 11 }
+    { 15 0 3 11 }
+    { 1 10 4 6 }
+    { 11 15 3 15 }
+} >cofactors ."
+"{
+    { 8 0 7 -11 }
+    { -15 0 -3 11 }
+    { 1 -10 4 -6 }
+    { -11 15 -3 15 }
+}"
+    }
+    { $example
+        "USING: math.matrices prettyprint ;"
+"{
+    { -8 0 7 -11 }
+    { 15 0 -3 -11 }
+    { 1 -10 -4 6 }
+    { 11 -15 3 -15 }
+} >cofactors ."
+"{
+    { -8 0 7 11 }
+    { -15 0 3 -11 }
+    { 1 10 -4 -6 }
+    { -11 -15 -3 -15 }
+}"
+    }
+} ;
+
+HELP: multiplicative-inverse
+{ $values { "matrix" matrix } { "inverse" matrix } }
+{ $description "Calculate the multiplicative inverse of the input." $nl "If the input is a " { $link square-matrix } ", this is done by multiplying the " { $link transpose } " of the " { $link2 >cofactors "cofactors" } " of the " { $link2 >minors "minors" } " of the input matrix by the " { $link2 1/det "inverse of the determinant" } " of the input matrix."  }
+{ $notelist
+    $keep-shape-note
+    $2d-only-note
+    { $matrix-scalar-note determinant >cofactors 1/det }
+}
+{ $errors { $link non-square-determinant } " if the input matrix is not a " { $link square-matrix } "." }
+;
 
 HELP: dim
-{ $values { "matrix" matrix } { "pair/f" { $maybe pair } } }
-{ $description "Find the dimensions of the input matrix, in the order of " { $snippet "rows, columns "} "." } ;
-
-HELP: dimension-range ;
+{ $values { "matrix" matrix } { "dimensions" pair } }
+{ $description "Find the dimensions of the input matrix, in the order of " { $snippet "{ rows cols }"} "." }
+{ $notes $2d-only-note }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "4 30 1 <matrix> dim ."
+        "{ 4 30 }"
+    }
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ } dim ."
+        "{ 0 0 }"
+    }
+} ;
 
 HELP: covariance-matrix ;
 HELP: covariance-matrix-ddof ;

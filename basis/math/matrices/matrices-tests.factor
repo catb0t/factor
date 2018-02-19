@@ -51,6 +51,8 @@ IN: math.matrices.tests
 { f } [ 4 <box-matrix> zero-matrix? ] unit-test
 ! make sure we're not using the sum-to-zero strategy
 { f } [ { { 0 -2 } { 1 -1 } } zero-matrix? ] unit-test
+{ f } [ { { 0 0 } { 1 -1 } } zero-matrix? ] unit-test
+{ f } [ { { 0 1 } { 0 -1 } } zero-matrix? ] unit-test
 
 { 3 } [ { 1 2 3 } 0 swap nth-end ] unit-test
 { 2 } [ { 1 2 3 } 1 swap nth-end ] unit-test
@@ -102,6 +104,48 @@ IN: math.matrices.tests
     { 0 2 4 }
 } } [ 3 3 [ * ] <matrix-by-indices> ] unit-test
 
+{ t } [ 2 4 15 <random-integer-matrix> mabs {
+    [ flatten [ 15 <= ] all? ]
+    [ well-formed-matrix? ]
+    [ length 2 = ]
+    [ first length 4 = ]
+} 1&& ] unit-test
+
+{ t } [ 4 -45 <square-random-integer-matrix> mabs {
+    [ flatten [ 45 <= ] all? ]
+    [ well-formed-matrix? ]
+    [ length 4 = ]
+    [ first length 4 = ]
+} 1&& ] unit-test
+
+{ t } [ 2 1 <square-random-integer-matrix> mabs {
+    [ flatten [ 1 <= ] all? ]
+    [ well-formed-matrix? ]
+    [ length 2 = ]
+    [ first length 2 = ]
+} 1&& ] unit-test
+
+{ t } [ 2 4 .89 <random-unit-matrix> mabs {
+    [ flatten [ .89 <= ] all? ]
+    [ well-formed-matrix? ]
+    [ length 2 = ]
+    [ first length 4 = ]
+} 1&& ] unit-test
+
+{ t } [ 2 4 -45.89 <random-unit-matrix> mabs {
+    [ flatten [ 45.89 <= ] all? ]
+    [ well-formed-matrix? ]
+    [ length 2 = ]
+    [ first length 4 = ]
+} 1&& ] unit-test
+
+{ t } [ 4 .89 <square-random-unit-matrix> mabs {
+    [ flatten [ .89 <= ] all? ]
+    [ well-formed-matrix? ]
+    [ length 4 = ]
+    [ first length 4 = ]
+} 1&& ] unit-test
+
 { t } [ 3 3 <zero-matrix> zero-square-matrix? ] unit-test
 { t } [ 3 <zero-square-matrix> zero-square-matrix? ] unit-test
 { t f } [ 3 1 <zero-matrix> [ zero-matrix? ] [ square-matrix? ] bi ] unit-test
@@ -141,49 +185,6 @@ IN: math.matrices.tests
 } } [
     3 <identity-matrix>
 ] unit-test
-
-{ {
-    { 0 1 }
-    { 0 1 }
-} } [ 2 <square-rows> ] unit-test
-
-{ {
-    { 0 0 }
-    { 1 1 }
-} } [ 2 <square-cols> ] unit-test
-
-{ {
-    { 5 6 }
-    { 5 6 }
-} } [ { 5 6 } <square-rows> ] unit-test
-
-{ {
-    { 5 5 }
-    { 6 6 }
-} } [ { 5 6 } <square-cols> ] unit-test
-
-{  {
-    { 1 }
-} } [ {
-    { 1 2 }
-} <square-rows> ] unit-test
-
-{  {
-    { 1 2 }
-    { 3 4 }
-} } [ {
-    { 1 2 5 }
-    { 3 4 6 }
-} <square-rows> ] unit-test
-
-{  {
-    { 1 2 }
-    { 3 4 }
-} } [ {
-    { 1 2 }
-    { 3 4 }
-    { 5 6 }
-} <square-rows> ] unit-test
 
 { {
     { 2 0 0 }
@@ -266,6 +267,49 @@ IN: math.matrices.tests
     { { 2 0 } { 2 1 } { 2 2 } }
     { { 3 0 } { 3 1 } { 3 2 } }
 } } [ { 4 3 } <coordinate-matrix> ] unit-test
+
+{ {
+    { 0 1 }
+    { 0 1 }
+} } [ 2 <square-rows> ] unit-test
+
+{ {
+    { 0 0 }
+    { 1 1 }
+} } [ 2 <square-cols> ] unit-test
+
+{ {
+    { 5 6 }
+    { 5 6 }
+} } [ { 5 6 } <square-rows> ] unit-test
+
+{ {
+    { 5 5 }
+    { 6 6 }
+} } [ { 5 6 } <square-cols> ] unit-test
+
+{  {
+    { 1 }
+} } [ {
+    { 1 2 }
+} <square-rows> ] unit-test
+
+{  {
+    { 1 2 }
+    { 3 4 }
+} } [ {
+    { 1 2 5 }
+    { 3 4 6 }
+} <square-rows> ] unit-test
+
+{  {
+    { 1 2 }
+    { 3 4 }
+} } [ {
+    { 1 2 }
+    { 3 4 }
+    { 5 6 }
+} <square-rows> ] unit-test
 
 { {
     { 1   1/2 1/3 1/4 }
@@ -518,6 +562,7 @@ CONSTANT: test-points {
 
 ! diagonals
 
+! diagonal getters
 { { 1 1 1 1 } } [ 4 <identity-matrix> main-diagonal ] unit-test
 { { 0 0 0 0 } } [ 4 <identity-matrix> anti-diagonal ] unit-test
 { { 4 8 } } [ { { 4 6 } { 3 8 } } main-diagonal ] unit-test

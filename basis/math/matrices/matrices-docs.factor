@@ -267,9 +267,9 @@ HELP: non-square-determinant
 { $error-description { $link determinant } " was used with a non-square matrix whose dimensions are " { $snippet "m x n" } ". It is not generally possible to find the determinant of a non-square matrix." } ;
 
 HELP: undefined-inverse
-{ $values { "m" integer } { "n" integer } { "r" "rank" } }
+{ $values { "m" integer } { "n" integer } { "r" rank-kind } }
 { $description "Throws an " { $link undefined-inverse } " error." }
-{ $error-description { $link multiplicative-inverse } " was used with a non-square matrix of rank " { $snippet "rank" } " whose dimensions are " { $snippet "m x n" } ". It is not generally possible to find the inverse of a rank-deficient non-square matrix." } ;
+{ $error-description { $link multiplicative-inverse } " was used with a non-square matrix of rank " { $snippet "rank" } " whose dimensions are " { $snippet "m x n" } ". It is not generally possible to find the inverse of a " { $link +deficient-rank+ } " non-square " { $link matrix } "." } ;
 
 ! BUILDERS
 HELP: <matrix>

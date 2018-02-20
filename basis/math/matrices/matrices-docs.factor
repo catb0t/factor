@@ -89,6 +89,8 @@ $nl
     <matrix-by-indices>
 
 } { $subsections
+    <random-integer-matrix>
+    <random-unit-matrix>
     <zero-matrix>
     <zero-square-matrix>
     <diagonal-matrix>
@@ -96,12 +98,6 @@ $nl
     <identity-matrix>
     <simple-eye>
     <eye>
-
-} { $subsections
-    <random-integer-matrix>
-    <square-random-integer-matrix>
-    <random-unit-matrix>
-    <square-random-unit-matrix>
 
 } { $subsections
     <coordinate-matrix>
@@ -338,7 +334,6 @@ HELP: <random-integer-matrix>
 { $notelist
     { "The signedness of the numbers in the resulting matrix will be randomized. Use " { $link mabs } " with this word to generate a matrix of random positive integers." }
     { $equiv-word-note "integral" <random-unit-matrix> }
-    { $equiv-word-note "non-square" <square-random-integer-matrix> }
 }
 { $errors { $link no-method } " if " { $snippet "max"} " is not an " { $link integer } "." }
 { $examples
@@ -349,30 +344,12 @@ HELP: <random-integer-matrix>
     }
 } ;
 
-HELP: <square-random-integer-matrix>
-{ $values { "n" integer } { "max" integer } { "matrix" square-matrix } }
-{ $description "Creates a " { $link square-matrix } " of size " { $snippet "n" } " full of random, possibly signed " { $link integer } "s whose absolute values are less than or equal to " { $snippet "max" } ", as given by " { $link random-integers } "." }
-{ $notelist
-    { "The signedness of the numbers in the resulting matrix will be randomized. Use " { $link mabs } " with this word to generate a matrix of random positive integers." }
-    { $equiv-word-note "integral" <square-random-unit-matrix> }
-    { $equiv-word-note "square" <random-integer-matrix> }
-}
-{ $errors { $link no-method } " if " { $snippet "max"} " is not an " { $link integer } "." }
-{ $examples
-    { $unchecked-example
-        "USING: math.matrices prettyprint ;"
-        "2 15 <square-random-integer-matrix> ."
-        "{ { 5 -10 } { -2 8 } }"
-    }
-} ;
-
 HELP: <random-unit-matrix>
 { $values { "m" integer } { "n" integer } { "max" number } { "matrix" matrix } }
 { $description "Creates a " { $snippet "m x n" } " " { $link matrix } " full of random, possibly signed " { $link float } "s  as a fraction of " { $snippet "max" } "." }
 { $notelist
     { "The signedness of the numbers in the resulting matrix will be randomized. Use " { $link mabs } " with this word to generate a matrix of random positive numbers." }
     { $equiv-word-note "real" <random-integer-matrix> }
-    { $equiv-word-note "non-square" <square-random-unit-matrix> }
     { "This word is implemented by generating sub-integral floats through " { $link random-units } " and multiplying by random integers less than or equal to " { $snippet "max" } "." }
 }
 { $examples
@@ -384,25 +361,6 @@ HELP: <random-unit-matrix>
     { -2.460506890603817 1.535222788710546 }
     { 3.692213981267878 -1.462963244399762 }
     { 13.8967592095433 -6.688509969360172 }
-}"
-    }
-} ;
-
-HELP: <square-random-unit-matrix>
-{ $values { "n" integer } { "max" number } { "matrix" matrix } }
-{ $description "Creates a " { $link square-matrix } " of size " { $snippet "n" } " full of random, possibly signed " { $link float } "s as a fraction of " { $snippet "max" } "." }
-{ $notelist
-    { "The signedness of the numbers in the resulting matrix will be randomized. Use " { $link mabs } " with this word to generate a matrix of random positive numbers." }
-    { $equiv-word-note "real" <random-integer-matrix> }
-    { $equiv-word-note "square" <random-unit-matrix> }
-}
-{ $examples
-    { $unchecked-example
-        "USING: math.matrices prettyprint ;"
-        "2 15 <square-random-unit-matrix> ."
-"{
-    { 3.258939507472367 -9.66528421670419 }
-    { 0.6103578496692134 -2.688503238985181 }
 }"
     }
 } ;

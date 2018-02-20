@@ -98,15 +98,9 @@ PRIVATE>
     '[ _ _ 1 + random-integers ] replicate
     finish-randomizing-matrix ; inline
 
-: <square-random-integer-matrix> ( n max -- matrix )
-    dupd <random-integer-matrix> ; inline
-
 : <random-unit-matrix> ( m n max -- matrix )
     '[ _ random-units [ _ * ] map ] replicate
     finish-randomizing-matrix ; inline
-
-: <square-random-unit-matrix> ( n max -- matrix )
-    dupd <random-unit-matrix> ; inline
 
 : <zero-matrix> ( m n -- matrix )
     0 <matrix> ; inline
@@ -132,7 +126,7 @@ PRIVATE>
 : <eye> ( m n k z -- matrix )
     [ [ <iota> ] bi@ ] 2dip
     '[ _ neg + = _ 0 ? ]
-    cartesian-map ;
+    cartesian-map ; inline
 
 ! if m = n and k = 0 then <identity-matrix> is (possibly) more efficient
 :: <simple-eye> ( m n k -- matrix )
@@ -447,10 +441,10 @@ M: matrix rank
 GENERIC: nullity ( matrix -- nullity )
 
 :: >square-matrix ( m -- subset )
-    m dim :> ( x y ) {
+    m dim first2 :> ( x y ) {
         { [ x y = ] [ m ] }
-        { [ x y < ] [ x <iota> cols transpose ] }
-        { [ x y > ] [ y <iota> rows ] }
+        { [ x y < ] [ x <iota> m cols transpose ] }
+        { [ x y > ] [ y <iota> m rows ] }
     } cond ;
 
 ! well-defined for square matrices; but works on nonsquare too

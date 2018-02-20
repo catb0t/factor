@@ -111,14 +111,14 @@ IN: math.matrices.tests
     [ first length 4 = ]
 } 1&& ] unit-test
 
-{ t } [ 4 -45 <square-random-integer-matrix> mabs {
+{ t } [ 4 4 -45 <random-integer-matrix> mabs {
     [ flatten [ 45 <= ] all? ]
     [ well-formed-matrix? ]
     [ length 4 = ]
     [ first length 4 = ]
 } 1&& ] unit-test
 
-{ t } [ 2 1 <square-random-integer-matrix> mabs {
+{ t } [ 2 2 1 <random-integer-matrix> mabs {
     [ flatten [ 1 <= ] all? ]
     [ well-formed-matrix? ]
     [ length 2 = ]
@@ -139,7 +139,7 @@ IN: math.matrices.tests
     [ first length 4 = ]
 } 1&& ] unit-test
 
-{ t } [ 4 .89 <square-random-unit-matrix> mabs {
+{ t } [ 4 4 .89 <random-unit-matrix> mabs {
     [ flatten [ .89 <= ] all? ]
     [ well-formed-matrix? ]
     [ length 4 = ]

@@ -4,7 +4,7 @@ USING: accessors arrays classes.singleton columns combinators
 combinators.short-circuit combinators.smart formatting fry
 grouping kernel locals math math.bits math.functions math.order
 math.ranges math.statistics math.vectors math.vectors.private
-random sequences sequences.deep sequences.private summary ;
+sequences sequences.deep sequences.private summary ;
 IN: math.matrices
 
 ! defined here because of issue #1943
@@ -14,7 +14,6 @@ DEFER: well-formed-matrix?
         dup first length
         '[ length _ = ] all?
     ] if-empty ;
-
 
 ! the MRO (class linearization) is performed in the order the predicates appear here
 ! except that null-matrix is last (but it is relied upon by zero-matrix)
@@ -42,19 +41,6 @@ PREDICATE: zero-matrix < matrix
 PREDICATE: zero-square-matrix < square-matrix
     { [ zero-matrix? ] [ square-matrix? ] } 1&& ;
 
-! TODO: triangular predicates, etc?
-
-! questionable implementation
-SINGLETONS:      +full-rank+ +half-rank+ +zero-rank+ +deficient-rank+ +uncalculated-rank+ ;
-UNION: rank-kind +full-rank+ +half-rank+ +zero-rank+ +deficient-rank+ +uncalculated-rank+ ;
-
-ERROR: negative-power-matrix
-    { m matrix } { n integer } ;
-ERROR: non-square-determinant
-    { m integer }  { n integer } ;
-ERROR: undefined-inverse
-    { m integer }  { n integer } { r rank-kind initial: +uncalculated-rank+ } ;
-
 <PRIVATE
 : ordinal-suffix ( n -- suffix ) 10 mod abs {
         { 1 [ "st" ] }
@@ -62,13 +48,6 @@ ERROR: undefined-inverse
         { 3 [ "rd" ] }
         [ drop "th" ]
     } case ;
-
-M: negative-power-matrix summary
-    n>> dup ordinal-suffix "%s%s power of a matrix is undefined" sprintf ;
-M: non-square-determinant summary
-    [ m>> ] [ n>> ] bi "%s x %s matrix is not square and has no determinant" sprintf ;
-M: undefined-inverse summary
-    [ m>> ] [ n>> ] [ r>> name>> ] tri "%s x %s matrix with rank %s has no inverse" sprintf ;
 
 : (nth-from-end) ( n seq -- n )
     length 1 - swap - ; inline
@@ -79,9 +58,6 @@ M: undefined-inverse summary
 : set-nth-end ( elt n seq -- )
     [ (nth-from-end) ] keep set-nth ; inline
 
-DEFER: alternating-sign
-: finish-randomizing-matrix ( matrix -- matrix' )
-    [ f alternating-sign randomize ] map randomize ; inline
 PRIVATE>
 
 ! Benign matrix constructors
@@ -93,14 +69,6 @@ PRIVATE>
 
 : <matrix-by-indices> ( ... m n quot: ( ... m' n' -- ... elt ) -- ... matrix )
     [ [ <iota> ] bi@ ] dip cartesian-map ; inline
-
-: <random-integer-matrix> ( m n max -- matrix )
-    '[ _ _ 1 + random-integers ] replicate
-    finish-randomizing-matrix ; inline
-
-: <random-unit-matrix> ( m n max -- matrix )
-    '[ _ random-units [ _ * ] map ] replicate
-    finish-randomizing-matrix ; inline
 
 : <zero-matrix> ( m n -- matrix )
     0 <matrix> ; inline
@@ -142,10 +110,31 @@ ALIAS: <cartesian-indices> <coordinate-matrix>
 : <cartesian-square-indices> ( n -- matrix )
     dup 2array <cartesian-indices> ; inline
 
-DEFER: rows
-DEFER: cols
-DEFER: transpose
-DEFER: >square-matrix
+ALIAS: transpose flip
+
+! VERY slow
+: anti-transpose ( matrix -- newmatrix )
+    [ reverse ] map transpose [ reverse ] map ;
+
+: row ( n matrix -- row )
+    nth ; inline
+
+: rows ( seq matrix -- rows )
+    '[ _ row ] map ; inline
+
+: col ( n matrix -- col )
+    swap '[ _ swap nth ] map ; inline
+
+: cols ( seq matrix -- cols )
+    '[ _ col ] map ; inline
+
+:: >square-matrix ( m -- subset )
+    m dim first2 :> ( x y ) {
+        { [ x y = ] [ m ] }
+        { [ x y < ] [ x <iota> m cols transpose ] }
+        { [ x y > ] [ y <iota> m rows ] }
+    } cond ;
+
 GENERIC: <square-rows> ( desc -- matrix )
 M: integer <square-rows>
     <iota> <square-rows> ;
@@ -165,8 +154,6 @@ M: square-matrix <square-cols> ;
 M: matrix <square-cols>
     >square-matrix ;
 
-! -------------------------------------------------------------
-! end of the simple creators; here are the complex builders
 <PRIVATE ! implementation details of <lower-matrix> and <upper-matrix>
 : dimension-range ( matrix -- dim range )
     dim [ <coordinate-matrix> ] [ first [1,b] ] bi ;
@@ -186,37 +173,9 @@ DEFER: matrix-set-nths
 : <upper-matrix> ( object m n -- matrix )
     <zero-matrix> [ upper-matrix-indices ] [ matrix-set-nths ] [ ] tri ;
 
-! Special matrix constructors follow
-: <hankel-matrix> ( n -- matrix )
-  [ <iota> dup ] keep '[ + abs 1 + dup _ > [ drop 0 ] when ] cartesian-map ;
-
-: <hilbert-matrix> ( m n -- matrix )
-    [ <iota> ] bi@ [ + 1 + recip ] cartesian-map ;
-
-: <toeplitz-matrix> ( n -- matrix )
-    <iota> dup [ - abs 1 + ] cartesian-map ;
-
-: <box-matrix> ( r -- matrix )
-    2 * 1 + dup '[ _ 1 <array> ] replicate ;
-
-: <vandermonde-matrix> ( u n -- matrix )
-    <iota> [ v^n ] with map reverse flip ;
-
 ! element- and sequence-wise operations, getters and setters
 : stitch ( m -- m' )
     [ ] [ [ append ] 2map ] map-reduce ;
-
-: row ( n matrix -- row )
-    nth ; inline
-
-: rows ( seq matrix -- rows )
-    '[ _ row ] map ; inline
-
-: col ( n matrix -- col )
-    swap '[ _ swap nth ] map ; inline
-
-: cols ( seq matrix -- cols )
-    '[ _ col ] map ; inline
 
 : matrix-map ( matrix quot: ( ... elt -- ... elt' ) -- matrix' )
     '[ _ map ] map ; inline
@@ -294,29 +253,6 @@ ALIAS: cartesian-row-map cartesian-matrix-map
 : perp ( v u -- w )
     dupd proj v- ;
 
-! implementation details of slightly complicated math like gram schmidt
-<PRIVATE
-: (m^n) ( m n -- n )
-    make-bits over first length <identity-matrix>
-    [ [ dupd mdot ] when [ dup mdot ] dip ] reduce nip ;
-PRIVATE>
-DEFER: multiplicative-inverse
-! A^-1 is the inverse but other negative powers are nonsense
-: m^n ( m n -- n ) {
-        { [ dup -1 = ] [ drop multiplicative-inverse ] }
-        { [ dup 0 >= ] [ (m^n) ] }
-        [ negative-power-matrix ]
-    } cond ;
-
-: n^m ( n m -- n ) swap m^n ;
-
-:: >square-matrix ( m -- subset )
-    m dim first2 :> ( x y ) {
-        { [ x y = ] [ m ] }
-        { [ x y < ] [ x <iota> m cols transpose ] }
-        { [ x y > ] [ y <iota> m rows ] }
-    } cond ;
-
 ! well-defined for square matrices; but works on nonsquare too
 : main-diagonal ( matrix -- seq )
     >square-matrix [ swap nth ] map-index ; inline
@@ -325,11 +261,23 @@ DEFER: multiplicative-inverse
 : anti-diagonal ( matrix -- seq )
     >square-matrix [ swap nth-end ] map-index ; inline
 
-ALIAS: transpose flip
+<PRIVATE
+: (rows-iota) ( matrix -- rows-iota )
+    dim first <iota> ;
+: (cols-iota) ( matrix -- cols-iota )
+    dim second <iota> ;
 
-! VERY slow implementation
-: anti-transpose ( matrix -- newmatrix )
-    [ reverse ] map transpose [ reverse ] map ;
+: simple-rows-except ( matrix desc quot -- others )
+    curry [ dup (rows-iota) ] dip
+    pick reject-as swap rows ; inline
+
+: simple-cols-except ( matrix desc quot -- others )
+    curry [ dup (cols-iota) ] dip
+    pick reject-as swap cols transpose ; inline ! need to un-transpose the result of cols
+
+CONSTANT: scalar-except-quot [ = ]
+CONSTANT: sequence-except-quot [ member? ]
+PRIVATE>
 
 GENERIC: rows-except ( matrix desc -- others )
 M: integer rows-except  scalar-except-quot   simple-rows-except ;

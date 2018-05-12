@@ -1,6 +1,38 @@
 USING: math.matrices ;
 IN: math.matrices.extra
 
+! questionable implementation
+SINGLETONS:      +full-rank+ +half-rank+ +zero-rank+ +deficient-rank+ +uncalculated-rank+ ;
+UNION: rank-kind +full-rank+ +half-rank+ +zero-rank+ +deficient-rank+ +uncalculated-rank+ ;
+
+ERROR: negative-power-matrix
+    { m matrix } { n integer } ;
+ERROR: non-square-determinant
+    { m integer }  { n integer } ;
+ERROR: undefined-inverse
+    { m integer }  { n integer } { r rank-kind initial: +uncalculated-rank+ } ;
+
+M: negative-power-matrix summary
+    n>> dup ordinal-suffix "%s%s power of a matrix is undefined" sprintf ;
+M: non-square-determinant summary
+    [ m>> ] [ n>> ] bi "%s x %s matrix is not square and has no determinant" sprintf ;
+M: undefined-inverse summary
+    [ m>> ] [ n>> ] [ r>> name>> ] tri "%s x %s matrix with rank %s has no inverse" sprintf ;
+
+<PRIVATE
+DEFER: alternating-sign
+: finish-randomizing-matrix ( matrix -- matrix' )
+    [ f alternating-sign randomize ] map randomize ; inline
+PRIVATE>
+
+: <random-integer-matrix> ( m n max -- matrix )
+    '[ _ _ 1 + random-integers ] replicate
+    finish-randomizing-matrix ; inline
+
+: <random-unit-matrix> ( m n max -- matrix )
+    '[ _ random-units [ _ * ] map ] replicate
+    finish-randomizing-matrix ; inline
+
 <PRIVATE
 : (gram-schmidt) ( v seq -- newseq )
     [ dupd proj v- ] each ;
@@ -17,6 +49,22 @@ PRIVATE>
 
 : outer-product ( u v -- m )
     '[ _ n*v ] map ;
+
+! Special matrix constructors follow
+: <hankel-matrix> ( n -- matrix )
+  [ <iota> dup ] keep '[ + abs 1 + dup _ > [ drop 0 ] when ] cartesian-map ;
+
+: <hilbert-matrix> ( m n -- matrix )
+    [ <iota> ] bi@ [ + 1 + recip ] cartesian-map ;
+
+: <toeplitz-matrix> ( n -- matrix )
+    <iota> dup [ - abs 1 + ] cartesian-map ;
+
+: <box-matrix> ( r -- matrix )
+    2 * 1 + dup '[ _ 1 <array> ] replicate ;
+
+: <vandermonde-matrix> ( u n -- matrix )
+    <iota> [ v^n ] with map reverse flip ;
 
 ! Transformation matrices
 :: <rotation-matrix3> ( axis theta -- matrix )
@@ -100,22 +148,6 @@ PRIVATE>
 ! -------------------------------------------------
 ! numerical analysis of matrices follows
 <PRIVATE
-: (rows-iota) ( matrix -- rows-iota )
-    dim first <iota> ;
-: (cols-iota) ( matrix -- cols-iota )
-    dim second <iota> ;
-
-: simple-rows-except ( matrix desc quot -- others )
-    curry [ dup (rows-iota) ] dip
-    pick reject-as swap rows ; inline
-
-: simple-cols-except ( matrix desc quot -- others )
-    curry [ dup (cols-iota) ] dip
-    pick reject-as swap cols transpose ; inline ! need to un-transpose the result of cols
-
-CONSTANT: scalar-except-quot [ = ]
-CONSTANT: sequence-except-quot [ member? ]
-
 : square-rank ( square-matrix -- rank ) ;
 : nonsquare-rank ( matrix -- rank ) ;
 PRIVATE>
@@ -269,6 +301,21 @@ M: zero-matrix multiplicative-inverse
 
 M: matrix multiplicative-inverse
     (specialized-inverse) ;
+
+<PRIVATE
+: (m^n) ( m n -- n )
+    make-bits over first length <identity-matrix>
+    [ [ dupd mdot ] when [ dup mdot ] dip ] reduce nip ;
+PRIVATE>
+
+! A^-1 is the inverse but other negative powers are nonsense
+: m^n ( m n -- n ) {
+        { [ dup -1 = ] [ drop multiplicative-inverse ] }
+        { [ dup 0 >= ] [ (m^n) ] }
+        [ negative-power-matrix ]
+    } cond ;
+
+: n^m ( n m -- n ) swap m^n ;
 
 : covariance-matrix-ddof ( matrix ddof -- cov )
     '[ _ cov-ddof ] cartesian-column-map ; inline

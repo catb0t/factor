@@ -1,4 +1,7 @@
-USING: math.matrices ;
+USING: accessors arrays combinators formatting fry kernel locals
+math math.bits math.functions math.matrices
+math.matrices.private math.order math.statistics math.vectors
+random sequences sequences.deep summary ;
 IN: math.matrices.extras
 
 ! questionable implementation
@@ -279,15 +282,6 @@ PRIVATE>
 
 ! -----------------------------
 ! end of inverse operations !
-
-! TODO: use the faster algorithm here
-: invertible-matrix? ( matrix -- ? )
-    ! determinant zero?
-    [ dim first2 max <identity-matrix> ] keep
-    dup multiplicative-inverse mdot = ;
-
-: linearly-independent-matrix? ( matrix -- ? ) ;
-
 ! A^-1
 GENERIC: multiplicative-inverse ( matrix -- inverse )
 M: zero-square-matrix multiplicative-inverse
@@ -301,6 +295,15 @@ M: zero-matrix multiplicative-inverse
 
 M: matrix multiplicative-inverse
     (specialized-inverse) ;
+
+
+! TODO: use the faster algorithm here
+: invertible-matrix? ( matrix -- ? )
+    ! determinant zero?
+    [ dim first2 max <identity-matrix> ] keep
+    dup multiplicative-inverse mdot = ;
+
+: linearly-independent-matrix? ( matrix -- ? ) ;
 
 <PRIVATE
 : (m^n) ( m n -- n )
@@ -326,4 +329,4 @@ PRIVATE>
 : sample-covariance-matrix ( matrix -- cov )
     1 covariance-matrix-ddof ; inline
 
-: population-cov-matrix ( matrix -- cov ) 0 cov-matrix-ddof ; inline
+: population-covariance-matrix ( matrix -- cov ) 0 covariance-matrix-ddof ; inline

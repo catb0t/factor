@@ -1,7 +1,14 @@
 ! Copyright (C) 2005, 2010, 2018 Slava Pestov, Joe Groff, and Cat Stevens.
-USING: arrays combinators.short-circuit grouping kernel math math.matrices.extras math.matrices.extras.private
-math.statistics math.vectors sequences sequences.deep sets tools.test ;
-IN: math.matrices.extras.tests
+USING: arrays combinators.short-circuit grouping kernel math
+math.matrices math.matrices.extras math.matrices.extras.private
+math.statistics math.vectors sequences sequences.deep sets
+tools.test ;
+IN: math.matrices.extras
+
+<PRIVATE
+: call-eq? ( obj quots -- ? )
+    [ call( x -- x ) ] with map all-eq? ; !  inline
+PRIVATE>
 
 { {
     { 4181 6765 }
@@ -212,7 +219,7 @@ CONSTANT: test-points {
         { 23+59/147 6+15/49 27+17/49 }
     }
 } [
-    test-points population-cov-matrix
+    test-points population-covariance-matrix
 ] unit-test
 
 { t } [ { { 1 } }

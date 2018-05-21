@@ -1,9 +1,12 @@
-USING: help.syntax help.markup math.matrices.extras ;
+USING: arrays generic.single help.markup help.syntax kernel math
+math.matrices math.matrices.extras math.matrices.private
+math.order math.ratios math.vectors opengl.gl random sequences
+urls ;
 IN: math.matrices.extras
 
 ABOUT: "math.matrices.extras"
 
-ARTICLE: "math.matrices.extras" "Extra matrix operations" 
+ARTICLE: "math.matrices.extras" "Extra matrix operations"
 
 "These constructions have special mathematical properties:"
 { $subsections

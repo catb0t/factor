@@ -1,11 +1,12 @@
 ! Copyright (C) 2005, 2010, 2018 Slava Pestov, Joe Groff, and Cat Stevens.
 USING: arrays combinators.short-circuit grouping kernel math math.matrices math.matrices.private
 math.statistics math.vectors sequences sequences.deep sets tools.test ;
-IN: math.matrices.tests
+IN: math.matrices
 
+<PRIVATE
 : call-eq? ( obj quots -- ? )
     [ call( x -- x ) ] with map all-eq? ; !  inline
-
+PRIVATE>
 ! ------------------------
 ! predicates
 

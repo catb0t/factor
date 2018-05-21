@@ -1,5 +1,5 @@
 USING: math.matrices ;
-IN: math.matrices.extra
+IN: math.matrices.extras
 
 ! questionable implementation
 SINGLETONS:      +full-rank+ +half-rank+ +zero-rank+ +deficient-rank+ +uncalculated-rank+ ;
@@ -325,3 +325,5 @@ PRIVATE>
 
 : sample-covariance-matrix ( matrix -- cov )
     1 covariance-matrix-ddof ; inline
+
+: population-cov-matrix ( matrix -- cov ) 0 cov-matrix-ddof ; inline

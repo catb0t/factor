@@ -1,7 +1,7 @@
 ! Copyright (C) 2005, 2010, 2018 Slava Pestov, Joe Groff, and Cat Stevens.
-USING: arrays combinators.short-circuit grouping kernel math math.matrices math.matrices.private
+USING: arrays combinators.short-circuit grouping kernel math math.matrices.extras math.matrices.extras.private
 math.statistics math.vectors sequences sequences.deep sets tools.test ;
-IN: math.matrices.tests
+IN: math.matrices.extras.tests
 
 { {
     { 4181 6765 }
@@ -205,6 +205,15 @@ CONSTANT: test-points {
     { 23+59/147 6+15/49 27+17/49 }
 } } [ test-points covariance-matrix ] unit-test
 
+{
+    {
+        { 80+8/147 21+85/147 23+59/147 }
+        { 21+85/147 9+227/441 6+15/49 }
+        { 23+59/147 6+15/49 27+17/49 }
+    }
+} [
+    test-points population-cov-matrix
+] unit-test
 
 { t } [ { { 1 } }
     { [ drop 1 ] [ (1determinant) ] [ 1 swap (ndeterminant) ] [ determinant ] }

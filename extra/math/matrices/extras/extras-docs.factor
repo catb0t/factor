@@ -1,6 +1,9 @@
+USING: help.syntax help.markup math.matrices.extras ;
+IN: math.matrices.extras
 
-<random-integer-matrix>
-<random-unit-matrix>
+ABOUT: "math.matrices.extras"
+
+ARTICLE: "math.matrices.extras" "Extra matrix operations" 
 
 "These constructions have special mathematical properties:"
 { $subsections
@@ -21,6 +24,10 @@
     <scale-matrix4>
     <skew-matrix4>
     <translation-matrix4>
+
+    <random-integer-matrix>
+    <random-unit-matrix>
+
 }
 
 

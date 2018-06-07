@@ -250,6 +250,7 @@ M: matrix determinant
 ! -----------------------------------------------------
 ! inverse operations and implementations follow
 ALIAS: additive-inverse mneg
+ALIAS: multiplicative-inverse recip
 
 ! per element, find the determinant of all other elements except the element's row / col
 ! https://www.mathsisfun.com/algebra/matrix-inverse-minors-cofactors-adjugate.html
@@ -290,28 +291,23 @@ ALIAS: additive-inverse mneg
     } case ;
 PRIVATE>
 
-! -----------------------------
-! end of inverse operations !
-! A^-1
-GENERIC: multiplicative-inverse ( matrix -- inverse )
-M: zero-square-matrix multiplicative-inverse
+M: zero-square-matrix recip
     length <zero-square-matrix> ;
 
-M: square-matrix multiplicative-inverse
+M: square-matrix recip
     (square-inverse) ;
 
-M: zero-matrix multiplicative-inverse
+M: zero-matrix recip
     dim first2 <zero-matrix> ; ! TODO: error based on rankiness
 
-M: matrix multiplicative-inverse
+M: matrix recip
     (specialized-inverse) ;
-
 
 ! TODO: use the faster algorithm here
 : invertible-matrix? ( matrix -- ? )
     ! determinant zero?
     [ dim first2 max <identity-matrix> ] keep
-    dup multiplicative-inverse mdot = ;
+    dup recip mdot = ;
 
 : linearly-independent-matrix? ( matrix -- ? ) ;
 
@@ -323,7 +319,7 @@ PRIVATE>
 
 ! A^-1 is the inverse but other negative powers are nonsense
 : m^n ( m n -- n ) {
-        { [ dup -1 = ] [ drop multiplicative-inverse ] }
+        { [ dup -1 = ] [ drop recip ] }
         { [ dup 0 >= ] [ (m^n) ] }
         [ negative-power-matrix ]
     } cond ;

@@ -12,7 +12,7 @@ DEFER: well-formed-matrix?
 : well-formed-matrix? ( object -- ? )
     [ t ] [
         dup first length
-        '[ length _ = ] all?
+        '[ _ length = ] all?
     ] if-empty ;
 
 ! the MRO (class linearization) is performed in the order the predicates appear here
@@ -20,10 +20,10 @@ DEFER: well-formed-matrix?
 ! in other words:
 ! sequence > matrix > zero-matrix > square-matrix > zero-square-matrix > null-matrix
 
-DEFER: dim
 PREDICATE: matrix < sequence
     { [ [ sequence? ] all? ] [ well-formed-matrix? ] } 1&& ;
 
+DEFER: dim
 ! can't define dim using this predicate for this reason,
 ! unless we are going to write two versions of dim, one of which is generic
 PREDICATE: square-matrix < matrix
@@ -42,13 +42,6 @@ PREDICATE: zero-square-matrix < square-matrix
     { [ zero-matrix? ] [ square-matrix? ] } 1&& ;
 
 <PRIVATE
-: ordinal-suffix ( n -- suffix ) 10 mod abs {
-        { 1 [ "st" ] }
-        { 2 [ "nd" ] }
-        { 3 [ "rd" ] }
-        [ drop "th" ]
-    } case ;
-
 : (nth-from-end) ( n seq -- n )
     length 1 - swap - ; inline
 
@@ -142,7 +135,7 @@ M: sequence <square-rows>
     [ length ] keep >array '[ _ clone ] { } replicate-as ;
 
 M: square-matrix <square-rows> ;
-M: matrix <square-rows> >square-matrix ; ! could no-method here but coercing to square is more useful
+M: matrix <square-rows> >square-matrix ; ! coercing to square is more useful than no-method
 
 GENERIC: <square-cols> ( desc -- matrix )
 M: integer <square-cols>
@@ -182,7 +175,6 @@ DEFER: matrix-set-nths
 
 : column-map ( matrix quot: ( ... col -- ... col' ) -- matrix' )
     [ transpose ] dip map transpose ; inline
-    ! [ [ first length <iota> ] keep ] dip '[ _ col @ ] map ; inline
 
 ! row-map would make sense compared to column-map
 ALIAS: row-map map

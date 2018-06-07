@@ -15,12 +15,21 @@ ERROR: non-square-determinant
 ERROR: undefined-inverse
     { m integer }  { n integer } { r rank-kind initial: +uncalculated-rank+ } ;
 
+<PRIVATE
+: ordinal-suffix ( n -- suffix ) 10 mod abs {
+        { 1 [ "st" ] }
+        { 2 [ "nd" ] }
+        { 3 [ "rd" ] }
+        [ drop "th" ]
+    } case ;
+PRIVATE>
+
 M: negative-power-matrix summary
     n>> dup ordinal-suffix "%s%s power of a matrix is undefined" sprintf ;
 M: non-square-determinant summary
-    [ m>> ] [ n>> ] bi "%s x %s matrix is not square and has no determinant" sprintf ;
+    [ m>> ] [ n>> ] bi "non-square %s x %s matrix has no determinant" sprintf ;
 M: undefined-inverse summary
-    [ m>> ] [ n>> ] [ r>> name>> ] tri "%s x %s matrix with rank %s has no inverse" sprintf ;
+    [ m>> ] [ n>> ] [ r>> name>> ] tri "%s x %s matrix of rank %s has no inverse" sprintf ;
 
 <PRIVATE
 DEFER: alternating-sign
@@ -151,6 +160,7 @@ PRIVATE>
 ! -------------------------------------------------
 ! numerical analysis of matrices follows
 <PRIVATE
+
 : square-rank ( square-matrix -- rank ) ;
 : nonsquare-rank ( matrix -- rank ) ;
 PRIVATE>

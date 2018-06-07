@@ -4,28 +4,17 @@ USING: kernel locals math math.vectors math.matrices
 namespaces sequences fry sorting ;
 IN: math.matrices.elimination
 
-SYMBOL: matrix
+: change-row ( ..a row# quot: ( ..a seq -- ..b seq ) matrix -- ..b )
+    swap change-nth ; inline
 
-: with-matrix ( matrix quot -- )
-    matrix swap [ matrix get ] compose with-variable ; inline
-
-: nth-row ( row# -- seq ) matrix get nth ;
-
-: change-row ( ..a row# quot: ( ..a seq -- ..b seq ) -- ..b )
-    matrix get swap change-nth ; inline
-
-: exchange-rows ( row# row# -- ) matrix get exchange ;
-
-: rows ( -- n ) matrix get length ;
-
-: cols ( -- n ) 0 nth-row length ;
+: exchange-rows ( pair matrix -- ) swap first2 exchange ;
 
 : skip ( i seq quot -- n )
     over [ find-from drop ] dip swap [ ] [ length ] ?if ; inline
 
 : first-col ( row# -- n )
     ! First non-zero column
-    0 swap nth-row [ zero? not ] skip ;
+    0 swap matrix-nth [ zero? not ] skip ;
 
 : clear-scale ( col# pivot-row i-row -- n )
     overd nth dup zero? [
@@ -67,7 +56,7 @@ SYMBOL: matrix
     ] if ;
 
 : echelon ( matrix -- matrix' )
-    [ 0 0 (echelon) ] with-matrix ;
+    0 0 (echelon) ;
 
 : nonzero-rows ( matrix -- matrix' )
     [ [ zero? ] all? ] reject ;

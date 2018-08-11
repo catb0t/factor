@@ -165,6 +165,9 @@ macosx-x86-fat:
 linux-x86-32:
 	$(MAKE) $(ALL) CONFIG=vm/Config.linux.x86.32
 
+haiku-x86-64: 
+	$(MAKE) $(ALL) CONFIG=vm/Config.haiku.x86.64
+
 linux-x86-64:
 	$(MAKE) $(ALL) CONFIG=vm/Config.linux.x86.64
 

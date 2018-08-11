@@ -252,6 +252,7 @@ find_os() {
         *Darwin*) OS=macosx;;
         *linux*) OS=linux;;
         *Linux*) OS=linux;;
+ 		Haiku)   OS=haiku;;
     esac
 }
 
@@ -280,6 +281,7 @@ find_num_cores() {
     case $uname_s in
         CYGWIN_NT-5.2-WOW64 | *CYGWIN_NT* | *CYGWIN* | MINGW32*) NUM_CORES=$NUMBER_OF_PROCESSORS;;
         *darwin* | *Darwin* | *linux* | *Linux*) NUM_CORES=$(getconf _NPROCESSORS_ONLN);;
+        Haiku) 2;;
     esac
 }
 

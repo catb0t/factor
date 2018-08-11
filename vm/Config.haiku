@@ -1,0 +1,35 @@
+# inherited from Unix config
+ifndef DEBUG
+	SITE_CFLAGS += -fomit-frame-pointer
+endif
+
+EXE_SUFFIX =
+DLL_PREFIX = lib
+DLL_EXTENSION = .a
+SHARED_DLL_EXTENSION = .so
+SHARED_FLAG = -shared
+
+PLAF_DLL_OBJS = vm/os-unix.o
+PLAF_EXE_OBJS += vm/main-unix.o
+PLAF_MASTER_HEADERS += vm/os-unix.hpp
+
+FFI_TEST_CFLAGS = -fPIC
+
+# LINKER = gcc -shared -o
+# LINK_WITH_ENGINE = '-Wl,-rpath,$$ORIGIN' -lfactor
+
+LINKER = $(AR) rcs
+LINK_WITH_ENGINE = -Wl,--whole-archive -lfactor -Wl,-no-whole-archive
+
+# inherited from Linux config
+PLAF_DLL_OBJS += vm/os-haiku.o # vm/os-genunix.o vm/mvm-unix.o
+PLAF_MASTER_HEADERS += vm/os-haiku.o # vm/os-genunix.hpp vm/os-linux.hpp
+LIBS = -ldl -lm -lrt -lpthread -Wl,--export-dynamic
+
+# GCC is the Official compiler of Haiku, clang is not a problem
+
+# clang spams warnings if we use -Wl,--no-as-needed with -c
+# -Wl,--no-as-needed is a gcc optimization, not required
+# ifneq ($(CXX),clang++)
+#	SITE_CFLAGS += -Wl,--no-as-needed
+# endif

@@ -1,33 +1,48 @@
 ! Copyright (C) 2006, 2010 Slava Pestov.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: kernel locals math math.vectors math.matrices
+USING: tools.deprecation kernel locals math math.vectors math.matrices
 namespaces sequences fry sorting ;
 IN: math.matrices.elimination
 
-SYMBOL: matrix
+SYMBOL: matrix deprecated
 
-: overd ( x y z -- x y x z ) [ over ] dip ;
+: overd ( x y z -- x y x z ) [ over ] dip ; deprecated
 
 : with-matrix ( matrix quot -- )
-    matrix swap [ matrix get ] compose with-variable ; inline
+    matrix swap [ matrix get ] compose with-variable ; inline deprecated
 
-: nth-row ( row# -- seq ) matrix get nth ;
+: ~with-matrix ( matrix quot: ( matrix -- matrix ) -- matrix )
+    call( matrix -- matrix ) ;
+
+: nth-row ( row# -- seq ) matrix get nth ; deprecated
+: ~nth-row ( row# matrix -- seq ) nth ;
 
 : change-row ( ..a row# quot: ( ..a seq -- ..b seq ) -- ..b )
-    matrix get swap change-nth ; inline
+    matrix get swap change-nth ; inline deprecated
 
-: exchange-rows ( row# row# -- ) matrix get exchange ;
+: ~change-row ( a row# matrix quot: ( ..a seq -- ..b seq ) -- matrix )
+    change-nth ; inline
 
-: rows ( -- n ) matrix get length ;
+: exchange-rows ( row# row# -- ) matrix get exchange ; deprecated
+: ~exchange-rows ( row# row# matrix -- ) exchange ;
 
-: cols ( -- n ) 0 nth-row length ;
+! rename these
+: rows ( -- n ) matrix get length ; deprecated
+: ~count-rows ( matrix -- n ) length ;
+
+: cols ( -- n ) 0 nth-row length ; deprecated
+: ~count-cols ( matrix -- n ) 0 ~nth-row length ;
 
 : skip ( i seq quot -- n )
     over [ find-from drop ] dip swap [ ] [ length ] ?if ; inline
 
 : first-col ( row# -- n )
     ! First non-zero column
-    0 swap nth-row [ zero? not ] skip ;
+    0 swap nth-row [ zero? not ] skip ; deprecated
+
+: ~first-nonzero-col ( row# matrix -- n )
+    ! First non-zero column
+    0 swap ~nth-row [ zero? not ] skip ;
 
 : clear-scale ( col# pivot-row i-row -- n )
     overd nth dup zero? [
@@ -43,22 +58,42 @@ SYMBOL: matrix
 : (clear-col) ( col# pivot-row i -- )
     [ [ clear-scale ] 2keep [ n*v ] dip v+ ] change-row ;
 
+: ~(clear-col) ( col# pivot-row i -- )
+    [ [ clear-scale ] 2keep [ n*v ] dip v+ ] ~change-row ;
+
 : rows-from ( row# -- slice )
-    rows dup <iota> <slice> ;
+    rows dup <iota> <slice> ; deprecated
+
+: ~rows-from ( row# matrix -- slice )
+    ~count-rows dup <iota> <slice> ;
 
 : clear-col ( col# row# rows -- )
-    [ nth-row ] dip [ [ 2dup ] dip (clear-col) ] each 2drop ;
+    [ nth-row ] dip [ [ 2dup ] dip (clear-col) ] each 2drop ; deprecated
+
+: ~clear-col ( col# row# rows -- )
+    [ ~nth-row ] dip [ [ 2dup ] dip ~(clear-col) ] each 2drop ;
 
 : do-row ( exchange-with row# -- )
     [ exchange-rows ] keep
     [ first-col ] keep
-    dup 1 + rows-from clear-col ;
+    dup 1 + rows-from clear-col ; deprecated
+
+: ~do-row ( exchange-with row# -- )
+    [ ~exchange-rows ] keep
+    [ ~first-nonzero-col ] keep
+    dup 1 + ~rows-from ~clear-col ;
 
 : find-row ( row# quot -- i elt )
-    [ rows-from ] dip find ; inline
+    [ rows-from ] dip find ; inline deprecated
+
+: ~find-row ( row# quot -- i elt )
+    [ ~rows-from ] dip find ; inline
 
 : pivot-row ( col# row# -- n )
     [ dupd nth-row nth zero? not ] find-row 2nip ;
+
+: ~pivot-row ( col# row# -- n )
+    [ dupd ~nth-row nth zero? not ] ~find-row 2nip ;
 
 : (echelon) ( col# row# -- )
     over cols < over rows < and [
@@ -68,8 +103,19 @@ SYMBOL: matrix
         2drop
     ] if ;
 
+: ~(echelon) ( col# row# matrix -- )
+    over ~count-cols < over ~count-rows < and [
+        2dup ~pivot-row [ over ~do-row 1 + ] when*
+        [ 1 + ] dip ~(echelon)
+    ] [
+        2drop
+    ] if ;
+
 : echelon ( matrix -- matrix' )
     [ 0 0 (echelon) ] with-matrix ;
+
+: ~echelon ( matrix -- matrix' )
+    [ 0 0 ~(echelon) ] ~with-matrix ;
 
 : nonzero-rows ( matrix -- matrix' )
     [ [ zero? ] all? ] reject ;

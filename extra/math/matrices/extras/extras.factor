@@ -1,3 +1,5 @@
+! Copyright (C) 2005, 2010, 2018 Slava Pestov, Joe Groff, and Cat Stevens.
+! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays combinators formatting fry kernel locals
 math math.bits math.functions math.matrices
 math.matrices.private math.order math.statistics math.vectors

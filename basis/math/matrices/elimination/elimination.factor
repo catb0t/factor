@@ -1,7 +1,7 @@
 ! Copyright (C) 2006, 2010 Slava Pestov.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: tools.deprecation kernel locals math math.vectors math.matrices
-namespaces sequences fry sorting ;
+USING: combinators.short-circuit tools.deprecation kernel locals math
+math.vectors math.matrices namespaces sequences fry sorting ;
 IN: math.matrices.elimination
 
 SYMBOL: matrix deprecated
@@ -20,7 +20,7 @@ SYMBOL: matrix deprecated
 : change-row ( ..a row# quot: ( ..a seq -- ..b seq ) -- ..b )
     matrix get swap change-nth ; inline deprecated
 
-: ~change-row ( a row# matrix quot: ( ..a seq -- ..b seq ) -- matrix )
+: ~change-row ( ..a row# matrix quot: ( ..a seq -- ..b seq ) -- ..b matrix )
     change-nth ; inline
 
 : exchange-rows ( row# row# -- ) matrix get exchange ; deprecated
@@ -58,8 +58,8 @@ SYMBOL: matrix deprecated
 : (clear-col) ( col# pivot-row i -- )
     [ [ clear-scale ] 2keep [ n*v ] dip v+ ] change-row ;
 
-: ~(clear-col) ( col# pivot-row i -- )
-    [ [ clear-scale ] 2keep [ n*v ] dip v+ ] ~change-row ;
+: ~(clear-col) ( col# pivot-row matrix i -- )
+    [ [ clear-scale ] 2keep [ n*v ] dip v+ ] change-nth ;
 
 : rows-from ( row# -- slice )
     rows dup <iota> <slice> ; deprecated
@@ -70,15 +70,15 @@ SYMBOL: matrix deprecated
 : clear-col ( col# row# rows -- )
     [ nth-row ] dip [ [ 2dup ] dip (clear-col) ] each 2drop ; deprecated
 
-: ~clear-col ( col# row# rows -- )
-    [ ~nth-row ] dip [ [ 2dup ] dip ~(clear-col) ] each 2drop ;
+: ~clear-col ( col# row# matrix rows -- )
+    [ ~nth-row ] dip [ [ 2dup ] 2dip ~(clear-col) 2drop ] each ;
 
 : do-row ( exchange-with row# -- )
     [ exchange-rows ] keep
     [ first-col ] keep
     dup 1 + rows-from clear-col ; deprecated
 
-: ~do-row ( exchange-with row# -- )
+: ~do-row ( exchange-with row# matrix -- )
     [ ~exchange-rows ] keep
     [ ~first-nonzero-col ] keep
     dup 1 + ~rows-from ~clear-col ;
@@ -90,7 +90,7 @@ SYMBOL: matrix deprecated
     [ ~rows-from ] dip find ; inline
 
 : pivot-row ( col# row# -- n )
-    [ dupd nth-row nth zero? not ] find-row 2nip ;
+    [ dupd nth-row nth zero? not ] find-row 2nip ; deprecated
 
 : ~pivot-row ( col# row# -- n )
     [ dupd ~nth-row nth zero? not ] ~find-row 2nip ;
@@ -103,19 +103,20 @@ SYMBOL: matrix deprecated
         2drop
     ] if ;
 
-: ~(echelon) ( col# row# matrix -- )
+: ~(echelon) ( col# row# matrix -- matrix )
+    { [ nip ~count-cols < ] [ ~count-rows nip ] } 3&&
     over ~count-cols < over ~count-rows < and [
         2dup ~pivot-row [ over ~do-row 1 + ] when*
         [ 1 + ] dip ~(echelon)
     ] [
-        2drop
+        2nip
     ] if ;
 
 : echelon ( matrix -- matrix' )
     [ 0 0 (echelon) ] with-matrix ;
 
 : ~echelon ( matrix -- matrix' )
-    [ 0 0 ~(echelon) ] ~with-matrix ;
+    0 0 ~(echelon) ;
 
 : nonzero-rows ( matrix -- matrix' )
     [ [ zero? ] all? ] reject ;
@@ -131,13 +132,26 @@ SYMBOL: matrix deprecated
             dup nth-row leading drop
             [ swap dup <iota> clear-col ] [ drop ] if*
         ] each
-    ] with-matrix ;
+    ] with-matrix ; deprecated
+
+: ~reduced ( matrix' -- matrix'' )
+    ~count-rows <iota> <reversed> [
+        dup ~nth-row leading drop
+        [ swap dup <iota> ~clear-col ] [ drop ] if*
+    ] each ;
 
 :: basis-vector ( row col# -- )
     row clone :> row'
     col# row' nth neg recip :> a
     0 col# row' set-nth
-    a row n*v col# matrix get set-nth ;
+    a row n*v col# matrix get set-nth ; deprecated
+
+! don't mutate the input blease
+:: ~basis-vector ( row col# matrix -- )
+    row clone :> row'
+    col# row' nth neg recip :> a
+    0 col# row' set-nth
+    a row n*v col# matrix set-nth ;
 
 : nullspace ( matrix -- seq )
     echelon reduced dup empty? [
@@ -147,15 +161,33 @@ SYMBOL: matrix deprecated
                 [ basis-vector ] [ drop ] if*
             ] each
         ] with-matrix flip nonzero-rows
+    ] unless ; deprecated
+
+: ~nullspace ( matrix -- seq )
+    ~echelon ~reduced dup empty? [
+        dup first length <identity-matrix>
+            [
+                dup leading drop
+                [ ~basis-vector ] [ drop ] if*
+            ] each
+        flip nonzero-rows
     ] unless ;
 
 : 1-pivots ( matrix -- matrix )
     [ dup leading nip [ recip v*n ] when* ] map ;
 
 : solution ( matrix -- matrix )
-    echelon nonzero-rows reduced 1-pivots ;
+    echelon nonzero-rows reduced 1-pivots ; deprecated
+
+: ~solution ( matrix -- matrix )
+    ~echelon nonzero-rows ~reduced 1-pivots ;
 
 : inverse ( matrix -- matrix ) ! Assumes an invertible matrix
     dup length
     [ <identity-matrix> [ append ] 2map solution ] keep
+    [ tail ] curry map ; deprecated
+
+: ~inverse ( matrix -- matrix ) ! Assumes an invertible matrix
+    dup length
+    [ <identity-matrix> [ append ] 2map ~solution ] keep
     [ tail ] curry map ;

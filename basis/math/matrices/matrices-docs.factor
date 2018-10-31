@@ -55,6 +55,7 @@ PRIVATE>
 ABOUT: "math.matrices"
 
 ARTICLE: "math.matrices" "Matrix operations"
+
 "The " { $vocab-link "math.matrices" } " vocabulary implements many ways of working with " { $emphasis "matrices" } " — sequences which have a minimum of 2 dimensions. Operations on 1-dimensional numeric vectors are implemented in " { $vocab-link "math.vectors" } ", upon which this vocabulary relies."
 $nl
 "In this vocabulary's documentation, " { $snippet "m" } " and " { $snippet "matrix" } " are the conventional names used for a given matrix object. " { $snippet "m" } " may refer to a number."
@@ -556,12 +557,37 @@ HELP: row-map
 
 HELP: cartesian-matrix-map
 { $values { "matrix" matrix } { "quot" { $quotation ( ... pair elt -- ... elt' ) } } { "matrix'" matrix } }
-{ $notelist { $equiv-word-note "orthogonal" cartesian-column-map } { $equiv-word-note "two-dimensional" map-index } $2d-only-note }
+{ $description "Calls the quotation with the matrix and the coordinate pair of the current element on the stack, with the matrix on the top of the stack." }
+{ $examples
+  { $example
+    "USING: arrays math.matrices prettyprint ;"
+    "{ { 0 1 } { 2 3 } } [ 2array ] cartesian-matrix-map ."
+"{
+    {
+        { { 0 0 } { { 0 1 } { 2 3 } } }
+        { { 0 1 } { { 0 1 } { 2 3 } } }
+    }
+    {
+        { { 1 0 } { { 0 1 } { 2 3 } } }
+        { { 1 1 } { { 0 1 } { 2 3 } } }
+    }
+}"
+  }
+}
+{ $notelist
+  { $equiv-word-note "orthogonal" cartesian-column-map }
+  { $equiv-word-note "two-dimensional" map-index }
+  $2d-only-note
+}
 ;
 
 HELP: cartesian-column-map
 { $values { "matrix" matrix } { "quot" { $quotation ( ... pair elt -- ... elt' ) } } { "matrix'" matrix } }
-{ $notelist { $equiv-word-note "orthogonal" cartesian-matrix-map } $2d-only-note }
+! { $description "" }
+{ $notelist
+  { $equiv-word-note "orthogonal" cartesian-matrix-map }
+  $2d-only-note
+}
 ;
 
 HELP: matrix-nth
@@ -779,14 +805,8 @@ HELP: n/m
 { $examples
     { $example
         "USING: kernel math.matrices prettyprint ;"
-        "2 2 <box-matrix> n/m ."
-"{
-    { 2 2 2 2 2 }
-    { 2 2 2 2 2 }
-    { 2 2 2 2 2 }
-    { 2 2 2 2 2 }
-    { 2 2 2 2 2 }
-}"
+        "2 { { 4 5 } { 2 1 } } n/m ."
+        "{ { 1/2 2/5 } { 1 2 } }"
     }
 } ;
 
@@ -802,14 +822,8 @@ HELP: m/n
 { $examples
     { $example
         "USING: kernel math.matrices prettyprint ;"
-        "2 <box-matrix> 2 m/n ."
-"{
-    { 1/2 1/2 1/2 1/2 1/2 }
-    { 1/2 1/2 1/2 1/2 1/2 }
-    { 1/2 1/2 1/2 1/2 1/2 }
-    { 1/2 1/2 1/2 1/2 1/2 }
-    { 1/2 1/2 1/2 1/2 1/2 }
-}"
+        "{ { 4 5 } { 2 1 } } 2 m/n ."
+        "{ { 2 2+1/2 } { 1 1/2 } }"
     }
 } ;
 

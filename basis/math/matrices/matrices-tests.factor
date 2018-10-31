@@ -388,7 +388,9 @@ PRIVATE>
 { t } [ 50 <iota> <anti-diagonal-matrix> dup anti-transpose = ] unit-test
 { { 4 3 2 1 } } [ { 1 2 3 4 } <diagonal-matrix> anti-transpose main-diagonal ] unit-test
 
+<PRIVATE
 SYMBOLS: A B C D E F G H I J K L M N O P ;
+PRIVATE>
 { { {
     { E F G H }
     { I J K L }

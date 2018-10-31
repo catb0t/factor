@@ -12,7 +12,7 @@ DEFER: well-formed-matrix?
 : well-formed-matrix? ( object -- ? )
     [ t ] [
         dup first length
-        '[ _ length = ] all?
+        '[ length _ = ] all?
     ] if-empty ;
 
 ! the MRO (class linearization) is performed in the order the predicates appear here
@@ -179,6 +179,7 @@ DEFER: matrix-set-nths
 ! row-map would make sense compared to column-map
 ALIAS: row-map map
 
+! a simpler verison of this like matrix-map except but map-index should be possible
 : cartesian-matrix-map ( matrix quot: ( ... pair elt -- ... elt' ) -- matrix' )
     [ [ first length <cartesian-square-indices> ] keep ] dip
     '[ _ @ ] matrix-map ; inline

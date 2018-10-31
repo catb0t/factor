@@ -1,5 +1,5 @@
 USING: arrays generic.single help.markup help.syntax kernel math
-math.matrices math.matrices.extras math.matrices.private
+math.matrices math.matrices.private math.matrices.extras
 math.order math.ratios math.vectors opengl.gl random sequences
 urls ;
 IN: math.matrices.extras
@@ -75,12 +75,12 @@ ARTICLE: "math.matrices.extras" "Extra matrix operations"
 HELP: invertible-matrix?
 { $values { "matrix" matrix } { "?" boolean } }
 { $description "Tests whether the input matrix has a " { $link multiplicative-inverse } ". In order for a matrix to be invertible, it must be a " { $link square-matrix } ", " { $emphasis "or" } ", if it is non-square, it must not be of " { $link +deficient-rank+ } "." }
-{ $examples { $example "USING: math.matrices prettyprint ;" "" } } ;
+{ $examples { $example "USING: math.matrices.extras prettyprint ;" "" } } ;
 
 HELP: linearly-independent-matrix?
 { $values { "matrix" matrix } { "?" boolean } }
 { $description "Tests whether the input matrix is linearly independent." }
-{ $examples { $example "USING: math.matrices prettyprint ;" "" } } ;
+{ $examples { $example "USING: math.matrices.extras prettyprint ;" "" } } ;
 
 ! SINGLETON RANK TYPES
 HELP: rank-kind
@@ -124,7 +124,7 @@ HELP: <random-integer-matrix>
 { $errors { $link no-method } " if " { $snippet "max"} " is not an " { $link integer } "." }
 { $examples
     { $unchecked-example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
         "2 4 15 <random-integer-matrix> ."
         "{ { -9 -9 1 3 } { -14 -8 14 10 } }"
     }
@@ -140,7 +140,7 @@ HELP: <random-unit-matrix>
 }
 { $examples
     { $unchecked-example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
         "4 2 15 <random-unit-matrix> ."
 "{
     { -3.713295909201797 3.815787135075961 }
@@ -166,7 +166,7 @@ HELP: <hankel-matrix>
 }
 { $examples
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
         "4 <hankel-matrix> ."
         "{ { 1 2 3 4 } { 2 3 4 0 } { 3 4 0 0 } { 4 0 0 0 } }"
     }
@@ -183,12 +183,12 @@ HELP: <hilbert-matrix>
 }
 { $examples
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
         "1 2 <hilbert-matrix> ."
         "{ { 1 1/2 } }"
     }
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
         "3 6 <hilbert-matrix> ."
 "{
     { 1 1/2 1/3 1/4 1/5 1/6 }
@@ -204,7 +204,7 @@ HELP: <toeplitz-matrix>
 }
 { $examples
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
         "4 <toeplitz-matrix> ."
         "{ { 1 2 3 4 } { 2 1 2 3 } { 3 2 1 2 } { 4 3 2 1 } }"
     }
@@ -215,7 +215,7 @@ HELP: <box-matrix>
 { $description "Create a box matrix (a " { $link square-matrix } ") with the dimensions of " { $snippet "r x r" } ", filled with ones. The number of elements in the output scales linearly (" { $snippet "(r*2)+1" } ") with " { $snippet "r" } "." }
 { $examples
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
         "2 <box-matrix> ."
 "{
     { 1 1 1 1 1 }
@@ -226,7 +226,7 @@ HELP: <box-matrix>
 }"
     }
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
         "3 <box-matrix> ."
 "{
     { 1 1 1 1 1 1 1 }
@@ -250,7 +250,7 @@ HELP: <scale-matrix3>
 }
 { $examples
     { $example
-        "USING: kernel math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
         "{ 22 33 -44 } <scale-matrix4> ."
 "{
     { 22 0.0 0.0 0.0 }
@@ -270,7 +270,7 @@ HELP: <scale-matrix4>
 }
 { $examples
     { $example
-        "USING: kernel math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
         "{ 22 33 -44 } <scale-matrix4> ."
 "{
     { 22 0.0 0.0 0.0 }
@@ -290,7 +290,7 @@ HELP: <ortho-matrix4>
 }
 { $examples
     { $example
-        "USING: kernel math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
         "{ -9.3 100 1/2 } <ortho-matrix4> ."
 "{
     { -0.1075268817204301 0.0 0.0 0.0 }
@@ -307,7 +307,7 @@ HELP: <frustum-matrix4>
 { $notes { $finite-input-note "two" "xy-dim" } }
 { $examples
     { $example
-        "USING: kernel math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
         "{ 5 4 } 5 6 <frustum-matrix4> ."
 "{
     { 1.0 0.0 0.0 0.0 }
@@ -330,7 +330,7 @@ HELP: gram-schmidt
 { $description "Apply a Gram-Schmidt transform on the matrix." }
 { $examples
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
         "{ { 1 2 } { 3 4 } { 5 6 } } gram-schmidt ."
         "{ { 1 2 } { 4/5 -2/5 } { 0 0 } }"
     }
@@ -341,7 +341,7 @@ HELP: gram-schmidt-normalize
 { $description "Apply a Gram-Schmidt transform on the matrix, and " { $link normalize } " each row of the result." }
 { $examples
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
         "{ { 1 2 } { 3 4 } { 5 6 } } gram-schmidt-normalize ."
 "{
     { 0.4472135954999579 0.8944271909999159 }
@@ -366,7 +366,7 @@ HELP: m^n
 }
 { $examples
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
         "{ { 1 2 } { 3 4 } } 2 m^n ."
         "{ { 7 10 } { 15 22 } }"
     }
@@ -387,7 +387,7 @@ HELP: n^m
 }
 { $examples
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
         "2 { { 1 2 } { 3 4 } } n^m ."
         "{ { 7 10 } { 15 22 } }"
     }
@@ -403,7 +403,7 @@ HELP: kronecker-product
 }
 { $examples
     { $unchecked-example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
 "{
     { 1 2 }
     { 3 4 }
@@ -424,7 +424,7 @@ HELP: outer-product
 { $description "Computes the " { $url URL" http://  enwp.org/Outer_product" "outer-product product" } " of " { $snippet "u" } " and " { $snippet "v" } "." }
 { $examples
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
         "{ 5 6 7 } { 1 2 3 } outer-product ."
         "{ { 5 10 15 } { 6 12 18 } { 7 14 21 } }" }
 } ;
@@ -442,7 +442,7 @@ HELP: determinant
 { $errors { $link non-square-determinant } " if the input matrix is not a " { $link square-matrix } "." }
 { $examples
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
 "{
     {  3  0 -1 }
     { -3  1  3 }
@@ -451,7 +451,7 @@ HELP: determinant
         "44"
     }
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
 "{
     { -8 -8 13 11 10 -5 -14 }
     { 3 -11 -8 3 -7 -3 4 }
@@ -479,7 +479,7 @@ HELP: 1/det
 }
 { $examples
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
 "{
     { 0 10 -12 4 }
     { -9 6 -11 9 }
@@ -500,7 +500,7 @@ HELP: m*1/det
 }
 { $examples
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
 "{
     { -14 0 -13 7 }
     { -4 11 7 -12 }
@@ -528,7 +528,7 @@ HELP: >minors
 { $errors { $link non-square-determinant } " if the input matrix is not a " { $link square-matrix } "." }
 { $examples
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
 "{
     { -8 0 7 -11 }
     { 15 0 -3 -11 }
@@ -554,7 +554,7 @@ HELP: >cofactors
 }
 { $examples
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
 "{
     { 8 0 7 11 }
     { 15 0 3 11 }
@@ -569,7 +569,7 @@ HELP: >cofactors
 }"
     }
     { $example
-        "USING: math.matrices prettyprint ;"
+        "USING: math.matrices.extras prettyprint ;"
 "{
     { -8 0 7 -11 }
     { 15 0 -3 -11 }

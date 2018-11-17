@@ -178,6 +178,7 @@ DEFER: matrix-set-nths
 
 ! row-map would make sense compared to column-map
 ALIAS: row-map map
+ALIAS: row-map2 map
 
 ! a simpler verison of this like matrix-map except but map-index should be possible
 : cartesian-matrix-map ( matrix quot: ( ... pair elt -- ... elt' ) -- matrix' )

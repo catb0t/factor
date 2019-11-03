@@ -2,8 +2,9 @@
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors colors.constants game.debug game.loop
 game.worlds gpu gpu.framebuffers gpu.util.wasd kernel literals
-locals make math math.matrices math.parser math.trig sequences
-specialized-arrays ui.gadgets.worlds ui.pixel-formats ;
+locals make math math.matrices math.matrices.extras math.parser
+math.trig sequences specialized-arrays ui.gadgets.worlds
+ui.pixel-formats ;
 FROM: alien.c-types => float ;
 SPECIALIZED-ARRAY: float
 IN: game.debug.tests

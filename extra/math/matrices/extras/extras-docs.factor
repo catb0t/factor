@@ -58,7 +58,6 @@ ARTICLE: "math.matrices.extras" "Extra matrix operations"
 } { $subsections
     determinant 1/det m*1/det
     >minors >cofactors
-    additive-inverse
     multiplicative-inverse
 }
 
@@ -319,12 +318,6 @@ HELP: <frustum-matrix4>
 } ;
 { <frustum-matrix4> glFrustum } related-words
 
-
-HELP: additive-inverse
-{ $values { "m" matrix } { "m'" matrix } }
-{ $description "An alias for " { $link mneg } " which serves as the companion to " { $link multiplicative-inverse } "." }
-{ $notelist $2d-only-note { $matrix-scalar-note neg } } ;
-
 HELP: gram-schmidt
 { $values { "matrix" matrix } { "orthogonal" matrix } }
 { $description "Apply a Gram-Schmidt transform on the matrix." }
@@ -337,8 +330,8 @@ HELP: gram-schmidt
 } ;
 
 HELP: gram-schmidt-normalize
-{ $values { "matrix" matrix } { "orthogonal" matrix } }
-{ $description "Apply a Gram-Schmidt transform on the matrix, and " { $link normalize } " each row of the result." }
+{ $values { "matrix" matrix } { "orthonormal" matrix } }
+{ $description "Apply a Gram-Schmidt transform on the matrix, and " { $link normalize } " each row of the result, resulting in an orthogonal and normalized matrix (orthonormal)." }
 { $examples
     { $example
         "USING: math.matrices.extras prettyprint ;"
@@ -352,7 +345,7 @@ HELP: gram-schmidt-normalize
 } ;
 
 HELP: m^n
-{ $values { "n" object } { "m" matrix } }
+{ $values { "m" matrix } { "n" object } }
 { $description "Compute the " { $snippet "nth" } " power of the input matrix. If " { $snippet "n" } " is " { $snippet "-1" } ", the inverse of the matrix is calculated (but see " { $link multiplicative-inverse } " for pitfalls)." }
 { $errors
     { $link negative-power-matrix } " if " { $snippet "n" } " is a negative number other than " { $snippet "-1" } "."
@@ -429,8 +422,12 @@ HELP: outer-product
         "{ { 5 10 15 } { 6 12 18 } { 7 14 21 } }" }
 } ;
 
-HELP: rank ;
-HELP: nullity ;
+HELP: rank
+{ $values { "matrix" matrix } { "rank" rank-kind } }
+;
+HELP: nullity
+{ $values { "matrix" matrix } { "nullity" rank-kind } }
+;
 
 HELP: determinant
 { $values { "matrix" square-matrix } { "determinant" number } }
@@ -494,7 +491,7 @@ HELP: m*1/det
 { $values { "matrix" square-matrix } { "matrix'" square-matrix } }
 { $description "Multiply the input matrix by the inverse (" { $link recip } ") of its " { $link determinant } "." }
 { $notelist
-    { "This word is used to implement " { $link multiplicative-inverse } "." }
+    { "This word is used to implement " { $link recip } " for " { $link square-matrix } "." }
     $2d-only-note
     { $matrix-scalar-note determinant recip }
 }
@@ -586,17 +583,25 @@ HELP: >cofactors
 } ;
 
 HELP: multiplicative-inverse
-{ $values { "matrix" matrix } { "inverse" matrix } }
+{ $values { "x" matrix } { "y" matrix } }
 { $description "Calculate the multiplicative inverse of the input." $nl "If the input is a " { $link square-matrix } ", this is done by multiplying the " { $link transpose } " of the " { $link2 >cofactors "cofactors" } " of the " { $link2 >minors "minors" } " of the input matrix by the " { $link2 1/det "inverse of the determinant" } " of the input matrix."  }
 { $notelist
     $keep-shape-note
     $2d-only-note
     { $matrix-scalar-note determinant >cofactors 1/det }
 }
-{ $errors { $link non-square-determinant } " if the input matrix is not a " { $link square-matrix } "." }
+{ $errors { $link non-square-determinant } " if the input matrix is not a " { $link square-matrix } "." } ;
+
+
+HELP: covariance-matrix-ddof
+{ $values { "matrix" matrix } { "ddof" object } { "cov" matrix } }
 ;
-
-
-HELP: covariance-matrix ;
-HELP: covariance-matrix-ddof ;
-HELP: sample-covariance-matrix ;
+HELP: covariance-matrix
+{ $values { "matrix" matrix } { "cov" matrix } }
+;
+HELP: sample-covariance-matrix
+{ $values { "matrix" matrix } { "cov" matrix } }
+;
+HELP: population-covariance-matrix
+{ $values { "matrix" matrix } { "cov" matrix } }
+;

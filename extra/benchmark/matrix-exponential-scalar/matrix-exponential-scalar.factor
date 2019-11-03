@@ -1,4 +1,4 @@
-USING: locals math math.combinatorics math.matrices
+USING: locals math math.combinatorics math.matrices math.matrices.extras
 prettyprint sequences typed ;
 IN: benchmark.matrix-exponential-scalar
 

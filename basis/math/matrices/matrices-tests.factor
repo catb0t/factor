@@ -357,7 +357,6 @@ PRIVATE>
 { t } [ 0 dup <zero-matrix> null-matrix? ] unit-test
 { f } [ 0 dup <zero-matrix> zero-matrix? ] unit-test
 { f } [ 4 <identity-matrix> zero-matrix? ] unit-test
-{ f } [ 4 <box-matrix> zero-matrix? ] unit-test
 
 { t } [ { }                 well-formed-matrix? ] unit-test
 { t } [ { { } }             well-formed-matrix? ] unit-test
@@ -671,4 +670,3 @@ PRIVATE>
     { [ length 16 = ] [ [ 9 = ] all? ] }
     1&&
 ] unit-test
-

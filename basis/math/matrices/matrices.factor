@@ -176,10 +176,6 @@ DEFER: matrix-set-nths
 : column-map ( matrix quot: ( ... col -- ... col' ) -- matrix' )
     [ transpose ] dip map transpose ; inline
 
-! row-map would make sense compared to column-map
-ALIAS: row-map map
-ALIAS: row-map2 map
-
 ! a simpler verison of this like matrix-map except but map-index should be possible
 : cartesian-matrix-map ( matrix quot: ( ... pair elt -- ... elt' ) -- matrix' )
     [ [ first length <cartesian-square-indices> ] keep ] dip
@@ -187,8 +183,6 @@ ALIAS: row-map2 map
 
 : cartesian-column-map ( matrix quot: ( ... pair elt -- ... elt' ) -- matrix' )
     [ cols first2 ] prepose cartesian-matrix-map ; inline
-
-ALIAS: cartesian-row-map cartesian-matrix-map
 
 : matrix-nth ( pair matrix -- elt )
     [ first2 swap ] dip nth nth ; inline
@@ -229,23 +223,10 @@ ALIAS: cartesian-row-map cartesian-matrix-map
 
 : mmin ( m -- n ) [ 1/0. ] dip [ [ min ] each ] each ;
 : mmax ( m -- n ) [ -1/0. ] dip [ [ max ] each ] each ;
-: mnorm ( m -- n ) dup mmax abs m/n ;
+: mnorm ( m -- m' ) dup mmax abs m/n ;
 : m-infinity-norm ( m -- n ) [ [ abs ] map-sum ] map supremum ;
 : m-1norm ( m -- n ) flip m-infinity-norm ;
 : frobenius-norm ( m -- n ) [ [ sq ] map-sum ] map-sum sqrt ;
-
-: cross ( vec1 vec2 -- vec3 )
-    [ [ { 1 2 0 } vshuffle ] [ { 2 0 1 } vshuffle ] bi* v* ]
-    [ [ { 2 0 1 } vshuffle ] [ { 1 2 0 } vshuffle ] bi* v* ] 2bi v- ; inline
-
-:: normal ( vec1 vec2 vec3 -- vec4 )
-    vec2 vec1 v- vec3 vec1 v- cross normalize ; inline
-
-: proj ( v u -- w )
-    [ [ v. ] [ norm-sq ] bi / ] keep n*v ;
-
-: perp ( v u -- w )
-    dupd proj v- ;
 
 ! well-defined for square matrices; but works on nonsquare too
 : main-diagonal ( matrix -- seq )

@@ -116,7 +116,8 @@ $nl
 "Transformations and elements of matrices:"
 { $subsections
     dim transpose
-    matrix-nth matrix-nths matrix-set-nth matrix-set-nths
+    matrix-nth matrix-nths
+    matrix-set-nth matrix-set-nths
 
 } { $subsections
     row rows rows-except
@@ -126,12 +127,11 @@ $nl
     matrix-except matrix-except-all
 
 } { $subsections
-    matrix-map column-map row-map stitch
+    matrix-map column-map stitch
 
 } { $subsections
     cartesian-matrix-map
     cartesian-column-map
-    cartesian-row-map
 }
 
 { $subsections
@@ -200,7 +200,7 @@ HELP: <matrix>
 } ;
 
 HELP: <matrix-by>
-{ $values { "m" integer } { "n" integer } { "quot" { $quotation ( ... -- elt ) } } }
+{ $values { "m" integer } { "n" integer } { "quot" { $quotation ( ... -- elt ) } } { "matrix" matrix } }
 { $description "Creates a matrix of size " { $snippet "m x n" } " using elements given by " { $snippet "quot" } ", a quotation called to create each element."  }
 { $notes "The following are equivalent:"
   { $code "m n [ 2drop foo ] <matrix-by-indices>" }
@@ -520,7 +520,7 @@ HELP: cols
 } ;
 
 HELP: matrix-map
-{ $values { "quot" { $quotation ( ... elt -- ... elt' ) } } { "matrix" matrix } { "matrix'" matrix } }
+{ $values { "matrix" matrix } { "quot" { $quotation ( ... elt -- ... elt' ) } } { "matrix'" matrix } }
 { $description "Apply the quotation to every element of the matrix." }
 { $notelist $2d-only-note }
 { $examples
@@ -532,25 +532,13 @@ HELP: matrix-map
 } ;
 
 HELP: column-map
-{ $values { "quot" { $quotation ( ... col -- ... col' ) } } { "matrix" matrix } { "matrix'" { $maybe sequence matrix } } }
+{ $values { "matrix" matrix } { "quot" { $quotation ( ... col -- ... col' ) } } { "matrix'" { $maybe sequence matrix } } }
 { $description "Apply the quotation to every column of the matrix. The output of the quotation must be a sequence." }
-{ $notelist $2d-only-note { $equiv-word-note "transpose" row-map } }
+{ $notelist $2d-only-note { $equiv-word-note "transpose" map } }
 { $examples
     { $example
         "USING: sequences math.matrices prettyprint ;"
         "3 <identity-matrix> [ reverse ] column-map ."
-        "{ { 0 0 1 } { 0 1 0 } { 1 0 0 } }"
-    }
-} ;
-
-HELP: row-map
-{ $values { "quot" { $quotation ( ... col -- ... col' ) } } { "matrix" matrix } { "matrix'" { $maybe sequence matrix } } }
-{ $description "Apply the quotation to every row of the matrix. The output of the quotation must be a sequence." }
-{ $notelist $2d-only-note { $equiv-word-note "transpose" column-map } { $equiv-word-note "aliased" map } }
-{ $examples
-    { $example
-        "USING: sequences math.matrices prettyprint ;"
-        "3 <identity-matrix> [ reverse ] row-map ."
         "{ { 0 0 1 } { 0 1 0 } { 1 0 0 } }"
     }
 } ;
@@ -664,7 +652,7 @@ HELP: matrix-set-nths
 
 HELP: mneg
 { $values { "m" matrix } { "m'" matrix } }
-{ $description "Negate (invert the sign) of every element in the matrix." }
+{ $description "Negate (invert the sign) of every element in the matrix. The resulting matrix is called the " { $emphasis "additive inverse" } " of the input matrix." }
 { $notelist
     { $equiv-word-note "companion" mabs }
     $2d-only-note
@@ -711,7 +699,7 @@ HELP: n+m
 } ;
 
 HELP: m+n
-{ $values { "n" object } { "m" matrix }  }
+{ $values { "m" matrix } { "n" object } }
 { $description { $snippet "n" } " is treated as a scalar and added to each element of the matrix " { $snippet "m" } "." }
 { $notelist
     { $equiv-word-note "swapped" n+m }
@@ -743,7 +731,7 @@ HELP: n-m
 } ;
 
 HELP: m-n
-{ $values { "n" object } { "m" matrix }  }
+{ $values { "m" matrix } { "n" object } }
 { $description { $snippet "n" } " is treated as a scalar and subtracted from each element of the matrix " { $snippet "m" } "." }
 { $notelist
     { $equiv-word-note "swapped" n-m }
@@ -776,7 +764,7 @@ HELP: n*m
 } ;
 
 HELP: m*n
-{ $values { "n" object } { "m" matrix }  }
+{ $values { "m" matrix } { "n" object } }
 { $description "Every element in the input matrix " { $snippet "m" } " is multiplied by the scalar "{ $snippet "n" } "." }
 { $notelist
     $keep-shape-note
@@ -811,7 +799,7 @@ HELP: n/m
 } ;
 
 HELP: m/n
-{ $values { "n" object } { "m" matrix }  }
+{ $values { "m" matrix } { "n" object } }
 { $description "Every element in the input matrix " { $snippet "m" } " is divided by the scalar "{ $snippet "n" } "." }
 { $notelist
     $keep-shape-note
@@ -904,7 +892,7 @@ HELP: mdotv
 } ;
 
 HELP: vdotm
-{ $values { "m" matrix } { "v" sequence } { "p" matrix } }
+{ $values { "v" sequence } { "m" matrix } { "p" matrix } }
 { $description "Computes the dot product of a vector and a matrix." }
 { $notelist
     { $equiv-word-note "swapped" mdotv }
@@ -1073,7 +1061,7 @@ HELP: anti-diagonal
 
 HELP: transpose
 { $values { "matrix" matrix } { "newmatrix" matrix } }
-{ $description "Transpose the input matrix over its " { $link main-diagonal } ". The main diagonal itself is left untouched, whereas the anti-diagonal is reversed." }
+{ $description "Transpose the input matrix over its " { $link main-diagonal } ". The main diagonal itself is preserved, whereas the anti-diagonal is reversed." }
 { $notelist
     { "This word is an alias for " { $link flip } ", so that it may be recognised as the common mathematical operation." }
     { $equiv-word-note "opposite" anti-transpose }
@@ -1094,7 +1082,7 @@ HELP: transpose
 
 HELP: anti-transpose
 { $values { "matrix" matrix } { "newmatrix" matrix } }
-{ $description "Like " { $link transpose } " except that the matrix is transposed over the " { $link anti-diagonal } "." }
+{ $description "Like " { $link transpose } " except that the matrix is transposed over the " { $link anti-diagonal } ", so that the anti-diagonal itself is preserved and the " { $link main-diagonal } " is reversed." }
 { $notes { $equiv-word-note "opposite" transpose } }
 { $examples
     { $example
@@ -1131,7 +1119,7 @@ HELP: cols-except
 HELP: matrix-except
 { $values { "matrix" matrix } { "exclude-pair" pair } { "submatrix" matrix } } ;
 HELP: matrix-except-all
-{ $values { "matrix-seq" matrix } { "submatrix" matrix } } ;
+{ $values { "matrix-seq" matrix } { "expansion" matrix } } ;
 
 
 HELP: dim

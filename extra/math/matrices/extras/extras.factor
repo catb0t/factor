@@ -2,8 +2,8 @@
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays combinators formatting fry kernel locals
 math math.bits math.functions math.matrices
-math.matrices.private math.order math.statistics math.vectors
-random sequences sequences.deep summary ;
+math.matrices.private math.order math.statistics math.text.english
+math.vectors random sequences sequences.deep summary ;
 IN: math.matrices.extras
 
 ! questionable implementation
@@ -16,15 +16,6 @@ ERROR: non-square-determinant
     { m integer }  { n integer } ;
 ERROR: undefined-inverse
     { m integer }  { n integer } { r rank-kind initial: +uncalculated-rank+ } ;
-
-<PRIVATE
-: ordinal-suffix ( n -- suffix ) 10 mod abs {
-        { 1 [ "st" ] }
-        { 2 [ "nd" ] }
-        { 3 [ "rd" ] }
-        [ drop "th" ]
-    } case ;
-PRIVATE>
 
 M: negative-power-matrix summary
     n>> dup ordinal-suffix "%s%s power of a matrix is undefined" sprintf ;
@@ -61,7 +52,7 @@ PRIVATE>
 : kronecker-product ( m1 m2 -- m )
     '[ [ _ n*m  ] map ] map stitch stitch ;
 
-: outer-product ( u v -- m )
+: outer-product ( u v -- matrix )
     '[ _ n*v ] map ;
 
 ! Special matrix constructors follow
@@ -251,7 +242,6 @@ M: matrix determinant
 
 ! -----------------------------------------------------
 ! inverse operations and implementations follow
-ALIAS: additive-inverse mneg
 ALIAS: multiplicative-inverse recip
 
 ! per element, find the determinant of all other elements except the element's row / col

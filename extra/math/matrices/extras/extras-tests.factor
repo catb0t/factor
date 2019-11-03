@@ -28,7 +28,6 @@ PRIVATE>
 { t } [ 50 <box-matrix> dup                  anti-transpose = ] unit-test
 { f } [ 4 <box-matrix> zero-matrix? ] unit-test
 
-
 { t } [ 2 4 15 <random-integer-matrix> mabs {
     [ flatten [ 15 <= ] all? ]
     [ well-formed-matrix? ]

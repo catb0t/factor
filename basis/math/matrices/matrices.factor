@@ -70,7 +70,6 @@ PRIVATE>
     dup <zero-matrix> ; inline
 
 ! main-diagonal matrix
-! running time is improved by 10% over the old implementation
 : <diagonal-matrix> ( diagonal-seq -- matrix )
     [ length <zero-square-matrix> ] keep over
     '[ dup _ nth set-nth ] each-index ; inline
@@ -270,6 +269,6 @@ M: sequence cols-except sequence-except-quot simple-cols-except ;
     matrix-seq dim [ <iota> ] map first2 cartesian-product
     [ [ matrix-seq swap matrix-except ] map ] map ;
 
-: dim ( matrix -- dimensions )
+: matrix-dim ( matrix -- dimensions )
     [ { 0 0 } ]
     [ [ length ] [ first length ] bi 2array ] if-empty ;

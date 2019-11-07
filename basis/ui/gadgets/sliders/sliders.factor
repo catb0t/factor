@@ -31,7 +31,7 @@ TUPLE: elevator < gadget direction ;
 CONSTANT: elevator-padding 4
 
 : elevator-length ( slider -- n )
-    [ elevator>> dim>> ] [ orientation>> ] bi vdot
+    [ elevator>> dim>> ] [ orientation>> ] bi v.
     elevator-padding 2 * [-] ;
 
 CONSTANT: min-thumb-dim 30
@@ -68,7 +68,7 @@ TUPLE: thumb < track ;
 
 : do-drag ( thumb -- )
     find-slider {
-        [ orientation>> drag-loc vdot ]
+        [ orientation>> drag-loc v. ]
         [ screen>slider ]
         [ saved>> + ]
         [ model>> set-range-value ]
@@ -114,7 +114,7 @@ CONSTANT: vertical-thumb-tiles
 
 : compute-direction ( elevator -- -1/1 )
     [ hand-click-rel ] [ find-slider ] bi
-    [ orientation>> vdot ]
+    [ orientation>> v. ]
     [ screen>slider ]
     [ slider-value - sgn ]
     tri ;

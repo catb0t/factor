@@ -111,7 +111,7 @@ $nl
 { $subsections m+ m- m* m/ m~ }
 
 "Dot product (multiplication) of vectors and matrices:"
-{ $subsections vdotm mdotv mdot }
+{ $subsections v.m m.v m. }
 
 "Transformations and elements of matrices:"
 { $subsections
@@ -875,39 +875,39 @@ HELP: m/
     }
 } ;
 
-HELP: mdotv
+HELP: m.v
 { $values { "m" matrix } { "v" sequence } { "p" matrix } }
 { $description "Computes the dot product of a matrix and a vector." }
 { $notelist
-    { $equiv-word-note "swapped" vdotm }
+    { $equiv-word-note "swapped" v.m }
     $2d-only-note
     { $matrix-scalar-note * + }
 }
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
-        "{ { 1 -1 2 } { 0 -3 1 } } { 2 1 0 } mdotv ."
+        "{ { 1 -1 2 } { 0 -3 1 } } { 2 1 0 } m.v ."
         "{ 1 -3 }"
     }
 } ;
 
-HELP: vdotm
+HELP: v.m
 { $values { "v" sequence } { "m" matrix } { "p" matrix } }
 { $description "Computes the dot product of a vector and a matrix." }
 { $notelist
-    { $equiv-word-note "swapped" mdotv }
+    { $equiv-word-note "swapped" m.v }
     $2d-only-note
     { $matrix-scalar-note * + }
 }
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
-        "{ 2 1 0 } { { 1 -1 2 } { 0 -3 1 } } vdotm ."
+        "{ 2 1 0 } { { 1 -1 2 } { 0 -3 1 } } v.m ."
         "{ 2 -5 5 }"
     }
 } ;
 
-HELP: mdot
+HELP: m.
 { $values { "m" matrix } }
 { $description "Computes the dot product of two matrices, i.e multiplies them." }
 { $notelist
@@ -917,7 +917,7 @@ HELP: mdot
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
-        "{ { 1 -1 2 } { 0 -3 1 } } { { 3 7 } { 9 12 } } mdot ."
+        "{ { 1 -1 2 } { 0 -3 1 } } { { 3 7 } { 9 12 } } m. ."
         "{ { -6 -5 } { -27 -36 } }"
     }
 } ;

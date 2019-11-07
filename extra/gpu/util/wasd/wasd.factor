@@ -40,12 +40,12 @@ M: wasd-world wasd-fly-vertically? drop t ;
 : wasd-mv-matrix ( world -- matrix )
     [ { 1.0 0.0 0.0 } swap pitch>> <rotation-matrix4> ]
     [ { 0.0 1.0 0.0 } swap yaw>>   <rotation-matrix4> ]
-    [ location>> vneg <translation-matrix4> ] tri mdot mdot ;
+    [ location>> vneg <translation-matrix4> ] tri m. m. ;
 
 : wasd-mv-inv-matrix ( world -- matrix )
     [ location>> <translation-matrix4> ]
     [ {  0.0 -1.0 0.0 } swap yaw>>   <rotation-matrix4> ]
-    [ { -1.0  0.0 0.0 } swap pitch>> <rotation-matrix4> ] tri mdot mdot ;
+    [ { -1.0  0.0 0.0 } swap pitch>> <rotation-matrix4> ] tri m. m. ;
 
 : wasd-p-matrix ( world -- matrix )
     p-matrix>> ;
@@ -69,7 +69,7 @@ CONSTANT: fov 0.7
     loc world dim>> [ /f 0.5 - 2.0 * ] 2map
     world wasd-fov-vector v*
     first2 neg -1.0 0.0 4array
-    world wasd-mv-inv-matrix swap mdotv ;
+    world wasd-mv-inv-matrix swap m.v ;
 
 : set-wasd-view ( world location yaw pitch -- world )
     [ >>location ] [ >>yaw ] [ >>pitch ] tri* ;
@@ -85,7 +85,7 @@ CONSTANT: fov 0.7
     cosy         0.0       siny        neg  3array
     siny sinp *  cosp      cosy sinp *      3array
     siny cosp *  sinp neg  cosy cosp *      3array 3array
-    v swap vdotm ;
+    v swap v.m ;
 
 : ?pitch ( world -- pitch )
     dup wasd-fly-vertically? [ pitch>> ] [ drop 0.0 ] if ;

@@ -203,8 +203,8 @@ DEFER: (d)
     [ v- ] 2map ;
 
 ! Laplacian
-: m.m' ( matrix -- matrix' ) dup flip mdot ;
-: m'.m ( matrix -- matrix' ) dup flip swap mdot ;
+: m.m' ( matrix -- matrix' ) dup flip m. ;
+: m'.m ( matrix -- matrix' ) dup flip swap m. ;
 
 : empty-matrix? ( matrix -- ? )
     [ t ] [ first empty? ] if-empty ;

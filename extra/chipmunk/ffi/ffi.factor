@@ -63,7 +63,7 @@ TYPED: cpvmult ( v1: cpVect s -- v2: cpVect )
     [ swap x>> * ]
     [ swap y>> * ] 2bi cpv ; inline
 
-TYPED: cpvdot ( v1: cpVect v2: cpVect -- s )
+TYPED: cpv. ( v1: cpVect v2: cpVect -- s )
     [ [ x>> ] bi@ * ]
     [ [ y>> ] bi@ * ] 2bi + ; inline
 
@@ -79,8 +79,8 @@ TYPED: cpvrperp ( v1: cpVect -- v2: cpVect )
 
 TYPED: cpvproject ( v1: cpVect v2: cpVect -- v3: cpVect )
     [ nip ]
-    [ cpvdot ]
-    [ nip dup cpvdot ]
+    [ cpv. ]
+    [ nip dup cpv. ]
     2tri / cpvmult ; inline
 
 TYPED: cpvrotate ( v1: cpVect v2: cpVect -- v3: cpVect )
@@ -104,7 +104,7 @@ TYPED: cpvunrotate ( v1: cpVect v2: cpVect -- v3: cpVect )
     ] 2bi cpv ; inline
 
 TYPED: cpvlengthsq ( v: cpVect -- s )
-    dup cpvdot ; inline
+    dup cpv. ; inline
 
 TYPED: cpvlerp ( v1: cpVect v2: cpVect s -- v3: cpVect )
     [ nip 1.0 swap - cpvmult ]
@@ -120,7 +120,7 @@ TYPED: cpvnormalize_safe ( v1: cpVect -- v2: cpVect )
 
 TYPED: cpvclamp ( v1: cpVect len -- v2: cpVect )
     2dup
-    [ dup cpvdot ]
+    [ dup cpv. ]
     [ sq ] 2bi* >
     [ [ cpvnormalize ] dip cpvmult ]
     [ drop ] if ; inline
@@ -443,20 +443,20 @@ FUNCTION: cpVect cpPolyShapeGetVert ( cpShape* shape, int idx )
 
 TYPED: cpPolyShapeValueOnAxis ( poly: cpPolyShape n: cpVect d -- min-dist )
     swap rot [ numVerts>> ] [ tVerts>> swap cpVect <c-direct-array> ] bi swap
-    [ cpvdot ] curry [ min ] reduce swap - ; inline
+    [ cpv. ] curry [ min ] reduce swap - ; inline
 
 TYPED: cpPolyShapeContainsVert ( poly: cpPolyShape v: cpVect -- ? )
     swap [ numVerts>> ] [ tAxes>> swap cpPolyShapeAxis <c-direct-array> ] bi swap
     [
-        [ [ n>> ] dip cpvdot ] [ drop d>> ] 2bi -
+        [ [ n>> ] dip cpv. ] [ drop d>> ] 2bi -
     ] curry [ max ] reduce 0.0 <= ; inline
 
 TYPED: cpPolyShapeContainsVertPartial ( poly: cpPolyShape v: cpVect n: cpVect -- ? )
     rot [ numVerts>> ] [ tAxes>> swap cpPolyShapeAxis <c-direct-array> ] bi -rot
     [| axis v n |
-        axis n>> n cpvdot 0.0 < 0
+        axis n>> n cpv. 0.0 < 0
         [ 0.0 ]
-        [ axis n>> v cpvdot axis d>> - ]
+        [ axis n>> v cpv. axis d>> - ]
         if
     ] 2curry [ max ] reduce 0.0 <= ; inline
 

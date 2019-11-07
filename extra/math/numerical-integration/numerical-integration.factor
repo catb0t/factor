@@ -18,4 +18,4 @@ SYMBOL: num-steps
 : integrate-simpson ( from to quot -- x )
     [ setup-simpson-range dup ] dip
     map dup generate-simpson-weights
-    vdot swap [ third ] keep first - 6 / * ; inline
+    v. swap [ third ] keep first - 6 / * ; inline

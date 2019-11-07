@@ -13,7 +13,7 @@ IN: math.similarity
     over length 3 < [ 2drop 1.0 ] [ population-corr 0.5 * 0.5 + ] if ;
 
 : cosine-similarity ( a b -- n )
-    [ vdot ] [ [ norm ] bi@ * ] 2bi / ;
+    [ v. ] [ [ norm ] bi@ * ] 2bi / ;
 
 <PRIVATE
 

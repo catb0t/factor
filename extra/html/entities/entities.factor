@@ -1864,7 +1864,7 @@ CONSTANT: html5 H{
     { "sigmaf;" "\u0003c2" }
     { "sigmav;" "\u0003c2" }
     { "sim;" "\u00223c" }
-    { "simdot;" "\u002a6a" }
+    { "sim.;" "\u002a6a" }
     { "sime;" "\u002243" }
     { "simeq;" "\u002243" }
     { "simg;" "\u002a9e" }

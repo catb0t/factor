@@ -299,14 +299,14 @@ M: matrix recip
 : invertible-matrix? ( matrix -- ? )
     ! determinant zero?
     [ dim first2 max <identity-matrix> ] keep
-    dup recip mdot = ;
+    dup recip m. = ;
 
 : linearly-independent-matrix? ( matrix -- ? ) ;
 
 <PRIVATE
 : (m^n) ( m n -- n )
     make-bits over first length <identity-matrix>
-    [ [ dupd mdot ] when [ dup mdot ] dip ] reduce nip ;
+    [ [ dupd m. ] when [ dup m. ] dip ] reduce nip ;
 PRIVATE>
 
 ! A^-1 is the inverse but other negative powers are nonsense

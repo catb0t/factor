@@ -23,11 +23,11 @@ DEFER: well-formed-matrix?
 PREDICATE: matrix < sequence
     { [ [ sequence? ] all? ] [ well-formed-matrix? ] } 1&& ;
 
-DEFER: dim
+DEFER: matrix-dim
 ! can't define dim using this predicate for this reason,
 ! unless we are going to write two versions of dim, one of which is generic
 PREDICATE: square-matrix < matrix
-    { [ well-formed-matrix? ] [ dim all-eq? ] } 1&& ;
+    { [ well-formed-matrix? ] [ matrix-dim all-eq? ] } 1&& ;
 
 ! really truly empty
 PREDICATE: null-matrix < matrix
@@ -121,7 +121,7 @@ ALIAS: transpose flip
     '[ _ col ] map ; inline
 
 :: >square-matrix ( m -- subset )
-    m dim first2 :> ( x y ) {
+    m matrix-dim first2 :> ( x y ) {
         { [ x y = ] [ m ] }
         { [ x y < ] [ x <iota> m cols transpose ] }
         { [ x y > ] [ y <iota> m rows ] }
@@ -148,7 +148,7 @@ M: matrix <square-cols>
 
 <PRIVATE ! implementation details of <lower-matrix> and <upper-matrix>
 : dimension-range ( matrix -- dim range )
-    dim [ <coordinate-matrix> ] [ first [1,b] ] bi ;
+    matrix-dim [ <coordinate-matrix> ] [ first [1,b] ] bi ;
 
 : upper-matrix-indices ( matrix -- matrix' )
     dimension-range <reversed> [ tail-slice* >array ] 2map concat ;
@@ -175,7 +175,7 @@ DEFER: matrix-set-nths
 : column-map ( matrix quot: ( ... col -- ... col' ) -- matrix' )
     [ transpose ] dip map transpose ; inline
 
-! a simpler verison of this like matrix-map except but map-index should be possible
+! a simpler verison of this, like matrix-map -except, but map-index, should be possible
 : cartesian-matrix-map ( matrix quot: ( ... pair elt -- ... elt' ) -- matrix' )
     [ [ first length <cartesian-square-indices> ] keep ] dip
     '[ _ @ ] matrix-map ; inline
@@ -237,9 +237,9 @@ DEFER: matrix-set-nths
 
 <PRIVATE
 : (rows-iota) ( matrix -- rows-iota )
-    dim first <iota> ;
+    matrix-dim first <iota> ;
 : (cols-iota) ( matrix -- cols-iota )
-    dim second <iota> ;
+    matrix-dim second <iota> ;
 
 : simple-rows-except ( matrix desc quot -- others )
     curry [ dup (rows-iota) ] dip
@@ -265,9 +265,9 @@ M: sequence cols-except sequence-except-quot simple-cols-except ;
 : matrix-except ( matrix exclude-pair -- submatrix )
     first2 [ rows-except ] dip cols-except ;
 
-:: matrix-except-all ( matrix-seq -- expansion )
-    matrix-seq dim [ <iota> ] map first2 cartesian-product
-    [ [ matrix-seq swap matrix-except ] map ] map ;
+:: matrix-except-all ( matrix -- expansion )
+    matrix matrix-dim [ <iota> ] map first2 cartesian-product
+    [ [ matrix swap matrix-except ] map ] map ;
 
 : matrix-dim ( matrix -- dimensions )
     [ { 0 0 } ]

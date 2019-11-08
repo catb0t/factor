@@ -115,7 +115,7 @@ $nl
 
 "Transformations and elements of matrices:"
 { $subsections
-    dim transpose
+    matrix-dim transpose
     matrix-nth matrix-nths
     matrix-set-nth matrix-set-nths
 
@@ -549,15 +549,15 @@ HELP: cartesian-matrix-map
 { $examples
   { $example
     "USING: arrays math.matrices prettyprint ;"
-    "{ { 0 1 } { 2 3 } } [ 2array ] cartesian-matrix-map ."
+    "{ { 21 22 } { 23 24 } } [ 2array ] cartesian-matrix-map ."
 "{
     {
-        { { 0 0 } { { 0 1 } { 2 3 } } }
-        { { 0 1 } { { 0 1 } { 2 3 } } }
+        { { 0 0 } { { 21 22 } { 23 24 } } }
+        { { 0 1 } { { 21 22 } { 23 24 } } }
     }
     {
-        { { 1 0 } { { 0 1 } { 2 3 } } }
-        { { 1 1 } { { 0 1 } { 2 3 } } }
+        { { 1 0 } { { 21 22 } { 23 24 } } }
+        { { 1 1 } { { 21 22 } { 23 24 } } }
     }
 }"
   }
@@ -566,17 +566,14 @@ HELP: cartesian-matrix-map
   { $equiv-word-note "orthogonal" cartesian-column-map }
   { $equiv-word-note "two-dimensional" map-index }
   $2d-only-note
-}
-;
+} ;
 
 HELP: cartesian-column-map
 { $values { "matrix" matrix } { "quot" { $quotation ( ... pair elt -- ... elt' ) } } { "matrix'" matrix } }
-! { $description "" }
 { $notelist
   { $equiv-word-note "orthogonal" cartesian-matrix-map }
   $2d-only-note
-}
-;
+} ;
 
 HELP: matrix-nth
 { $values { "pair" pair } { "matrix" matrix } { "elt" object } }
@@ -983,6 +980,16 @@ HELP: mnorm
     }
 } ;
 
+HELP: m-infinity-norm
+{ $values { "m" matrix } { "n" number } } ;
+
+HELP: m-1norm
+{ $values { "m" matrix } { "n" number } } ;
+
+HELP: frobenius-norm
+{ $values { "m" matrix } { "n" number } }
+{ $notes "Also known as the Hilbert-Schmidt norm." } ;
+
 HELP: >square-matrix
 { $values { "m" matrix } { "subset" square-matrix } }
 { $description "Find only the " { $link2 square-matrix "square" } " subset of the input matrix." }
@@ -1115,26 +1122,73 @@ HELP: rows-except
 } ;
 
 HELP: cols-except
-{ $values { "matrix" matrix } { "desc" { $or integer sequence } } { "others" matrix } } ;
+{ $values { "matrix" matrix } { "desc" { $or integer sequence } } { "others" matrix } }
+{ $contract "Get all the columns from " { $snippet "matrix" } " " { $emphasis "not" } " described by " { $snippet "desc" } "." }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+"{
+    { 2 7 12 2 }
+    { 8 9 10 0 }
+    { 1 3 3 5 }
+    { 8 13 7 12 }
+} { 1 3 } cols-except . "
+        "{ { 2 12 } { 8 10 } { 1 3 } { 8 7 } }"
+    }
+} ;
 HELP: matrix-except
-{ $values { "matrix" matrix } { "exclude-pair" pair } { "submatrix" matrix } } ;
+{ $values { "matrix" matrix } { "exclude-pair" pair } { "submatrix" matrix } }
+{ $description "Get all the rows and columns from " { $snippet "matrix" } " except the row and column given in " { $snippet "exclude-pair" } ". The result is the " { $snippet "submatrix" } " containing no values from the given row and column." }
+{ $examples
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ { 0 1 } { 2 3 } } { 0 1 } matrix-except ."
+        "{ { 2 } }"
+    }
+} ;
+
 HELP: matrix-except-all
-{ $values { "matrix-seq" matrix } { "expansion" matrix } } ;
+{ $values { "matrix" matrix } { "expansion" { $sequence matrix } } }
+{ $description "Find every possible submatrix of " { $snippet "matrix" } " by using " { $link matrix-except } " for every value's row-column pair." }
+{ $examples
+    "There are 9 possible 2x2 submatrices of a 3x3 matrix with 9 indices, because there are 9 indices to exclude creating a new submatrix."
+    { $example
+        "USING: math.matrices prettyprint ;"
+        "{ { 0 1 2 } { 3 4 5 } { 6 7 8 } } matrix-except-all ."
+        "{
+    {
+        { { 4 5 } { 7 8 } }
+        { { 3 5 } { 6 8 } }
+        { { 3 4 } { 6 7 } }
+    }
+    {
+        { { 1 2 } { 7 8 } }
+        { { 0 2 } { 6 8 } }
+        { { 0 1 } { 6 7 } }
+    }
+    {
+        { { 1 2 } { 4 5 } }
+        { { 0 2 } { 3 5 } }
+        { { 0 1 } { 3 4 } }
+    }
+}"
+    }
+} ;
 
 
-HELP: dim
+HELP: matrix-dim
 { $values { "matrix" matrix } { "dimensions" pair } }
 { $description "Find the dimensions of the input matrix, in the order of " { $snippet "{ rows cols }"} "." }
 { $notes $2d-only-note }
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
-        "4 30 1 <matrix> dim ."
+        "4 30 1 <matrix> matrix-dim ."
         "{ 4 30 }"
     }
     { $example
         "USING: math.matrices prettyprint ;"
-        "{ } dim ."
+        "{ } matrix-dim ."
         "{ 0 0 }"
     }
 } ;

@@ -424,7 +424,9 @@ HELP: outer-product
 
 HELP: rank
 { $values { "matrix" matrix } { "rank" rank-kind } }
-;
+{ $contract "The " { $emphasis "rank" } " of a " { $link matrix } " is how its number of linearly independent columns compare to the maximal number of linearly independent columns for a matrix with the same dimension." }
+{ $notes "See " { $url "https://en.wikipedia.org/wiki/Rank_(linear_algebra)" } " for more information." } ;
+
 HELP: nullity
 { $values { "matrix" matrix } { "nullity" rank-kind } }
 ;

@@ -175,14 +175,6 @@ DEFER: matrix-set-nths
 : column-map ( matrix quot: ( ... col -- ... col' ) -- matrix' )
     [ transpose ] dip map transpose ; inline
 
-! a simpler verison of this, like matrix-map -except, but map-index, should be possible
-: cartesian-matrix-map ( matrix quot: ( ... pair elt -- ... elt' ) -- matrix' )
-    [ [ first length <cartesian-square-indices> ] keep ] dip
-    '[ _ @ ] matrix-map ; inline
-
-: cartesian-column-map ( matrix quot: ( ... pair elt -- ... elt' ) -- matrix' )
-    [ cols first2 ] prepose cartesian-matrix-map ; inline
-
 : matrix-nth ( pair matrix -- elt )
     [ first2 swap ] dip nth nth ; inline
 

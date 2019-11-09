@@ -318,6 +318,38 @@ HELP: <frustum-matrix4>
 } ;
 { <frustum-matrix4> glFrustum } related-words
 
+HELP: cartesian-matrix-map
+{ $values { "matrix" matrix } { "quot" { $quotation ( ... pair matrix -- ... matrix' ) } } { "matrix-seq" { $sequence matrix } } }
+{ $description "Calls the quotation with the matrix and the coordinate pair of the current element on the stack, with the matrix on the top of the stack." }
+{ $examples
+  { $example
+    "USING: arrays math.matrices.extras prettyprint ;"
+    "{ { 21 22 } { 23 24 } } [ 2array ] cartesian-matrix-map ."
+"{
+    {
+        { { 0 0 } { { 21 22 } { 23 24 } } }
+        { { 0 1 } { { 21 22 } { 23 24 } } }
+    }
+    {
+        { { 1 0 } { { 21 22 } { 23 24 } } }
+        { { 1 1 } { { 21 22 } { 23 24 } } }
+    }
+}"
+  }
+}
+{ $notelist
+  { $equiv-word-note "orthogonal" cartesian-column-map }
+  { $equiv-word-note "two-dimensional" map-index }
+  $2d-only-note
+} ;
+
+HELP: cartesian-column-map
+{ $values { "matrix" matrix } { "quot" { $quotation ( ... pair matrix -- ... matrix' ) } } { "matrix-seq" { $sequence matrix } } }
+{ $notelist
+  { $equiv-word-note "orthogonal" cartesian-matrix-map }
+  $2d-only-note
+} ;
+
 HELP: gram-schmidt
 { $values { "matrix" matrix } { "orthogonal" matrix } }
 { $description "Apply a Gram-Schmidt transform on the matrix." }

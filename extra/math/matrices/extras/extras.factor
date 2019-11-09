@@ -150,6 +150,14 @@ PRIVATE>
         { 0.0 0.0 0.0 1.0 }
     } ;
 
+! a simpler verison of this, like matrix-map -except, but map-index, should be possible
+: cartesian-matrix-map ( matrix quot: ( ... pair matrix -- ... matrix' ) -- matrix-seq )
+    [ [ first length <cartesian-square-indices> ] keep ] dip
+    '[ _ @ ] matrix-map ; inline
+
+: cartesian-column-map ( matrix quot: ( ... pair matrix -- ... matrix' ) -- matrix-seq )
+    [ cols first2 ] prepose cartesian-matrix-map ; inline
+
 ! -------------------------------------------------
 ! numerical analysis of matrices follows
 <PRIVATE
@@ -304,6 +312,7 @@ M: matrix recip
 : linearly-independent-matrix? ( matrix -- ? ) ;
 
 <PRIVATE
+! this is the original definition of m^n from 2012; it has not been lost
 : (m^n) ( m n -- n )
     make-bits over first length <identity-matrix>
     [ [ dupd m. ] when [ dup m. ] dip ] reduce nip ;

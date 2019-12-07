@@ -128,10 +128,10 @@ ALIAS: transpose flip
   [ length min ] (each) (each-integer) <iota> ; inline
 
 : generic-anti-transpose-unsafe ( cols-iota matrix -- newmatrix )
-    [ reverse [ nth-end-unsafe ] with { } map-as ] curry { } map-as ; inline
+    [ <reversed> [ nth-end-unsafe ] with { } map-as ] curry { } map-as ; inline
 
 : array-anti-transpose-unsafe ( cols-iota matrix -- newmatrix )
-    [ reverse [ array-nth-end-unsafe ] with map ] curry map ; inline
+    [ <reversed> [ array-nth-end-unsafe ] with map ] curry map ; inline
 PRIVATE>
 
 ! much faster than [ reverse ] map flip [ reverse ] map

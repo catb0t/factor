@@ -58,21 +58,24 @@ ARTICLE: "math.matrices" "Matrix operations"
 
 "The " { $vocab-link "math.matrices" } " vocabulary implements many ways of working with " { $emphasis "matrices" } " — sequences which have a minimum of 2 dimensions. Operations on 1-dimensional numeric vectors are implemented in " { $vocab-link "math.vectors" } ", upon which this vocabulary relies."
 $nl
-"In this vocabulary's documentation, " { $snippet "m" } " and " { $snippet "matrix" } " are the conventional names used for a given matrix object. " { $snippet "m" } " may refer to a number."
+"In this vocabulary's documentation, " { $snippet "m" } " and " { $snippet "matrix" } " are the conventional names used for a given matrix object. " { $snippet "m" } " may also refer to a number."
+$nl
+"The " { $vocab-link "math.matrices.extras" } "vocabulary implements extensions to this one."
 $nl
 "Matrices are classified their mathematical properties, and by predicate words:"
 $nl
 ! split up intentionally
 { $subsections
     matrix
+    irregular-matrix
     square-matrix
     zero-matrix
     zero-square-matrix
     null-matrix
 
 } { $subsections
-    well-formed-matrix?
     matrix?
+    irregular-matrix?
     square-matrix?
     zero-matrix?
     zero-square-matrix?
@@ -115,7 +118,8 @@ $nl
 
 "Transformations and elements of matrices:"
 { $subsections
-    matrix-dim transpose
+    dimension
+    transpose anti-transpose
     matrix-nth matrix-nths
     matrix-set-nth matrix-set-nths
 
@@ -138,12 +142,16 @@ $nl
 ! PREDICATE CLASSES
 
 HELP: matrix
-{ $class-description "The class of matrices. In mathematics and linear algebra, a matrix is a collection of scalar elements for the purpose of the uniform application of algorithms." }
-{ $notes "In Factor, any sequence with two or more dimensions can be a " { $link matrix } ", and the elements may be any " { $link object } "."
-$nl "A well-formed matrix is a sequence with more than one dimension, whose rows are all of equal length. See " { $link well-formed-matrix? } "." } ;
+{ $class-description "The class of regular, rectangular matrices. In mathematics and linear algebra, a matrix is a rectangular collection of scalar elements for the purpose of the uniform application of algorithms." }
+{ $notes "In Factor, any sequence with two or more dimensions (one or more layers of subsequences) can be a " { $link matrix } ", and the elements may be any " { $link object } "."
+$nl "A regular matrix is a sequence with two or more dimensions, whose subsequences are all of equal length. See " { $link regular-matrix? } "." }
+$nl "Irregular matrices are classified by " { $link irregular-matrix } "." ;
+
+HELP: irregular-matrix
+{ $class-description "The most common matrix, and most easily manipulated by this vocabulary, is rectangular. This predicate classifies irregular (non-rectangular) matrices." } ;
 
 HELP: square-matrix
-{ $class-description "The class of square matrices. A square matrix is a " { $link matrix } " which has the same number of rows and columns." } ;
+{ $class-description "The class of square matrices. A square matrix is a " { $link matrix } " which has the same number of rows and columns. In other words, its outermost two dimensions are of equal size." } ;
 
 HELP: zero-matrix
 { $class-description "The class of zero matrices. A zero matrix is a matrix whose only elements are the scalar " { $snippet "0" } "." }
@@ -156,23 +164,25 @@ HELP: null-matrix
 { $class-description "The class of null matrices. A null matrix is an empty sequence, or a sequence which consists only of empty sequences." }
 { $notes "In mathematics, a null matrix is a matrix full of zeroes. In Factor, such a matrix is called a " { $link zero-matrix } "." } ;
 
+{ matrix irregular-matrix square-matrix zero-matrix null-matrix zero-square-matrix null-matrix } related-words
+
 ! NON-PREDICATE TESTS
 
-HELP: well-formed-matrix?
+HELP: regular-matrix?
 { $values { "object" object } { "?" boolean } }
-{ $description "Tests if the object is a well-formed " { $link matrix } ". A well-formed matrix is a sequence, which has an equal number of elements in every row, and an equal number of elements in every column, such that there are no empty slots." }
-{ $notes "The " { $link null-matrix } " is considered well-formed, because of semantic requirements of the matrix implementation." }
+{ $description "Tests if the object is a regular (well-formed, rectangular, etc) " { $link matrix } ". A regular matrix is a sequence with an equal number of elements in every row, and an equal number of elements in every column, such that there are no empty slots." }
+{ $notes "The " { $link null-matrix } " is considered regular, because of semantic requirements of the matrix implementation." }
 { $examples
-    "The example is a poorly formed matrix, because the rows have an unequal number of elements."
+    "The example is an irregular matrix, because the rows have an unequal number of elements."
     { $example
         "USING: math.matrices prettyprint ;"
-        "{ { 1 } { } } well-formed-matrix? ."
+        "{ { 1 } { } } regular-matrix? ."
         "f"
     }
-    "The example is a well formed matrix, because the rows have an equal number of elements."
+    "The example is a regular matrix, because the rows have an equal number of elements."
     { $example
         "USING: math.matrices prettyprint ;"
-        "{ { 1 } { 2 } } well-formed-matrix? ."
+        "{ { 1 } { 2 } } regular-matrix? ."
         "t"
     }
 } ;
@@ -1110,8 +1120,12 @@ HELP: matrix-except
     }
 } ;
 
+HELP: submatrix-excluding
+{ $values { "matrix" matrix } { "exclude-pair" pair } { "submatrix" matrix } }
+{ $description "A possibly more obvious word for " { $link matrix-except } "." } ;
+
 HELP: matrix-except-all
-{ $values { "matrix" matrix } { "expansion" { $sequence matrix } } }
+{ $values { "matrix" matrix } { "submatrices" { $sequence matrix } } }
 { $description "Find every possible submatrix of " { $snippet "matrix" } " by using " { $link matrix-except } " for every value's row-column pair." }
 { $examples
     "There are 9 possible 2x2 submatrices of a 3x3 matrix with 9 indices, because there are 9 indices to exclude creating a new submatrix."
@@ -1138,20 +1152,23 @@ HELP: matrix-except-all
     }
 } ;
 
+HELP: all-submatrices
+{ $values { "matrix" matrix } { "submatrices" { $sequence matrix } } }
+{ $description "A possibly more obvious name for " { $link matrix-except-all } "." } ;
 
-HELP: matrix-dim
-{ $values { "matrix" matrix } { "dimensions" pair } }
-{ $description "Find the dimensions of the input matrix, in the order of " { $snippet "{ rows cols }"} "." }
-{ $notes $2d-only-note }
+HELP: dimension
+{ $values { "matrix" matrix } { "dimension" pair } }
+{ $description "Find the dimension of the input matrix, in the order of " { $snippet "{ rows cols }"} "." }
+{ $notelist $2d-only-note "Not to be confused with dimensionality, or the number of dimension scalars needed to describe a matrix." }
 { $examples
     { $example
         "USING: math.matrices prettyprint ;"
-        "4 30 1 <matrix> matrix-dim ."
+        "4 30 1 <matrix> dimension ."
         "{ 4 30 }"
     }
     { $example
         "USING: math.matrices prettyprint ;"
-        "{ } matrix-dim ."
+        "{ } dimension ."
         "{ 0 0 }"
     }
 } ;

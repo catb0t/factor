@@ -9,10 +9,10 @@ slots.private summary ;
 IN: math.matrices
 
 ! defined here because of issue #1943
-DEFER: well-formed-matrix?
-: well-formed-matrix? ( object -- ? )
+DEFER: regular-matrix?
+: regular-matrix? ( object -- ? )
     [ t ] [
-        dup first length
+        dup first-unsafe length
         '[ length _ = ] all?
     ] if-empty ;
 
@@ -21,27 +21,27 @@ DEFER: well-formed-matrix?
 ! in other words:
 ! sequence > matrix > zero-matrix > square-matrix > zero-square-matrix > null-matrix
 
+! Factor bug that's hard to repro: using `bi and` in these predicates
+! instead of 1&& will cause spirious no-method and bounds-error errors in <square-cols>
+! and the tests/docs for no apparent reason
 PREDICATE: matrix < sequence
-    { [ [ sequence? ] all? ] [ well-formed-matrix? ] } 1&& ;
+    { [ [ sequence? ] all? ] [ regular-matrix? ] } 1&& ;
 
-PREDICATE: unshaped-matrix < sequence
-    { [ [ sequence? ] all? ] [ well-formed-matrix? not ] } 1&& ;
+PREDICATE: irregular-matrix < sequence
+    { [ [ sequence? ] all? ] [ regular-matrix? not ] } 1&& ;
 
-DEFER: matrix-dim
+DEFER: dimension
 ! can't define dim using this predicate for this reason,
 ! unless we are going to write two versions of dim, one of which is generic
 PREDICATE: square-matrix < matrix
-    matrix-dim all-eq? ;
+    dimension first2-unsafe = ;
 
-! really truly empty
 PREDICATE: null-matrix < matrix
     flatten empty? ;
 
-! just full of zeroes
 PREDICATE: zero-matrix < matrix
     dup null-matrix? [ drop f ] [ flatten [ zero? ] all? ] if ;
 
-! square and full of zeroes
 PREDICATE: zero-square-matrix < square-matrix
     { [ zero-matrix? ] [ square-matrix? ] } 1&& ;
 
@@ -137,7 +137,7 @@ PRIVATE>
 ! much faster than [ reverse ] map flip [ reverse ] map
 : anti-transpose ( matrix -- newmatrix )
     dup empty? [ ] [
-        [ dup well-formed-matrix?
+        [ dup regular-matrix?
             [ matrix-cols-iota ] [ unshaped-cols-iota ] if
         ] keep
 
@@ -163,7 +163,7 @@ ALIAS: anti-flip anti-transpose
     '[ _ col ] map ; inline
 
 :: >square-matrix ( m -- subset )
-    m matrix-dim first2 :> ( x y ) {
+    m dimension first2 :> ( x y ) {
         { [ x y = ] [ m ] }
         { [ x y < ] [ x <iota> m cols transpose ] }
         { [ x y > ] [ y <iota> m rows ] }
@@ -190,7 +190,7 @@ M: matrix <square-cols>
 
 <PRIVATE ! implementation details of <lower-matrix> and <upper-matrix>
 : dimension-range ( matrix -- dim range )
-    matrix-dim [ <coordinate-matrix> ] [ first [1,b] ] bi ;
+    dimension [ <coordinate-matrix> ] [ first [1,b] ] bi ;
 
 : upper-matrix-indices ( matrix -- matrix' )
     dimension-range <reversed> [ tail-slice* >array ] 2map concat ;
@@ -263,17 +263,17 @@ DEFER: matrix-set-nths
 
 ! well-defined for square matrices; but works on nonsquare too
 : main-diagonal ( matrix -- seq )
-    >square-matrix [ swap nth ] map-index ; inline
+    >square-matrix [ swap nth-unsafe ] map-index ; inline
 
 ! top right to bottom left; reverse the result if you expected it to start in the lower left
 : anti-diagonal ( matrix -- seq )
-    >square-matrix [ swap nth-end ] map-index ; inline
+    >square-matrix [ swap nth-end-unsafe ] map-index ; inline
 
 <PRIVATE
 : (rows-iota) ( matrix -- rows-iota )
-    matrix-dim first <iota> ;
+    dimension first-unsafe <iota> ;
 : (cols-iota) ( matrix -- cols-iota )
-    matrix-dim second <iota> ;
+    dimension second-unsafe <iota> ;
 
 : simple-rows-except ( matrix desc quot -- others )
     curry [ dup (rows-iota) ] dip
@@ -295,14 +295,18 @@ GENERIC: cols-except ( matrix desc -- others )
 M: integer cols-except  scalar-except-quot   simple-cols-except ;
 M: sequence cols-except sequence-except-quot simple-cols-except ;
 
-! well-defined for any well-formed-matrix
+! well-defined for any regular matrix
 : matrix-except ( matrix exclude-pair -- submatrix )
     first2 [ rows-except ] dip cols-except ;
 
-:: matrix-except-all ( matrix -- expansion )
-    matrix matrix-dim [ <iota> ] map first2 cartesian-product
+ALIAS: submatrix-excluding matrix-except
+
+:: matrix-except-all ( matrix -- submatrices )
+    matrix dimension [ <iota> ] map first2-unsafe cartesian-product
     [ [ matrix swap matrix-except ] map ] map ;
 
-: matrix-dim ( matrix -- dimensions )
+ALIAS: all-submatrices matrix-except-all
+
+: dimension ( matrix -- dimension )
     [ { 0 0 } ]
-    [ [ length ] [ first length ] bi 2array ] if-empty ;
+    [ [ length ] [ first-unsafe length ] bi 2array ] if-empty ;

@@ -10,13 +10,13 @@ PRIVATE>
 ! ------------------------
 ! predicates
 
-{ t } [ { }                 well-formed-matrix? ] unit-test
-{ t } [ { { } }             well-formed-matrix? ] unit-test
-{ t } [ { { 1 2 } }         well-formed-matrix? ] unit-test
-{ t } [ { { 1 2 } { 3 4 } } well-formed-matrix? ] unit-test
-{ t } [ { { 1 } { 3 } }     well-formed-matrix? ] unit-test
-{ f } [ { { 1 2 } { 3 } }   well-formed-matrix? ] unit-test
-{ f } [ { { 1 } { 3 2 } }   well-formed-matrix? ] unit-test
+{ t } [ { }                 regular-matrix? ] unit-test
+{ t } [ { { } }             regular-matrix? ] unit-test
+{ t } [ { { 1 2 } }         regular-matrix? ] unit-test
+{ t } [ { { 1 2 } { 3 4 } } regular-matrix? ] unit-test
+{ t } [ { { 1 } { 3 } }     regular-matrix? ] unit-test
+{ f } [ { { 1 2 } { 3 } }   regular-matrix? ] unit-test
+{ f } [ { { 1 } { 3 2 } }   regular-matrix? ] unit-test
 
 
 { t } [ { } square-matrix? ] unit-test
@@ -362,13 +362,13 @@ PRIVATE>
 { f } [ 0 dup <zero-matrix> zero-matrix? ] unit-test
 { f } [ 4 <identity-matrix> zero-matrix? ] unit-test
 
-{ t } [ { }                 well-formed-matrix? ] unit-test
-{ t } [ { { } }             well-formed-matrix? ] unit-test
-{ t } [ { { 1 2 } }         well-formed-matrix? ] unit-test
-{ t } [ { { 1 2 } { 3 4 } } well-formed-matrix? ] unit-test
-{ t } [ { { 1 } { 3 } }     well-formed-matrix? ] unit-test
-{ f } [ { { 1 2 } { 3 } }   well-formed-matrix? ] unit-test
-{ f } [ { { 1 } { 3 2 } }   well-formed-matrix? ] unit-test
+{ t } [ { }                 regular-matrix? ] unit-test
+{ t } [ { { } }             regular-matrix? ] unit-test
+{ t } [ { { 1 2 } }         regular-matrix? ] unit-test
+{ t } [ { { 1 2 } { 3 4 } } regular-matrix? ] unit-test
+{ t } [ { { 1 } { 3 } }     regular-matrix? ] unit-test
+{ f } [ { { 1 2 } { 3 } }   regular-matrix? ] unit-test
+{ f } [ { { 1 } { 3 2 } }   regular-matrix? ] unit-test
 ! TODO: note: lines since last HEAD comment were deleted in "fix more code and add more rigorous tests"
 
 ! diagonals

@@ -6,7 +6,7 @@ math.matrices.private math.order math.statistics math.text.english
 math.vectors random sequences sequences.deep summary ;
 IN: math.matrices.extras
 
-! questionable implementation
+! this is a questionable implementation
 SINGLETONS:      +full-rank+ +half-rank+ +zero-rank+ +deficient-rank+ +uncalculated-rank+ ;
 UNION: rank-kind +full-rank+ +half-rank+ +zero-rank+ +deficient-rank+ +uncalculated-rank+ ;
 
@@ -292,27 +292,26 @@ ALIAS: multiplicative-inverse recip
 PRIVATE>
 
 M: zero-square-matrix recip
-    length <zero-square-matrix> ;
+    ; inline
 
 M: square-matrix recip
-    (square-inverse) ;
+    (square-inverse) ; inline
 
 M: zero-matrix recip
-    matrix-dim first2 <zero-matrix> ; ! TODO: error based on rankiness
+    transpose ; inline ! TODO: error based on rankiness
 
 M: matrix recip
-    (specialized-inverse) ;
+    (specialized-inverse) ; inline
 
-! TODO: use the faster algorithm here
+! TODO: use the faster algorithm: [ determinant zero? ]
 : invertible-matrix? ( matrix -- ? )
-    ! determinant zero?
     [ matrix-dim first2 max <identity-matrix> ] keep
     dup recip m. = ;
 
 : linearly-independent-matrix? ( matrix -- ? ) ;
 
 <PRIVATE
-! this is the original definition of m^n from 2012; it has not been lost
+! this is the original definition of m^n as committed in 2012; it has not been lost
 : (m^n) ( m n -- n )
     make-bits over first length <identity-matrix>
     [ [ dupd m. ] when [ dup m. ] dip ] reduce nip ;
@@ -325,7 +324,7 @@ PRIVATE>
         [ negative-power-matrix ]
     } cond ;
 
-: n^m ( n m -- n ) swap m^n ;
+: n^m ( n m -- n ) swap m^n ; inline
 
 : covariance-matrix-ddof ( matrix ddof -- cov )
     '[ _ cov-ddof ] cartesian-column-map ; inline

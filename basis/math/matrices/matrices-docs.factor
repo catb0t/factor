@@ -1,4 +1,4 @@
-! Copyright (C) 2005, 2010, 2018 Slava Pestov, Joe Groff, Cat Stevens.
+! Copyright (C) 2005, 2010, 2018 Slava Pestov, Joe Groff, and Cat Stevens.
 USING: accessors arrays assocs generic.single formatting locals help.markup help.markup.private help.syntax io
 kernel math math.functions math.order math.ratios math.vectors opengl.gl prettyprint
 sequences sequences.generalizations urls ;

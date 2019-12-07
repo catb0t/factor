@@ -3,8 +3,9 @@
 USING: accessors arrays classes.singleton columns combinators
 combinators.short-circuit combinators.smart formatting fry
 grouping kernel locals math math.bits math.functions math.order
-math.ranges math.statistics math.vectors math.vectors.private
-sequences sequences.deep sequences.private summary ;
+math.private math.ranges math.statistics math.vectors
+math.vectors.private sequences sequences.deep sequences.private
+slots.private summary ;
 IN: math.matrices
 
 ! defined here because of issue #1943
@@ -23,11 +24,14 @@ DEFER: well-formed-matrix?
 PREDICATE: matrix < sequence
     { [ [ sequence? ] all? ] [ well-formed-matrix? ] } 1&& ;
 
+PREDICATE: unshaped-matrix < sequence
+    { [ [ sequence? ] all? ] [ well-formed-matrix? not ] } 1&& ;
+
 DEFER: matrix-dim
 ! can't define dim using this predicate for this reason,
 ! unless we are going to write two versions of dim, one of which is generic
 PREDICATE: square-matrix < matrix
-    { [ well-formed-matrix? ] [ matrix-dim all-eq? ] } 1&& ;
+    matrix-dim all-eq? ;
 
 ! really truly empty
 PREDICATE: null-matrix < matrix
@@ -40,18 +44,6 @@ PREDICATE: zero-matrix < matrix
 ! square and full of zeroes
 PREDICATE: zero-square-matrix < square-matrix
     { [ zero-matrix? ] [ square-matrix? ] } 1&& ;
-
-<PRIVATE
-: (nth-from-end) ( n seq -- n )
-    length 1 - swap - ; inline
-
-: nth-end ( n seq -- elt )
-    [ (nth-from-end) ] keep nth ; inline
-
-: set-nth-end ( elt n seq -- )
-    [ (nth-from-end) ] keep set-nth ; inline
-
-PRIVATE>
 
 ! Benign matrix constructors
 : <matrix> ( m n element -- matrix )
@@ -69,16 +61,35 @@ PRIVATE>
 : <zero-square-matrix> ( n -- matrix )
     dup <zero-matrix> ; inline
 
+<PRIVATE
+: (nth-from-end) ( n seq -- n )
+    length 1 - swap - ; inline flushable
+
+: nth-end ( n seq -- elt )
+    [ (nth-from-end) ] keep nth ; inline flushable
+
+: nth-end-unsafe ( n seq -- elt )
+    [ (nth-from-end) ] keep nth-unsafe ; inline flushable
+
+: array-nth-end-unsafe ( n seq -- elt )
+    [ (nth-from-end) ] keep swap 2 fixnum+fast slot ; inline flushable
+
+: set-nth-end ( elt n seq -- )
+    [ (nth-from-end) ] keep set-nth ; inline
+
+: set-nth-end-unsafe ( elt n seq -- )
+    [ (nth-from-end) ] keep set-nth-unsafe ; inline
+PRIVATE>
+
 ! main-diagonal matrix
 : <diagonal-matrix> ( diagonal-seq -- matrix )
     [ length <zero-square-matrix> ] keep over
-    '[ dup _ nth set-nth ] each-index ; inline
+    '[ dup _ nth set-nth-unsafe ] each-index ; inline
 
-! could be written: <diagonal-matrix> [ reverse ] map
-! but that's 3x slower because of iterating the matrix twice
+! could also be written slower as: <diagonal-matrix> [ reverse ] map
 : <anti-diagonal-matrix> ( diagonal-seq -- matrix )
     [ length <zero-square-matrix> ] keep over
-    '[ dup _ nth set-nth-end ] each-index ; inline
+    '[ dup _ nth set-nth-end-unsafe ] each-index ; inline
 
 : <identity-matrix> ( n -- matrix )
     1 <repetition> <diagonal-matrix> ; inline
@@ -104,9 +115,40 @@ ALIAS: <cartesian-indices> <coordinate-matrix>
 
 ALIAS: transpose flip
 
-! VERY slow
+<PRIVATE
+: array-matrix? ( matrix -- ? )
+    [ array? ]
+    [ [ array? ] all? ] bi and ; inline foldable flushable
+
+: matrix-cols-iota ( matrix -- cols-iota )
+  first-unsafe length <iota> ; inline
+
+: unshaped-cols-iota ( matrix -- cols-iota )
+  [ first-unsafe length 1 ] keep
+  [ length min ] (each) (each-integer) <iota> ; inline
+
+: generic-anti-transpose-unsafe ( cols-iota matrix -- newmatrix )
+    [ reverse [ nth-end-unsafe ] with { } map-as ] curry { } map-as ; inline
+
+: array-anti-transpose-unsafe ( cols-iota matrix -- newmatrix )
+    [ reverse [ array-nth-end-unsafe ] with map ] curry map ; inline
+PRIVATE>
+
+! much faster than [ reverse ] map flip [ reverse ] map
 : anti-transpose ( matrix -- newmatrix )
-    [ reverse ] map transpose [ reverse ] map ;
+    dup empty? [ ] [
+        [ dup well-formed-matrix?
+            [ matrix-cols-iota ] [ unshaped-cols-iota ] if
+        ] keep
+
+        dup array-matrix? [
+            array-anti-transpose-unsafe
+        ] [
+            generic-anti-transpose-unsafe
+        ] if
+    ] if ;
+
+ALIAS: anti-flip anti-transpose
 
 : row ( n matrix -- row )
     nth ; inline

@@ -54,6 +54,8 @@ PRIVATE>
 { f } [ { { 0 0 } { 1 -1 } } zero-matrix? ] unit-test
 { f } [ { { 0 1 } { 0 -1 } } zero-matrix? ] unit-test
 
+! nth etc
+
 { 3 } [ { 1 2 3 } 0 swap nth-end ] unit-test
 { 2 } [ { 1 2 3 } 1 swap nth-end ] unit-test
 { 1 } [ { 1 2 3 } 2 swap nth-end ] unit-test
@@ -69,6 +71,8 @@ PRIVATE>
 [ { 0 0 0 } dup 1 -1 rot set-nth-end ] [ bounds-error? ] must-fail-with
 [ { 0 0 0 } dup 2 3 rot set-nth-end ] [ bounds-error? ] must-fail-with
 [ { 0 0 0 } dup 3 4 rot set-nth-end ] [ bounds-error? ] must-fail-with
+
+! constructors
 
 { {
     { 5 5 }
@@ -382,10 +386,30 @@ PRIVATE>
 { t } [ 50 <identity-matrix> dup transpose = ] unit-test
 { { 4 3 2 1 } } [ { 1 2 3 4 } <anti-diagonal-matrix> transpose anti-diagonal ] unit-test
 
+{ {
+ { 1 4 7 }
+ { 2 5 8 }
+ { 3 6 9 }
+} } [ {
+ { 1 2 3 }
+ { 4 5 6 }
+ { 7 8 9 }
+} transpose ] unit-test
+
 ! anti transposition
 { { 1 2 3 4 } } [ { 1 2 3 4 } <anti-diagonal-matrix> anti-transpose anti-diagonal ] unit-test
 { t } [ 50 <iota> <anti-diagonal-matrix> dup anti-transpose = ] unit-test
 { { 4 3 2 1 } } [ { 1 2 3 4 } <diagonal-matrix> anti-transpose main-diagonal ] unit-test
+
+{ {
+ { 9 6 3 }
+ { 8 5 2 }
+ { 7 4 1 }
+} } [ {
+ { 1 2 3 }
+ { 4 5 6 }
+ { 7 8 9 }
+} anti-transpose ] unit-test
 
 <PRIVATE
 SYMBOLS: A B C D E F G H I J K L M N O P ;

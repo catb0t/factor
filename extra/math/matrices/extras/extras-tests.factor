@@ -30,42 +30,42 @@ PRIVATE>
 
 { t } [ 2 4 15 <random-integer-matrix> mabs {
     [ flatten [ 15 <= ] all? ]
-    [ well-formed-matrix? ]
+    [ regular-matrix? ]
     [ length 2 = ]
     [ first length 4 = ]
 } 1&& ] unit-test
 
 { t } [ 4 4 -45 <random-integer-matrix> mabs {
     [ flatten [ 45 <= ] all? ]
-    [ well-formed-matrix? ]
+    [ regular-matrix? ]
     [ length 4 = ]
     [ first length 4 = ]
 } 1&& ] unit-test
 
 { t } [ 2 2 1 <random-integer-matrix> mabs {
     [ flatten [ 1 <= ] all? ]
-    [ well-formed-matrix? ]
+    [ regular-matrix? ]
     [ length 2 = ]
     [ first length 2 = ]
 } 1&& ] unit-test
 
 { t } [ 2 4 .89 <random-unit-matrix> mabs {
     [ flatten [ .89 <= ] all? ]
-    [ well-formed-matrix? ]
+    [ regular-matrix? ]
     [ length 2 = ]
     [ first length 4 = ]
 } 1&& ] unit-test
 
 { t } [ 2 4 -45.89 <random-unit-matrix> mabs {
     [ flatten [ 45.89 <= ] all? ]
-    [ well-formed-matrix? ]
+    [ regular-matrix? ]
     [ length 2 = ]
     [ first length 4 = ]
 } 1&& ] unit-test
 
 { t } [ 4 4 .89 <random-unit-matrix> mabs {
     [ flatten [ .89 <= ] all? ]
-    [ well-formed-matrix? ]
+    [ regular-matrix? ]
     [ length 4 = ]
     [ first length 4 = ]
 } 1&& ] unit-test

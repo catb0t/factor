@@ -243,7 +243,7 @@ M: square-matrix determinant
 
 ! determinant is undefined for m =/= n, unlike inverse
 M: matrix determinant
-    matrix-dim first2 non-square-determinant ;
+    dimension first2 non-square-determinant ;
 
 : 1/det ( matrix -- 1/det )
     determinant recip ; inline
@@ -284,7 +284,7 @@ ALIAS: multiplicative-inverse recip
 ! only defined for rank(A) = rows(A) OR rank(A) = cols(M)
 ! https://en.wikipedia.org/wiki/Invertible_matrix
 : (specialized-inverse) ( rect-matrix -- inverted )
-    dup [ rank ] [ matrix-dim ] bi [ = ] with map {
+    dup [ rank ] [ dimension ] bi [ = ] with map {
         { { t f } [ (left-inverse) ] }
         { { f t } [ (right-inverse) ] }
         [ no-case ]
@@ -305,7 +305,7 @@ M: matrix recip
 
 ! TODO: use the faster algorithm: [ determinant zero? ]
 : invertible-matrix? ( matrix -- ? )
-    [ matrix-dim first2 max <identity-matrix> ] keep
+    [ dimension first2 max <identity-matrix> ] keep
     dup recip m. = ;
 
 : linearly-independent-matrix? ( matrix -- ? ) ;

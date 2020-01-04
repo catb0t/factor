@@ -13,7 +13,7 @@ DEFER: regular-matrix?
 : regular-matrix? ( object -- ? )
     [ t ] [
         dup first-unsafe length
-        '[ length _ = ] all?
+        [ swap length = ] with all?
     ] if-empty ;
 
 ! the MRO (class linearization) is performed in the order the predicates appear here
@@ -120,9 +120,12 @@ ALIAS: transpose flip
     [ array? ]
     [ [ array? ] all? ] bi and ; inline foldable flushable
 
+! simpler / shorter word can be used when the matrix is regular
 : matrix-cols-iota ( matrix -- cols-iota )
   first-unsafe length <iota> ; inline
 
+! excerpted from sequences:transpose; this word creates a cols-iota for irregular matrices,
+! so that anti-transpose works with irregular matrices / general sequences like transpose does
 : unshaped-cols-iota ( matrix -- cols-iota )
   [ first-unsafe length 1 ] keep
   [ length min ] (each) (each-integer) <iota> ; inline
@@ -310,3 +313,4 @@ ALIAS: all-submatrices matrix-except-all
 : dimension ( matrix -- dimension )
     [ { 0 0 } ]
     [ [ length ] [ first-unsafe length ] bi 2array ] if-empty ;
+

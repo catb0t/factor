@@ -1,6 +1,6 @@
 ! Copyright (C) 2005, 2009 Slava Pestov.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: accessors arrays compiler.units definitions help
+USING: accessors arrays assocs.extras compiler.units definitions help
 help.topics kernel math parser sequences vocabs.parser words ;
 IN: help.syntax
 
@@ -22,3 +22,16 @@ SYNTAX: ARTICLE:
 
 SYNTAX: ABOUT:
     current-vocab scan-object >>help changed-definition ;
+
+ERROR: not-an-alias word ;
+
+SYNTAX: ALIAS-HELP:
+    scan-word bootstrap-word
+    [ >link save-location ]
+    [ dup "alias" word-prop
+        [
+            [ parse-array-def ]
+            [ [ "dependencies" word-prop first word-help ] keep ]
+            bi* [ prepend ] dip set-word-help
+        ] [ not-an-alias ] if
+    ] bi ;

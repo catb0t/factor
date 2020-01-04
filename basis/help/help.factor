@@ -186,5 +186,9 @@ help-hook [ [ print-topic ] ] initialize
 : remove-word-help ( word -- )
     f "help" set-word-prop ;
 
+! : autofill-word-help ( content word -- content )
+!     over \ $values ?of nip [ "declared-effect" word-prop ] when ;
+
 : set-word-help ( content word -- )
     [ swap "help" set-word-prop ] keep xref-article ;
+    ! [ [ [ autofill-word-help ] dip ] keep "help" set-word-prop ] keep xref-article ;

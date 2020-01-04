@@ -402,6 +402,31 @@ M: f ($instance) ($link) ;
     "Inputs and outputs" $heading
     [ values-row ] map $table ;
 
+! this is kinda silly
+: declared-values ( in-effect values: hashtable -- values )
+    [
+        dup assoc? [
+            [ dup sequence? [ 1array ] unless ] map
+        ] unless
+    ] dip
+    [
+        [ \ $snippet swap present 2array ]
+        [ dup word? [ \ $instance prefix ] when ]
+        bi* 2array
+    ] [
+        values-row
+    ] if* ;
+
+: tabled-inputs ( in-effect values: hashtable -- table ) ;
+: tabled-outputs ( out-effect values: hashtable -- table ) ;
+
+: $values* ( word element: hashtable -- )
+    "Inputs" $heading
+    [ "declared-effect" word-prop [ out>> ] [ in>> dup ] bi ] dip
+    as-declared-inputs [ tabled-inputs $table ] keep
+    "Outputs" $heading
+    tabled-outputs $table ;
+
 : $side-effects ( element -- )
     "Side effects" $heading "Modifies " print-element
     [ $snippet ] textual-list ;

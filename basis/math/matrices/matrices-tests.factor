@@ -10,7 +10,7 @@ PRIVATE>
 ! ------------------------
 ! predicates
 
-{ t } [ { }                 regular-matrix? ] unit-test
+{ f } [ { }                 regular-matrix? ] unit-test
 { t } [ { { } }             regular-matrix? ] unit-test
 { t } [ { { 1 2 } }         regular-matrix? ] unit-test
 { t } [ { { 1 2 } { 3 4 } } regular-matrix? ] unit-test
@@ -19,7 +19,9 @@ PRIVATE>
 { f } [ { { 1 } { 3 2 } }   regular-matrix? ] unit-test
 
 
-{ t } [ { } square-matrix? ] unit-test
+{ f } [ { } square-matrix? ] unit-test
+{ f } [ { { } } square-matrix? ] unit-test
+{ t } [ { { { } } } square-matrix? ] unit-test
 { t } [ { { 1 } } square-matrix? ] unit-test
 { t } [ { { 1 2 } { 3 4 } } square-matrix? ] unit-test
 { f } [ { { 1 } { 2 3 } } square-matrix? ] unit-test
@@ -50,9 +52,17 @@ PRIVATE>
 { f } [ 0 dup <zero-matrix> zero-matrix? ] unit-test
 { f } [ 4 <identity-matrix> zero-matrix? ] unit-test
 ! make sure we're not using the sum-to-zero strategy
-{ f } [ { { 0 -2 } { 1 -1 } } zero-matrix? ] unit-test
-{ f } [ { { 0 0 } { 1 -1 } } zero-matrix? ] unit-test
-{ f } [ { { 0 1 } { 0 -1 } } zero-matrix? ] unit-test
+{ t f } [ { { 0 -2 } { 1 -1 } } [ flatten sum zero? ] [ zero-matrix? ] bi ] unit-test
+{ t f } [ { { 0 0 } { 1 -1 } } [ flatten sum zero? ] [ zero-matrix? ] bi ] unit-test
+{ t f } [ { { 0 1 } { 0 -1 } } [ flatten sum zero? ] [ zero-matrix? ] bi ] unit-test
+
+{ t } [ { }                 regular-matrix? ] unit-test
+{ t } [ { { } }             regular-matrix? ] unit-test
+{ t } [ { { 1 2 } }         regular-matrix? ] unit-test
+{ t } [ { { 1 2 } { 3 4 } } regular-matrix? ] unit-test
+{ t } [ { { 1 } { 3 } }     regular-matrix? ] unit-test
+{ f } [ { { 1 2 } { 3 } }   regular-matrix? ] unit-test
+{ f } [ { { 1 } { 3 2 } }   regular-matrix? ] unit-test
 
 ! nth etc
 
@@ -318,16 +328,6 @@ PRIVATE>
 ] unit-test
 
 
-! TODO: note: merge conflict from HEAD contained the following
-! ------------------------
-! predicates
-
-{ t } [ { } square-matrix? ] unit-test
-{ t } [ { { 1 } } square-matrix? ] unit-test
-{ t } [ { { 1 2 } { 3 4 } } square-matrix? ] unit-test
-{ f } [ { { 1 } { 2 3 } } square-matrix? ] unit-test
-{ f } [ { { 1 2 } } square-matrix? ] unit-test
-
 { 9 }
 [ { { 2 -2 1 } { 1 3 -1 } { 2 -4 2 } } m-1norm ] unit-test
 
@@ -336,40 +336,6 @@ PRIVATE>
 
 { 2.0 }
 [ { { 1 1 } { 1 1 } } frobenius-norm ] unit-test
-! from "intermediate commit"
-! any deep-empty matrix is null
-! it doesn't make any sense for { } to be null while { { } } to be considered nonnull
-{ t } [ {
-    { }
-    { { } }
-    { { { } } }
-    { { } { } { } }
-    { { { } } { { { } } } }
-} [ null-matrix? ] map [ ] all?
-] unit-test
-
-{ f } [ {
-    { 1 2 }
-    { { 1 2 } }
-    { { 1 } { 2 } }
-    { { { 1 } } { 2 } { } }
-} [ null-matrix? ] map [ ] any?
-] unit-test
-
-{ t } [ 10 dup <zero-matrix> zero-matrix? ] unit-test
-{ t } [ 10 10 15 <simple-eye> zero-matrix? ] unit-test
-{ t } [ 0 dup <zero-matrix> null-matrix? ] unit-test
-{ f } [ 0 dup <zero-matrix> zero-matrix? ] unit-test
-{ f } [ 4 <identity-matrix> zero-matrix? ] unit-test
-
-{ t } [ { }                 regular-matrix? ] unit-test
-{ t } [ { { } }             regular-matrix? ] unit-test
-{ t } [ { { 1 2 } }         regular-matrix? ] unit-test
-{ t } [ { { 1 2 } { 3 4 } } regular-matrix? ] unit-test
-{ t } [ { { 1 } { 3 } }     regular-matrix? ] unit-test
-{ f } [ { { 1 2 } { 3 } }   regular-matrix? ] unit-test
-{ f } [ { { 1 } { 3 2 } }   regular-matrix? ] unit-test
-! TODO: note: lines since last HEAD comment were deleted in "fix more code and add more rigorous tests"
 
 ! diagonals
 
@@ -694,3 +660,24 @@ PRIVATE>
     { [ length 16 = ] [ [ 9 = ] all? ] }
     1&&
 ] unit-test
+
+{ t } [ { { 1 } { 2 } { 3 } } >=2d? ] unit-test
+{ f } [ { 1 { 2 } { 3 } } >=2d? ] unit-test
+{ f } [ { 1 2 3 } >=2d? ] unit-test
+{ t } [ { { { { 1 } { 2 } { 3 } { 4 } } } } >=2d? ]  unit-test
+
+{ 1 } [ { 1 } dimensionality ] unit-test
+{ 2 } [ { { 2 3 } } dimensionality ] unit-test
+{ 3 } [ { { { 2 3 } } } dimensionality ] unit-test
+{ 4 } [ { { { { 2 3 } } } } dimensionality ] unit-test
+! { 2 } [ { { 1 2 3 } { 4 5 6 } { 7 8 } } dimensionality ] unit-test
+
+{ { 2 2 } } [ { { 1 2 } { 3 4 } } dimensions ] unit-test
+{ { 3 3 } } [ { { 1 2 3 } { 4 5 6 } { 7 8 9 } } dimensions ] unit-test
+! { { 3 } } [ { { 1 2 3 } { 4 5 6 } { 7 8 } } dimensions* ] unit-test
+! { { 2 2 2 } } [
+!   {
+!     { { 1 2 } { 3 4 } }
+!     { { 1 2 } { 3 4 } }
+!   } dimensions*
+! ] unit-test

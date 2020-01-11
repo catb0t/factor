@@ -118,7 +118,7 @@ $nl
 
 "Transformations and elements of matrices:"
 { $subsections
-    dimension
+    dimensions dimensions* dimensionality
     transpose anti-transpose
     matrix-nth matrix-nths
     matrix-set-nth matrix-set-nths
@@ -1154,21 +1154,24 @@ HELP: matrix-except-all
 
 HELP: all-submatrices
 { $values { "matrix" matrix } { "submatrices" { $sequence matrix } } }
-{ $description "A possibly more obvious name for " { $link matrix-except-all } "." } ;
+{ $description "A (possibly) more obvious name for " { $link matrix-except-all } "." } ;
 
-HELP: dimension
-{ $values { "matrix" matrix } { "dimension" pair } }
-{ $description "Find the dimension of the input matrix, in the order of " { $snippet "{ rows cols }"} "." }
-{ $notelist $2d-only-note "Not to be confused with dimensionality, or the number of dimension scalars needed to describe a matrix." }
+! HELP: dimensionality ;
+! HELP: dimensions* ;
+HELP: dimensions
+{ $values { "matrix" matrix } { "d" array } }
+{ $description "Find the dimensions of the input matrix, in the order of " { $snippet "{ rows cols }"} "." }
+{ $notelist $2d-only-note "2-dimension-specific version of " { $link dimensions* } "." }
 { $examples
-    { $example
-        "USING: math.matrices prettyprint ;"
-        "4 30 1 <matrix> dimension ."
-        "{ 4 30 }"
-    }
-    { $example
-        "USING: math.matrices prettyprint ;"
-        "{ } dimension ."
-        "{ 0 0 }"
-    }
-} ;
+   { $example
+       "USING: math.matrices prettyprint ;"
+       "4 30 1 <matrix> dimensions ."
+       "{ 4 30 }"
+   }
+   { $example
+       "USING: math.matrices prettyprint ;"
+       "{ } dimensions ."
+       "{ 0 0 }"
+   }
+}
+{ $related dimensions* } ;

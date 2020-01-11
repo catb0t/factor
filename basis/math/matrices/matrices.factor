@@ -4,7 +4,7 @@ USING: accessors arrays classes.singleton columns combinators
 combinators.short-circuit combinators.smart formatting fry
 grouping kernel locals math math.bits math.functions math.order
 math.private math.ranges math.statistics math.vectors
-math.vectors.private sequences sequences.deep sequences.private
+math.vectors.private sequences sequences.extras sequences.deep sequences.private
 slots.private summary ;
 IN: math.matrices
 
@@ -12,8 +12,8 @@ IN: math.matrices
 DEFER: regular-matrix?
 : regular-matrix? ( object -- ? )
     [ t ] [
-        dup first-unsafe length
-        [ swap length = ] with all?
+        dup first length
+        [ swap length = ] curry all?
     ] if-empty ;
 
 ! the MRO (class linearization) is performed in the order the predicates appear here
@@ -30,11 +30,11 @@ PREDICATE: matrix < sequence
 PREDICATE: irregular-matrix < sequence
     { [ [ sequence? ] all? ] [ regular-matrix? not ] } 1&& ;
 
-DEFER: dimension
+DEFER: dimensions
 ! can't define dim using this predicate for this reason,
 ! unless we are going to write two versions of dim, one of which is generic
 PREDICATE: square-matrix < matrix
-    dimension first2-unsafe = ;
+    dimensions first2-unsafe = ;
 
 PREDICATE: null-matrix < matrix
     flatten empty? ;
@@ -122,12 +122,12 @@ ALIAS: transpose flip
 
 ! simpler / shorter word can be used when the matrix is regular
 : matrix-cols-iota ( matrix -- cols-iota )
-  first-unsafe length <iota> ; inline
+  first length <iota> ; inline
 
 ! excerpted from sequences:transpose; this word creates a cols-iota for irregular matrices,
 ! so that anti-transpose works with irregular matrices / general sequences like transpose does
 : unshaped-cols-iota ( matrix -- cols-iota )
-  [ first-unsafe length 1 ] keep
+  [ first length 1 ] keep
   [ length min ] (each) (each-integer) <iota> ; inline
 
 : generic-anti-transpose-unsafe ( cols-iota matrix -- newmatrix )
@@ -166,7 +166,7 @@ ALIAS: anti-flip anti-transpose
     '[ _ col ] map ; inline
 
 :: >square-matrix ( m -- subset )
-    m dimension first2 :> ( x y ) {
+    m dimensions first2-unsafe :> ( x y ) {
         { [ x y = ] [ m ] }
         { [ x y < ] [ x <iota> m cols transpose ] }
         { [ x y > ] [ y <iota> m rows ] }
@@ -193,7 +193,7 @@ M: matrix <square-cols>
 
 <PRIVATE ! implementation details of <lower-matrix> and <upper-matrix>
 : dimension-range ( matrix -- dim range )
-    dimension [ <coordinate-matrix> ] [ first [1,b] ] bi ;
+    dimensions [ <coordinate-matrix> ] [ first [1,b] ] bi ;
 
 : upper-matrix-indices ( matrix -- matrix' )
     dimension-range <reversed> [ tail-slice* >array ] 2map concat ;
@@ -274,9 +274,9 @@ DEFER: matrix-set-nths
 
 <PRIVATE
 : (rows-iota) ( matrix -- rows-iota )
-    dimension first-unsafe <iota> ;
+    dimensions first-unsafe <iota> ;
 : (cols-iota) ( matrix -- cols-iota )
-    dimension second-unsafe <iota> ;
+    dimensions second-unsafe <iota> ;
 
 : simple-rows-except ( matrix desc quot -- others )
     curry [ dup (rows-iota) ] dip
@@ -305,12 +305,46 @@ M: sequence cols-except sequence-except-quot simple-cols-except ;
 ALIAS: submatrix-excluding matrix-except
 
 :: matrix-except-all ( matrix -- submatrices )
-    matrix dimension [ <iota> ] map first2-unsafe cartesian-product
+    matrix dimensions [ <iota> ] map first2 cartesian-product
     [ [ matrix swap matrix-except ] map ] map ;
 
 ALIAS: all-submatrices matrix-except-all
 
-: dimension ( matrix -- dimension )
-    [ { 0 0 } ]
-    [ [ length ] [ first-unsafe length ] bi 2array ] if-empty ;
+<PRIVATE
 
+GENERIC: >=2d? ( seq -- ? )
+M: matrix >=2d?
+  drop t ; inline
+M: sequence >=2d?
+  [ {
+      [ sequence? ]
+      [ dup first length [ swap length = ] curry all? ]
+    } 1&&
+  ] all? ; inline
+
+: (generalized-dim) ( acc quot: ( acc seq -- acc ) seq -- acc )
+  [ [ swap call( acc seq -- acc ) ] 2keep drop ] [ dup >=2d? ] bi* [
+    flatten1 (generalized-dim)
+  ] [ 2drop ] if ; inline recursive foldable
+
+: (dimensionality) ( n seq -- n )
+  [ 1 + ] [ dup >=2d? ] bi* [
+    flatten1 (dimensionality)
+  ] [ drop ] if ; recursive foldable
+
+: (dimensions*) ( d seq -- d )
+  [ length swap [ push ] keep ] [ nip dup >=2d? ] 2bi [
+    flatten1 (dimensions*)
+  ] [ drop ] if ; recursive foldable
+
+PRIVATE>
+
+: dimensionality ( seq -- n )
+  0 swap (dimensionality) ; inline
+
+: dimensions* ( seq -- d )
+  V{ } swap (dimensions*) { } like ; inline
+
+: dimensions ( matrix -- d )
+  [ { 0 0 } ]
+  [ [ length ] [ first length ] bi 2array ] if-empty ;

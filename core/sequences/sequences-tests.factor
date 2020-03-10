@@ -17,6 +17,56 @@ IN: sequences.tests
 [ -10 3 "hello" <slice> ] must-fail
 [ 2 1 "hello" <slice> ] must-fail
 
+{ t } [ 2 5 f 7 <iota> <step-slice> virtual-exemplar iota? ] unit-test
+{ 2 T{ iota f 7 } } [ 2 5 f 7 <iota> <step-slice> 0 swap virtual@ ] unit-test
+
+{ V{ 1 2 3 4 5 } } [ 0 5 1 { 1 2 3 4 5 } <step-slice> >vector ] unit-test
+{ V{ 1 2 3 4 5 } } [ 0 5 f { 1 2 3 4 5 } <step-slice> >vector ] unit-test
+{ V{ 1 3 5 } } [ 0 5 2 { 1 2 3 4 5 } <step-slice> >vector ] unit-test
+{ 3 } [ 0 5 2 { 1 2 3 4 5 } <step-slice> length ] unit-test
+{ V{ 1 4 } } [ 0 5 3 { 1 2 3 4 5 } <step-slice> >vector ] unit-test
+{ V{ 1 5 } } [ 0 5 4 { 1 2 3 4 5 6 } <step-slice> >vector ] unit-test
+{ V{ 2 4 } } [ 1 5 2 { 1 2 3 4 5 } <step-slice> >vector ] unit-test
+{ 4 } [ 1 5 2 { 1 2 3 4 5 } <step-slice> 1 swap nth ] unit-test
+{ 2 } [ 1 5 2 { 1 2 3 4 5 } <step-slice> length ] unit-test
+
+{ V{ 3 4 } } [
+    2 4 ! subseq
+    1 10 f over <iota>
+    <step-slice> subseq >vector
+] unit-test
+{ V{ 5 7 } } [
+    2 4 ! subseq
+    1 10 2 over <iota>
+    <step-slice> subseq >vector
+] unit-test
+{ V{ 3 4 } } [
+    0 2 ! subseq
+    2 4 f ! second slice
+    1 10 f ! first slice
+    over <iota>
+    <step-slice> <step-slice> subseq >vector
+] unit-test
+
+{ V{ 8 11 } } [
+    1 3 ! subseq
+    2 8 3 ! second slice
+    1 20 2 ! first slice
+    over <iota>
+    <step-slice> <step-slice> subseq >vector
+] unit-test
+
+{ 2 } [
+    1 3 ! subseq
+    2 8 3 ! second slice
+    1 20 2 ! first slice
+    over <iota>
+    <step-slice> <step-slice> subseq length
+] unit-test
+
+[ 0 4 -2 "hello" <step-slice> ] must-fail
+[ 0 4 0 "hello" <step-slice> ] must-fail
+
 { "cba" } [ "abcdef" 3 head-slice reverse ] unit-test
 
 { 5040 } [ [ 1 2 3 4 5 6 7 ] 1 [ * ] reduce ] unit-test

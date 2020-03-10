@@ -260,6 +260,48 @@ M: slice length [ to>> ] [ from>> ] bi - ; inline
 
 INSTANCE: slice virtual-sequence
 
+! A slice of another sequence.
+TUPLE: step-slice
+    { from integer read-only }
+    { to integer read-only }
+    { step integer read-only initial: 1 }
+    { seq read-only } ;
+
+: collapse-step-slice ( from to slice -- from' to' seq )
+    [ step>> ] [ from>> ] [ seq>> ] tri [ [ * ] swap [ + ] [ curry ] 2bi@ compose bi@ ] dip ; inline
+
+ERROR: step-slice-error from to step seq ;
+
+: check-step-slice ( from to step/f seq -- from to step/f seq )
+    over 1 < [ step-slice-error ] when ! step/f < 1
+    [ [ [ dup ] dip swap ] dip swap ] dip swap
+    [ [ [ dup ] dip swap ] dip swap ] dip swap > [ step-slice-error ] when ! from > to
+    pick [ dup length ] dip < [ step-slice-error ] when ! to > seq length (swapped)
+    [ [ [ dup ] dip swap ] dip swap ] dip swap 0 < [ step-slice-error ] when ; inline ! from < 0
+
+<PRIVATE
+
+: <step-slice-unsafe> ( from to step seq -- slice )
+    dup step-slice? [ swap [ collapse-step-slice ] dip swap ] when step-slice boa ; inline
+
+PRIVATE>
+
+! : <slice> ( from to seq -- slice )
+!     1 swap check-slice <slice-unsafe> ; inline
+
+: <step-slice> ( from to step/f seq -- step-slice )
+    [ dup 1 ? ] dip check-step-slice <step-slice-unsafe> ; inline
+
+M: step-slice virtual-exemplar seq>> ; inline
+
+M: step-slice virtual@ [ [ step>> * ] [ from>> ] bi + ] [ seq>> ] bi ; inline
+
+M: step-slice length
+    [ to>> ] [ from>> ] [ step>> ] tri [ - ] dip /
+    dup dup >integer number= [ 1 + >integer ] unless ; inline
+
+INSTANCE: step-slice virtual-sequence
+
 ! One element repeated many times
 TUPLE: repetition
     { length integer read-only }

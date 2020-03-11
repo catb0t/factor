@@ -772,7 +772,7 @@ M: integer infinite-loop infinite-loop ;
 
 { } [ [ too-deep ] final-info drop ] unit-test
 
-{ } [ [ reversed boa slice boa nth-unsafe * ] final-info drop ] unit-test
+{ } [ [ reversed boa 1 slice boa nth-unsafe * ] final-info drop ] unit-test
 
 MIXIN: empty-mixin
 

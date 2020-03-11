@@ -37,15 +37,15 @@ TUPLE: stable-slice < slice ;
 TUPLE: upward-slice < slice ;
 
 : downward-slices ( seq -- slices )
-    [ > ] [ downward-slice boa ] (monotonic-split)
+    [ > ] [ 1 downward-slice boa ] (monotonic-split)
     [ length 1 > ] filter ;
 
 : stable-slices ( seq -- slices )
-    [ = ] [ stable-slice boa ] (monotonic-split)
+    [ = ] [ 1 stable-slice boa ] (monotonic-split)
     [ length 1 > ] filter ;
 
 : upward-slices ( seq -- slices )
-    [ < ] [ upward-slice boa ] (monotonic-split)
+    [ < ] [ 1 upward-slice boa ] (monotonic-split)
     [ length 1 > ] filter ;
 
 : trends ( seq -- slices )

@@ -216,8 +216,8 @@ INSTANCE: reversed virtual-sequence
 TUPLE: slice
     { from integer read-only }
     { to integer read-only }
-    { step integer read-only initial: 1 }
-    { seq read-only } ;
+    { seq read-only }
+    { step integer read-only initial: 1 } ;
 
 : collapse-slice ( from to slice -- from' to' seq )
     [ step>> ] [ from>> ] [ seq>> ] tri [ [ * ] swap [ + ] [ curry ] 2bi@ compose bi@ ] dip ; inline

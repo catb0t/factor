@@ -1,4 +1,4 @@
-USING: alien.syntax alien.c-types classes.struct ;
+USING: alien.c-types alien.syntax classes.struct ;
 IN: unix.types
 
 TYPEDEF: ulonglong __uquad_type
@@ -39,25 +39,33 @@ TYPEDEF: ulonglong __fsfilcnt64_t
 TYPEDEF: ulonglong ino64_t
 TYPEDEF: ulonglong off64_t
 
+STRUCT: sigset_t
+    { val uchar[128] } ;
+
+! NOTE: feature "Process Scheduling"
+! sched_param from <bits/types/struct_sched_param.h>
 STRUCT: sched_param
     { sched_priority int } ;
+
+! linux's <spawn.h> defines the following as structs, macos does not
 
 TYPEDEF: void* spawn_action
 
 STRUCT: posix_spawn_file_actions_t
-    { __allocated int }
-    { __used int }
-    { __actions spawn_action }
+    { allocated int }
+    { used int }
+    ! struct spawn_action *__actions;
+    { actions spawn_action }
+    ! int __pad[16];
     { __pad int[16] } ;
 
-STRUCT: sigset_t
-    { val uchar[128] } ;
-
 STRUCT: posix_spawnattr_t
-  { __flags short }
-  { __pgrp pid_t }
-  { __sd sigset_t }
-  { __ss sigset_t }
-  { __sp sched_param }
-  { __policy int }
-  { __pad int[16] } ;
+    { flags alien.c-types:short } ! flags
+    { pgrp pid_t }  ! pgroup
+    { sd sigset_t } ! sigdefault
+    { ss sigset_t } ! sigmask
+    ! struct sched_param __sp;
+    { sp sched_param }
+    { policy int }  ! schedpolicy
+    ! int __pad[16];
+    { __pad int[16] } ;

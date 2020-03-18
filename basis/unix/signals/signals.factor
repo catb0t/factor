@@ -1,8 +1,31 @@
 ! Copyright (C) 2011 Joe Groff.
-! See https://factorcode.org/license.txt for BSD license.
-USING: accessors assocs io kernel math namespaces sequences
-system threads ;
+! See http://factorcode.org/license.txt for BSD license.
+USING: accessors alien.c-types alien.data alien.syntax assocs
+classes.struct io kernel math namespaces sequences system
+threads unix.process unix.types ;
 IN: unix.signals
+
+FUNCTION: int sigemptyset ( sigset_t* set )
+FUNCTION: int sigfillset ( sigset_t* set )
+FUNCTION: int sigaddset ( sigset_t* set, int signum )
+FUNCTION: int sigdelset ( sigset_t* set, int signum )
+FUNCTION: int sigismember ( sigset_t* set, int signum )
+
+<PRIVATE
+HOOK: (sigset-new) os ( -- set )
+
+M: freebsd (sigset-new)
+    0 sigset_t <ref> ;
+
+M: macosx (sigset-new)
+    0 sigset_t <ref> ;
+
+M: linux (sigset-new)
+    sigset_t <struct> ;
+PRIVATE>
+
+: <sigset> ( -- set )
+    (sigset-new) [ sigemptyset check-posix ] keep ;
 
 CONSTANT: signal-names
 {

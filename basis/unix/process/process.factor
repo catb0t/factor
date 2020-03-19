@@ -16,29 +16,6 @@ FUNCTION: int execvp ( c-string path, c-string* argv )
 FUNCTION: int execve ( c-string path, c-string* argv, c-string* envp )
 
 
-TYPEDEF: void posix_spawn_file_actions_t
-TYPEDEF: void posix_spawnattr_t
-
-FUNCTION: int posix_spawn ( pid_t *pid, c-string path,
-                       posix_spawn_file_actions_t *file_actions,
-                       posix_spawnattr_t *attrp,
-                       c-string* argv, c-string* envp )
-
-FUNCTION: int posix_spawnp ( pid_t *pid, c-string file,
-                       posix_spawn_file_actions_t *file_actions,
-                       posix_spawnattr_t *attrp,
-                       c-string* argv, c-string* envp )
-
-: posix-spawn ( path posix_spawn_file_actions_t* posix_spawnattr_t* argv envp -- pid_t )
-    [ [ 0 pid_t <ref> ] dip utf8 malloc-string ] 4dip
-    [ utf8 strings>alien ] bi@
-    [
-        posix_spawnp dup 0 = [ drop ] [ throw-errno ] if
-    ] 6 nkeep 5drop pid_t deref ;
-
-: posix-spawn-args-with-path ( seq -- int )
-    [ first f f ] keep f posix-spawn ;
-
 : exec ( pathname argv -- int )
     [ utf8 malloc-string ] [ utf8 strings>alien ] bi* execv ;
 

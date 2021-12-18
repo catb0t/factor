@@ -4,7 +4,8 @@ USING: accessors alien.c-types alien.data assocs combinators
 continuations environment fry io.backend io.backend.unix
 io.files.private io.files.unix io.launcher io.launcher.private
 io.pathnames io.ports kernel libc math namespaces sequences
-simple-tokenizer strings system unix unix.ffi unix.process ;
+simple-tokenizer strings system unix unix.ffi unix.process
+unix.process.posix-spawn ;
 QUALIFIED-WITH: unix.signals sig
 IN: io.launcher.unix
 

@@ -11,3 +11,10 @@ IN: unix.process
 
 CONSTANT:	POSIX_SPAWN_SETEXEC         0x0040
 CONSTANT: POSIX_SPAWN_START_SUSPENDED 0x0080
+
+! macosx does not support the POSIX Process Scheduling feature
+! however, we do define the names so that scheduling code for "unix"
+! platforms does not fail to compile on macosx, without silly require guards
+
+CONSTANT: POSIX_SPAWN_SETSCHEDULER     f
+CONSTANT: POSIX_SPAWN_SETSCHEDPARAM    f

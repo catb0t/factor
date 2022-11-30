@@ -16,9 +16,6 @@ FUNCTION: int execv ( c-string path, c-string* argv )
 FUNCTION: int execvp ( c-string path, c-string* argv )
 FUNCTION: int execve ( c-string path, c-string* argv, c-string* envp )
 
-TYPEDEF: void* posix_spawn_file_actions_t
-TYPEDEF: void* posix_spawnattr_t
-
 : exec ( pathname argv -- int )
     [ utf8 malloc-string ] [ utf8 strings>alien ] bi* execv ;
 

@@ -3,6 +3,10 @@
 USING: system vocabs.metadata ;
 IN: unix.scheduler
 
+CONSTANT: SCHED_OTHER f
+CONSTANT: SCHED_RR    f
+CONSTANT: SCHED_FIFO  f
+
 CONSTANT: MOST_IDLE_SCHED_POLICY f
 
 : policy-priority-range ( policy -- high low )

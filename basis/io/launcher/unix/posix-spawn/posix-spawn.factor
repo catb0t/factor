@@ -36,18 +36,28 @@ CONSTANT: middle-priorities { +low-priority+ +high-priority+ +highest-priority+ 
         { +new-session+ [ spawn-new-session-impossible ] }
     } case ;
 
-<< os macosx? [
+HOOK: setup-scheduler os ( spawnattr flags process -- flags )
 
-: setup-scheduler ( spawnattr flags process -- flags )
+! TODO: mirror POSIX-style priority scheduling for <process> on macosx
+! since we are not in the forked process, we can't really do much
+! unless we wait until after the child is posix_spawn'd, and then nice(2)
+! its pid, but that isn't terribly robust and nice (affinity) is not
+! the same as priority
+
+! this is currently a no-op
+M: macosx setup-scheduler
     [ 3drop ] keepd ;
 
-] [
-
-: fifo-requested? ( priority -- ? )
+: use-fifo-policy? ( priority -- ? )
     { +highest-priority+ +realtime-priority+ } member? ; inline foldable flushable
 
-: round-robin-ok? ( priority -- ? )
+HOOK: use-round-robin-policy? os ( priority -- ? )
+
+M: linux use-round-robin-policy?
     { +high-priority+ +low-priority+ } member? ; inline foldable flushable
+
+M: freebsd use-round-robin-policy?
+    { +high-priority+ +low-priority+ +lowest-priority+ } member? ; inline foldable flushable
 
 : ?edge-priority ( priority -- index/f )
     { +realtime-priority+ +lowest-priority+ } index ; inline foldable flushable
@@ -60,7 +70,7 @@ CONSTANT: middle-priorities { +low-priority+ +high-priority+ +highest-priority+ 
         - middle-priorities [ length /i swap ] keep index 1 + *
     ] if* ; foldable flushable
 
-! see man sched(7)
+! see man 7 sched
 ! select a scheduler policy and priority based on the desired priority slot
 ! note that CPU affinity as set by nice(2) is distinct from process priority
 ! and process priority is in the range [1,99] on Linux, but should be found with
@@ -68,11 +78,14 @@ CONSTANT: middle-priorities { +low-priority+ +high-priority+ +highest-priority+ 
 
 ! +realtime-priority+ and +highest-priority+ will result in a FIFO Scheduler
 ! Policy, because that is the most aggressive
-! +high-priority+ and +low-priority+ are kind of middling and we give them the
-! Round Robin scheduler to remain fair to other similar processes in their
-! priority list
-! +lowest-priority+ will be SCHED_IDLE on Linux or SCHED_OTHER on FreeBSD
-! (no SCHED_IDLE on FreeBSD)
+
+! +high-priority+ and +low-priority+ are kind of middling on either side
+! of +normal-priority+, and we give them the Round Robin scheduler to remain fair
+! to other similar processes in their priority list
+
+! +lowest-priority+ will be SCHED_IDLE on Linux, and SCHED_RR with minimum priority
+! on FreeBSD, as there is no SCHED_IDLE on FreeBSD.
+
 ! +normal-priority+ will be SCHED_OTHER, which is the default on Linux + BSD
 ! SCHED_IDLE and SCHED_OTHER (and all non-realtime policies) require
 ! sched_param->priority to be 0, because the priority will be fully determined
@@ -88,14 +101,14 @@ CONSTANT: middle-priorities { +low-priority+ +high-priority+ +highest-priority+ 
 ! by the io.launcher / <process> APIs.
 
 ! if priority is f, nothing is done and you are at the will of the scheduler.
-: setup-scheduler ( spawnattr flags process -- flags )
+M: unix setup-scheduler
     priority>> [
         swap [
             dup {
-                { [ dup fifo-requested? ]     [ drop SCHED_FIFO ] }
-                { [ dup +normal-priority+ = ] [ drop SCHED_OTHER ] }
-                { [ dup round-robin-ok? ]     [ drop SCHED_RR ] }
-                { [ dup +lowest-priority+ = ] [ drop MOST_IDLE_SCHED_POLICY ] }
+                { [ dup use-fifo-policy? ]        [ drop SCHED_FIFO ] }
+                { [ dup +normal-priority+ = ]     [ drop SCHED_OTHER ] }
+                { [ dup use-round-robin-policy? ] [ drop SCHED_RR ] }
+                { [ dup +lowest-priority+ = ]     [ drop MOST_IDLE_SCHED_POLICY ] }
             } cond
             [ nip attr-set-schedpolicy ] [
                 dup priority-allowed? [
@@ -107,8 +120,6 @@ CONSTANT: middle-priorities { +low-priority+ +high-priority+ +highest-priority+ 
             POSIX_SPAWN_SETSCHEDULER bitor
         ] bi*
     ] [ nip ] if* ;
-
-] if >>
 
 : reset-fd ( fd -- )
     [ F_SETFL 0 fcntl io-error ] [ F_SETFD 0 fcntl io-error ] bi ;

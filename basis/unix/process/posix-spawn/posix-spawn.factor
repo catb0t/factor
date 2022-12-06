@@ -32,7 +32,8 @@ FUNCTION: int posix_spawn ( pid_t* pid, c-string path, posix_spawn_file_actions_
 FUNCTION: int posix_spawnp ( pid_t* pid, c-string file, posix_spawn_file_actions_t* file_actions, posix_spawnattr_t* attrp, c-string argv[], c-string envp[] )
 
 ! on Linux, not calling _destroy leaks memory
-! it's implementation-defined whether the _init will allocate memory (since the object is an out parameter, it could just stack-allocate the struct)
+! it's implementation-defined whether the _init will allocate memory
+! (since the object is an out parameter, it could just stack-allocate the struct)
 FUNCTION: int posix_spawn_file_actions_init ( posix_spawn_file_actions_t* file_actions )
 FUNCTION: int posix_spawn_file_actions_destroy ( posix_spawn_file_actions_t* file_actions )
 DESTRUCTOR: posix_spawn_file_actions_destroy

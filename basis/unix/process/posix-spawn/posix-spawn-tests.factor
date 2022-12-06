@@ -85,12 +85,13 @@ IN: unix.process.posix-spawn
 
 { t } [
 
-    "/usr/bin/atom"                 ! filename path
+    "/bin/sh"                 ! filename path
     f                               ! NULL pointer for file_actions
     f                               ! NULL pointer for attr
     {
-        "/usr/bin/atom"
-        "/home/cat/projects/git/om"
+        "/bin/sh"
+        "-c"
+        "echo 2"
     }                               ! argv
     (os-envs)                       ! envp
 
@@ -100,13 +101,14 @@ IN: unix.process.posix-spawn
 
 { t } [
 
-    "/usr/bin/atom"                 ! filename path
+    "/bin/sh"                 ! filename path
     <posix-spawn-file-actions>      ! file actions struct
     [ set-file-actions ] keep       ! configuration
     f                               ! NULL pointer for spawnattr
     {
-        "/usr/bin/atom"
-        "/home/cat/projects/git/om"
+        "/bin/sh"
+        "-c"
+        "echo 2"
     }                               ! argv
     (os-envs)                       ! envp
 
@@ -115,13 +117,14 @@ IN: unix.process.posix-spawn
 ] unit-test
 
 { t } [
-    "/usr/bin/atom"                 ! filename path
+    "/bin/sh"                 ! filename path
     <posix-spawn-file-actions>      ! file actions struct
     [ set-file-actions ] keep       ! configuration
     f                               ! NULL pointer for spawnattr
     {
-        "/usr/bin/atom"
-        "/home/cat/projects/git/om"
+        "/bin/sh"
+        "-c"
+        "echo 2"
     }                               ! argv
     (os-envs)                       ! envp
 
@@ -129,7 +132,7 @@ IN: unix.process.posix-spawn
 ] unit-test
 
 { t } [
-    { "/usr/bin/atom" "/tmp/posix-spawn-tests-log" }
+    { "/usr/bin/cat" "/tmp/posix-spawn-tests-log" }
     posix-spawn-args-by-file
     pid-ok?
 ] unit-test
@@ -141,13 +144,13 @@ IN: unix.process.posix-spawn
 ] unit-test
 
 [
-    { "dc" "-e" "12345 6 / p" }
+    { "cat" "/tmp/posix-spawn-tests-log" }
     posix-spawn-args-by-file
     pid-ok?
 ] must-fail
 
 { t } [
-    { "dc" "-e" "12345 6 / p" }
+    { "/usr/bin/cat" "/tmp/posix-spawn-tests-log" }
     posix-spawn-args-with-path
     pid-ok?
 ] unit-test

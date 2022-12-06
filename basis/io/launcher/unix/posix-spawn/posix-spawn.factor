@@ -13,7 +13,7 @@ IN: io.launcher.unix.posix-spawn
 <PRIVATE
 ERROR: spawn-new-session-impossible attr process group ;
 M: spawn-new-session-impossible summary
-    drop "+new-session+ impossible in the posix-spawn API\nPOSIX does not provide a way to create a new session ID for a spawned process.\nUse setsid in the child process, or fork-process instead of spawn-process." ;
+    drop "requested group +new-session+ is impossible in the posix-spawn API\nPOSIX does not provide a way to create a new session ID for a spawned process.\nUse setsid in the child process, or fork-process instead of spawn-process." ;
 
 M: spawn-new-session-impossible error.
     describe ;
@@ -23,20 +23,20 @@ CONSTANT: middle-priorities { +low-priority+ +high-priority+ +highest-priority+ 
 : get-arguments ( process -- target argv )
     command>> dup string? [ tokenize ] when [ first ] keep ;
 
-: do-new-group ( spawnattr flags -- flags )
+: do-new-group ( spawnattr: posix_spawnattr_t flags -- flags )
     [ 0 attr-set-pgroup ]
     [ POSIX_SPAWN_SETPGROUP bitor ] bi* ; inline
 
 ! NOTE when documenting: Unimplemented: SETPGROUP and attr_setpgroup(n != 0)
 ! "the child's process group shall be as specified in the spawn-pgroup"
-: setup-process-group ( spawnattr flags process -- flags )
+: setup-process-group ( spawnattr: posix_spawnattr_t flags process -- flags )
     dup group>> {
         { +same-group+  [ drop nip ] }
         { +new-group+   [ drop do-new-group ] }
         { +new-session+ [ spawn-new-session-impossible ] }
     } case ;
 
-HOOK: setup-scheduler os ( spawnattr flags process -- flags )
+HOOK: setup-scheduler os ( spawnattr: posix_spawnattr_t flags process -- flags )
 
 ! TODO: mirror POSIX-style priority scheduling for <process> on macosx
 ! since we are not in the forked process, we can't really do much
@@ -174,7 +174,7 @@ M: unix setup-scheduler
 
 PRIVATE>
 
-:: spawn-process ( process -- pid )
+:: spawn-process ( process: process -- pid: pid_t )
     process get-arguments :> ( target argv )
     process setup-spawnattr :> spawnattr
     process setup-file-actions :> file-actions

@@ -33,13 +33,13 @@ $nl
     posix-spawnp
 }
 
-"Wrappers that don't call destructors, so that input objects can be reused:"
+"Wrappers that don't call destructors. These will leak memory quickly if the input " { $snippet "spawnattr" } " and " { $snippet "file_actions" } " objects are not properly disposed (" { $link "destructors" } "). " $nl " They are provided so that the input objects can be reused between calls:"
 { $subsections
     posix-spawn*
     posix-spawnp*
 }
 
-"File descriptor control for the new process launched by " { $snippet "posix_spawn()" } " or " { $snippet "posix_spawnp()" } " is configured by the " { $snippet "file_actions" } " input:"
+"File descriptor control for the new process launched by " { $snippet "posix_spawn()" } " or " { $snippet "posix_spawnp()" } " is configured by the " { $snippet "file_actions" } " parameter:"
 { $subsections
     <posix-spawn-file-actions>
     actions-add-open
@@ -47,9 +47,10 @@ $nl
     actions-add-dup2
 }
 
-"Process configuration is handled by the " { $snippet "attr" } "parameter:"
+"Process control for the new process is configured by the " { $snippet "spawnattr" } " parameter:"
 { $subsections
     <posix-spawnattr>
+
     attr-get-flags
     attr-set-flags
 

@@ -1,1 +1,1 @@
-posix_spawn interface
+posix_spawn low-level interface for spawning processes efficiently

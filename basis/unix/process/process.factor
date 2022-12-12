@@ -1,6 +1,6 @@
 USING: alien alien.c-types alien.data alien.syntax
-environment.unix generalizations io.encodings.utf8 kernel
-layouts libc math math.functions math.order sequences
+environment.unix generalizations inspector io io.encodings.utf8
+kernel layouts libc math math.functions math.order sequences
 simple-tokenizer strings system unix unix.types unix.utilities ;
 IN: unix.process
 
@@ -97,6 +97,12 @@ FUNCTION: pid_t waitpid ( pid_t wpid, int* status, int options )
 
 : check-posix ( n -- )
     [ (throw-errno) ] unless-zero ;
+
+: with-check-posix ( ..a quot: ( ..a -- n ) -- b.. )
+    dup [ call ] dip swap [ drop ] [
+        [ "Checked POSIX quotation failed" print nl describe ] dip
+        (throw-errno)
+    ] if-zero ; inline
 
 <PRIVATE
 HOOK: (pid-limit) os ( -- max-pid )

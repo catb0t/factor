@@ -85,7 +85,7 @@ IN: unix.process.posix-spawn
 
 { t } [
 
-    "/bin/sh"                 ! filename path
+    "/bin/sh"                       ! filename path
     f                               ! NULL pointer for file_actions
     f                               ! NULL pointer for attr
     {
@@ -101,7 +101,23 @@ IN: unix.process.posix-spawn
 
 { t } [
 
-    "/bin/sh"                 ! filename path
+    "/bin/sh"                       ! filename path
+    f                               ! NULL pointer for file_actions
+    f                               ! NULL pointer for attr
+    {
+        "/bin/sh"
+        "-c"
+        "echo 2"
+    }                               ! argv
+    f                               ! NULL envp
+
+    posix-spawn pid-ok?
+
+] unit-test
+
+{ t } [
+
+    "/bin/sh"                       ! filename path
     <posix-spawn-file-actions>      ! file actions struct
     [ set-file-actions ] keep       ! configuration
     f                               ! NULL pointer for spawnattr
@@ -117,7 +133,7 @@ IN: unix.process.posix-spawn
 ] unit-test
 
 { t } [
-    "/bin/sh"                 ! filename path
+    "/bin/sh"                       ! filename path
     <posix-spawn-file-actions>      ! file actions struct
     [ set-file-actions ] keep       ! configuration
     f                               ! NULL pointer for spawnattr
@@ -127,6 +143,21 @@ IN: unix.process.posix-spawn
         "echo 2"
     }                               ! argv
     (os-envs)                       ! envp
+
+    posix-spawn* pid-ok?
+] unit-test
+
+{ t } [
+    "/bin/sh"                       ! filename path
+    <posix-spawn-file-actions>      ! file actions struct
+    [ set-file-actions ] keep       ! configuration
+    f                               ! NULL pointer for spawnattr
+    {
+        "/bin/sh"
+        "-c"
+        "echo 2"
+    }                               ! argv
+    f                               ! NULL envp
 
     posix-spawn* pid-ok?
 ] unit-test
@@ -160,3 +191,17 @@ IN: unix.process.posix-spawn
     posix-spawn-args-with-path
     pid-ok?
 ] unit-test
+
+! { t } [
+!     flags{ POSIX_SPAWN_SETPGROUP } <posix-spawnattr>
+!     0 [ attr-set-pgroup ] keepd
+! 
+!     <posix-spawn-file-actions>
+! 
+!     [ stdin-handle fileno dup actions-add-dup2 ]
+!     [ stdout-handle fileno dup actions-add-dup2 ]
+!     [ stderr-handle fileno dup actions-add-dup2 ] tri
+! 
+! 
+!     { "/bin/cat" }
+! ] unit-test

@@ -1,26 +1,30 @@
 ! Copyright (C) 2007, 2010, 2022 Slava Pestov and Cat Stevens.
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors alien.c-types alien.data classes.struct
-combinators continuations debugger environment fry inspector
-io.backend io.backend.unix io.files.private io.files.unix
-io.launcher io.launcher.private io.pathnames io.ports kernel
-libc literals math namespaces sequences simple-tokenizer strings
-summary system unix unix.ffi unix.process
-unix.process.posix-spawn unix.scheduler unix.types ;
+combinators continuations debugger environment formatting fry
+inspector io.backend io.backend.unix io.files.private
+io.files.unix io.launcher io.launcher.private io.pathnames
+io.ports kernel libc literals math namespaces sequences
+simple-tokenizer strings summary system unix unix.ffi
+unix.process unix.process.posix-spawn unix.scheduler unix.types ;
 QUALIFIED-WITH: unix.signals sig
 IN: io.launcher.unix.posix-spawn
 
 <PRIVATE
+! supporting +new-session+ only on GNU would be feature parity with io.launcher.windows
+! but would still leave out freebsd, macosx and non-GNU linux, and would require
+! special handling between GNU libc linux and other linux
 ERROR: spawn-new-session-impossible attr process group ;
 M: spawn-new-session-impossible summary
-    drop "requested group +new-session+ is impossible in the posix-spawn API\nPOSIX does not provide a way to create a new session ID for a spawned process.\nUse setsid in the child process, or fork-process instead of spawn-process." ;
+    [ group>> ] [ process>> command>> ] bi
+    "Requested group %s is a GNU extension, not available in POSIX\nThis feature requires POSIX_SPAWN_SETSID, a GNU extension.\nPOSIX does not provide a way to create a new session ID for a spawned process.\nUse setsid(3p) in the child process, or fork-process instead of spawn-process.\nCommand: '%s'" sprintf ;
 
 M: spawn-new-session-impossible error.
     describe ;
 
 CONSTANT: middle-priorities { +low-priority+ +high-priority+ +highest-priority+ }
 
-: get-arguments ( process -- target argv )
+: arguments>split-argv ( process -- target argv )
     command>> dup string? [ tokenize ] when [ first ] keep ;
 
 : do-new-group ( spawnattr: posix_spawnattr_t flags -- flags )
@@ -31,9 +35,9 @@ CONSTANT: middle-priorities { +low-priority+ +high-priority+ +highest-priority+ 
 ! "the child's process group shall be as specified in the spawn-pgroup"
 : setup-process-group ( spawnattr: posix_spawnattr_t flags process -- flags )
     dup group>> {
-        { +same-group+  [ drop nip ] }
+        { +same-group+  [ 3drop 0 ] }
         { +new-group+   [ drop do-new-group ] }
-        { +new-session+ [ spawn-new-session-impossible ] }
+        { +new-session+ [ nip dup group>> spawn-new-session-impossible ] }
     } case ;
 
 HOOK: setup-scheduler os ( spawnattr: posix_spawnattr_t flags process -- flags )
@@ -101,7 +105,8 @@ M: freebsd use-round-robin-policy?
 ! by the io.launcher / <process> APIs.
 
 ! if priority is f, nothing is done and you are at the will of the scheduler.
-M: unix setup-scheduler
+
+M: unix setup-scheduler ( spawnattr: posix_spawnattr_t flags process -- flags )
     priority>> [
         swap [
             dup {
@@ -109,7 +114,7 @@ M: unix setup-scheduler
                 { [ dup +normal-priority+ = ]     [ drop SCHED_OTHER ] }
                 { [ dup use-round-robin-policy? ] [ drop SCHED_RR ] }
                 { [ dup +lowest-priority+ = ]     [ drop MOST_IDLE_SCHED_POLICY ] }
-            } cond
+            } cond ! ( spawnattr priority cond-result )
             [ nip attr-set-schedpolicy ] [
                 dup priority-allowed? [
                     policy-priority-range segment-priority-in-range
@@ -158,27 +163,31 @@ M: unix setup-scheduler
         ?closed write-flags 2 redirect
     ] if ;
 
-: setup-environment ( spawnattr flags process -- flags )
+: ?setup-environment ( process -- envp/f )
     dup pass-environment? [
-        dup get-environment
-    ] when ;
+       get-environment
+    ] [ drop f ] if ;
 
-: setup-spawnattr ( process -- spawnattr )
-    [ <posix-spawnattr> flags{ } ] dip
-    [ setup-process-group ] 3keep nip swapd
-    [ setup-scheduler ] 3keep 2drop swap
-    [ attr-set-flags ] keepd ;
+:: setup-spawnattr ( process -- spawnattr )
+    <posix-spawnattr> :> spawnattr
+
+    spawnattr flags{ } process setup-process-group :> flags!
+    spawnattr flags    process setup-scheduler   ! -- flags
+    spawnattr swap     attr-set-flags
+
+    spawnattr ;
 
 : setup-file-actions ( process -- file-actions )
-    [ <posix-spawn-file-actions> ] dip ;
+    ! setup-redirection here
+    drop <posix-spawn-file-actions> ;
 
 PRIVATE>
 
 :: spawn-process ( process: process -- pid: pid_t )
-    process get-arguments :> ( target argv )
+    process arguments>split-argv :> ( target argv )
     process setup-spawnattr :> spawnattr
     process setup-file-actions :> file-actions
-    process setup-environment :> envp
+    process ?setup-environment :> envp
 
     target
     spawnattr file-actions

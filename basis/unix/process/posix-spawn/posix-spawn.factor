@@ -1,31 +1,36 @@
 ! Copyright (C) 2020, 2022 Cat Stevens and Doug Coleman.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: alien alien.c-types alien.data alien.destructors
-alien.strings alien.syntax arrays classes.struct combinators
-destructors environment generalizations io.encodings.utf8 kernel
-layouts libc literals math strings system unix.ffi unix.process
-unix.types unix.utilities unix.signals vocabs vocabs.loader words ;
+USING: accessors alien alien.c-types alien.data
+alien.destructors alien.strings alien.syntax arrays
+classes.struct combinators debugger destructors environment
+formatting generalizations generic.single inspector
+io.encodings.utf8 kernel layouts libc literals math strings
+summary system unix.ffi unix.process unix.signals unix.types
+unix.utilities vocabs vocabs.loader words ;
 
 FROM: alien.c-types => short ;
 QUALIFIED: sequences
 
 IN: unix.process.posix-spawn
 
-
+! SPAWNATTR FLAGS
+! these 4 are always meaningful
 CONSTANT: POSIX_SPAWN_RESETIDS 0x1
 CONSTANT: POSIX_SPAWN_SETPGROUP 0x2
 
 CONSTANT: POSIX_SPAWN_SETSIGDEF 0x4
 CONSTANT: POSIX_SPAWN_SETSIGMASK 0x8
 
-! Note: Feature "Process Scheduling"
-CONSTANT: POSIX_SPAWN_SETSCHEDPARAM 0x10
-CONSTANT: POSIX_SPAWN_SETSCHEDULER 0x20
-! end feature
+! these 2 require the optional "Process Scheduling" feature, which macosx does not have
+! these are defined by each platform's sub vocabulary
+
+! POSIX_SPAWN_SETSCHEDPARAM
+! POSIX_SPAWN_SETSCHEDULER
 
 << {
-  { [ os linux? ] [ "unix.process.posix-spawn.linux" require ] }
-  { [ os macosx? ] [ "unix.process.posix-spawn.macosx" require ] }
+  { [ os linux? ]   [ "unix.process.posix-spawn.linux"   require ] }
+  { [ os macosx? ]  [ "unix.process.posix-spawn.macosx"  require ] }
+  { [ os freebsd? ] [ "unix.process.posix-spawn.freebsd" require ] }
 } cond >>
 
 FUNCTION: int posix_spawn ( pid_t* pid, c-string path, posix_spawn_file_actions_t* file_actions, posix_spawnattr_t* attrp, c-string argv[], c-string envp[] )
@@ -71,37 +76,33 @@ FUNCTION: int posix_spawnattr_setschedpolicy ( posix_spawnattr_t* attr, int sche
 <PRIVATE
 HOOK: (posix-spawn-file-actions-new) os ( -- file-actions )
 
-M: freebsd (posix-spawn-file-actions-new)
+! linux is the odd one out with its struct definitions
+M: unix (posix-spawn-file-actions-new)
     f posix_spawn_file_actions_t <ref> ;
 
 M: linux (posix-spawn-file-actions-new)
     posix_spawn_file_actions_t <struct> ;
-
-M: macosx (posix-spawn-file-actions-new)
-    f posix_spawn_file_actions_t <ref> ;
 PRIVATE>
 
 : <posix-spawn-file-actions> ( -- file-actions )
     (posix-spawn-file-actions-new) [
-        posix_spawn_file_actions_init check-posix
+        [ posix_spawn_file_actions_init ] with-check-posix
     ] keep ;
 
 : actions-add-open ( file_actions: posix_spawn_file_actions_t fd: int path: string oflag: int mode: mode_t -- )
-    [ utf8 string>alien ] 2dip posix_spawn_file_actions_addopen check-posix ;
+    [ utf8 string>alien ] 2dip [ posix_spawn_file_actions_addopen ] with-check-posix ;
 
 : actions-add-close ( file_actions: posix_spawn_file_actions_t fd: int -- )
-    posix_spawn_file_actions_addclose check-posix ;
+    [ posix_spawn_file_actions_addclose ] with-check-posix ;
 
 : actions-add-dup2 ( file_actions: posix_spawn_file_actions_t fd: int newfd: int -- )
-    posix_spawn_file_actions_adddup2 check-posix ;
+    [ posix_spawn_file_actions_adddup2 ] with-check-posix ;
 
 <PRIVATE
 HOOK: (posix-spawnattr-new) os ( -- attr )
 
-M: freebsd (posix-spawnattr-new)
-    f posix_spawnattr_t <ref> ;
-
-M: macosx (posix-spawnattr-new)
+! as above, OK for macosx and bsd, not OK for Linux
+M: unix (posix-spawnattr-new)
     f posix_spawnattr_t <ref> ;
 
 M: linux (posix-spawnattr-new)
@@ -110,62 +111,90 @@ PRIVATE>
 
 : <posix-spawnattr> ( -- attr )
     (posix-spawnattr-new) [
-        posix_spawnattr_init check-posix
+        [ posix_spawnattr_init ] with-check-posix
     ] keep ;
 
 : attr-get-flags ( attr: posix_spawnattr_t -- flags: short )
     0 short <ref> [
-        posix_spawnattr_getflags check-posix
+        [ posix_spawnattr_getflags ] with-check-posix
     ] keep short deref ;
 
 : attr-set-flags ( attr: posix_spawnattr_t flags: short -- )
-    posix_spawnattr_setflags check-posix ;
+    [ posix_spawnattr_setflags ] with-check-posix ;
 
 : attr-get-pgroup ( attr: posix_spawnattr_t -- pgroup: pid_t )
     0 pid_t <ref> [
-        posix_spawnattr_getpgroup check-posix
+        [ posix_spawnattr_getpgroup ] with-check-posix
     ] keep pid_t deref ;
 
 : attr-set-pgroup ( attr: posix_spawnattr_t pgroup: pid_t -- )
-    posix_spawnattr_setpgroup check-posix ;
+    [ posix_spawnattr_setpgroup ] with-check-posix ;
 
 : attr-get-sigdefault ( attr: posix_spawnattr_t -- sigdefault: sigset_t )
     <sigset> [
-        posix_spawnattr_getsigdefault check-posix
+        [ posix_spawnattr_getsigdefault ] with-check-posix
     ] keep ;
 
 : attr-set-sigdefault ( attr: posix_spawnattr_t sigdefault: sigset_t -- )
-    posix_spawnattr_setsigdefault check-posix ;
+    [ posix_spawnattr_setsigdefault ] with-check-posix ;
 
 : attr-get-sigmask ( attr: posix_spawnattr_t -- sigmask: sigset_t )
     <sigset> [
-        posix_spawnattr_getsigmask check-posix
+        [ posix_spawnattr_getsigmask ] with-check-posix
     ] keep ;
 
 : attr-set-sigmask ( attr: posix_spawnattr_t sigmask: sigset_t -- )
-    posix_spawnattr_setsigmask check-posix ;
+    [ posix_spawnattr_setsigmask ] with-check-posix ;
 
-! NOTE: feature "Process Scheduling"
-: attr-get-schedparam ( attr: posix_spawnattr_t -- schedparam: sched_param )
+! NOTE: POSIX feature "Process Scheduling" (not implemented by macosx)
+ERROR: posix-process-scheduling-not-available word os attr ;
+M: posix-process-scheduling-not-available summary
+    [ os>> dup ] [ word>> ] bi
+    "POSIX \"Process Scheduling\" features are not available on %s\n%s does not implement the optional Process Scheduling feature level\n(needed to use the %s word)" sprintf ;
+
+M: posix-process-scheduling-not-available error.
+    describe ;
+
+: (posix-process-scheduling-not-available) ( attr word -- * )
+    os rot posix-process-scheduling-not-available ;
+
+HOOK: attr-get-schedparam os ( attr: posix_spawnattr_t -- schedparam: sched_param )
+M: macosx attr-get-schedparam macosx
+    \ attr-get-schedparam (posix-process-scheduling-not-available) ;
+
+M: unix attr-get-schedparam
     sched_param <struct> [
-        posix_spawnattr_getschedparam check-posix
+        [ posix_spawnattr_getschedparam ] with-check-posix
     ] keep ;
 
-: attr-set-schedparam ( attr: posix_spawnattr_t schedparam: sched_param -- )
-    posix_spawnattr_setschedparam check-posix ;
+HOOK: attr-set-schedparam os ( attr: posix_spawnattr_t schedparam: sched_param -- )
+M: macosx attr-set-schedparam
+    drop \ attr-set-schedparam (posix-process-scheduling-not-available) ;
 
-: attr-get-schedpolicy ( attr: posix_spawnattr_t -- schedpolicy: int )
+M: unix attr-set-schedparam
+    [ posix_spawnattr_setschedparam ] with-check-posix ;
+
+HOOK: attr-get-schedpolicy os ( attr: posix_spawnattr_t -- schedpolicy: int )
+M: macosx attr-get-schedpolicy
+    \ attr-get-schedpolicy (posix-process-scheduling-not-available) ;
+
+M: unix attr-get-schedpolicy
     0 int <ref> [
-        posix_spawnattr_getschedpolicy check-posix
+        [ posix_spawnattr_getschedpolicy ] with-check-posix
     ] keep int deref ;
 
-: attr-set-schedpolicy ( attr: posix_spawnattr_t schedpolicy: int -- )
-    posix_spawnattr_setschedpolicy check-posix ;
+HOOK: attr-set-schedpolicy os ( attr: posix_spawnattr_t schedpolicy: int -- )
+M: macosx attr-set-schedpolicy
+    \ attr-set-schedpolicy (posix-process-scheduling-not-available) ;
+
+M: unix attr-set-schedpolicy
+    [ posix_spawnattr_setschedpolicy ] with-check-posix ;
 ! end feature
 
 <PRIVATE
 
-: (posix-spawn) ( path: string file_actions: posix_spawn_file_actions_t attrp: posix_spawnattr_t argv envp func: word -- pid: pid_t )
+: (posix-spawn)
+    ( path: string file_actions: posix_spawn_file_actions_t attrp: posix_spawnattr_t argv envp func: word -- pid: pid_t )
     [
       [ [ 0 pid_t <ref> ] dip utf8 string>alien ] 4dip
       [ utf8 strings>alien ] bi@
@@ -175,7 +204,9 @@ PRIVATE>
         check-posix
     ] 7 nkeep 6 ndrop pid_t deref ; inline
 
-: (posix-spawn-with-destructors) ( path: string file_actions: posix_spawn_file_actions_t attrp: posix_spawnattr_t argv envp func: word -- pid: pid_t )
+! this was originally written using locals, and it wasn't any cleaner
+: (posix-spawn-with-destructors)
+    ( path: string file_actions: posix_spawn_file_actions_t attrp: posix_spawnattr_t argv envp func: word -- pid: pid_t )
     [
       [
         [
@@ -196,16 +227,20 @@ PRIVATE>
 
 PRIVATE>
 
-: posix-spawn* ( path: string file_actions: posix_spawn_file_actions_t attrp: posix_spawnattr_t argv envp -- pid_t )
+: posix-spawn*
+    ( path: string file_actions: posix_spawn_file_actions_t attrp: posix_spawnattr_t argv envp -- pid_t )
     \ posix_spawn (posix-spawn) ;
 
-: posix-spawnp* ( file: string file_actions: posix_spawn_file_actions_t attrp: posix_spawnattr_t argv envp -- pid_t )
+: posix-spawnp*
+    ( file: string file_actions: posix_spawn_file_actions_t attrp: posix_spawnattr_t argv envp -- pid_t )
     \ posix_spawnp (posix-spawn) ;
 
-: posix-spawn ( path: string file_actions: posix_spawn_file_actions_t attrp: posix_spawnattr_t argv envp -- pid_t )
+: posix-spawn
+    ( path: string file_actions: posix_spawn_file_actions_t attrp: posix_spawnattr_t argv envp -- pid_t )
     \ posix_spawn (posix-spawn-with-destructors) ;
 
-: posix-spawnp ( file: string file_actions: posix_spawn_file_actions_t attrp: posix_spawnattr_t argv envp -- pid_t )
+: posix-spawnp
+    ( file: string file_actions: posix_spawn_file_actions_t attrp: posix_spawnattr_t argv envp -- pid_t )
     \ posix_spawnp (posix-spawn-with-destructors) ;
 
 

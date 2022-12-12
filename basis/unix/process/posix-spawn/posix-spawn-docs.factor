@@ -2,14 +2,14 @@
 ! See http://factorcode.org/license.txt for BSD license.
 USING: environment help help.markup help.syntax strings unix.ffi
 unix.process unix.process.posix-spawn
-unix.process.posix-spawn.private unix.types ;
+unix.process.posix-spawn.private unix.types urls ;
 IN: unix.process.posix-spawn
 
 ABOUT: "unix.process.posix-spawn"
 
 ARTICLE: "unix.process.posix-spawn" "Launching processes with posix_spawn"
 
-"The " { $vocab-link "unix.process.posix-spawn" } " vocabulary provides low-level wrappers for " { $snippet "posix_spawn(3)" } " and similar functions from " { $snippet "spawn.h" } " on systems with POSIX compatibility."
+"The " { $vocab-link "unix.process.posix-spawn" } " vocabulary provides low-level wrappers for " { $snippet "posix_spawn(3)" } " and related functions from " { $snippet "<spawn.h>" } " on systems with POSIX compatibility."
 $nl
 
 { $snippet "posix_spawn()" } " spawns a new process by executing the file found at the pathname given in its first parameter. With " { $snippet "posix_spawnp()" } ", the system will search for the file in the " { $snippet "PATH" } " environment variable, just like " { $link execvp } "."
@@ -18,7 +18,7 @@ $nl
 { $snippet "posix_spawn(3)" } " uses much less memory than " { $snippet "fork(2)" } " because it does not copy the parent process' memory, and is more logical when the forked process memory is often going to be overwritten by an immediate call to the " { $snippet "exec(3)" } " family of functions anyway."
 $nl
 
-"Refer to " { $snippet "man 3 posix_spawn" } ", etc for complete POSIX feature documentation."
+"Refer to " { $snippet "man 3 posix_spawn" } ", etc for complete POSIX feature documentation. Man pages for functions like " { $snippet "posix_spawn_file_actions_addopen" } " may not be installed by default. On Debian and Ubuntu, you can install the " { $snippet "manpages-dev" } ", " { $snippet "manpages-posix" } ", and " { $snippet "manpages-posix-dev" } " packages, or check " { $url "https://man7.org" } "."
 $nl
 
 "Ease-of-use words with the current " { $link (os-envs) } " and no other configuration:"

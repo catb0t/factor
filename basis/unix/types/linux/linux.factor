@@ -49,6 +49,7 @@ STRUCT: sched_param
 
 ! linux's <spawn.h> defines the following as structs, macos does not
 
+! any other declaration causes crashes and bad pointers, so this is just void*
 TYPEDEF: void* spawn_action
 
 STRUCT: posix_spawn_file_actions_t

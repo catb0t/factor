@@ -1,10 +1,10 @@
 ! Copyright (C) 2007, 2010 Slava Pestov.
 ! See https://factorcode.org/license.txt for BSD license.
 USING: accessors alien.c-types alien.data assocs combinators
-continuations environment fry io.backend io.backend.unix
-io.files.private io.files.unix io.launcher io.launcher.private
-io.launcher.unix.posix-spawn io.pathnames io.ports kernel libc math
-namespaces sequences simple-tokenizer strings system unix
+environment fry io.backend io.backend.unix io.files.private
+io.files.unix io.launcher io.launcher.private
+io.launcher.unix.posix-spawn io.pathnames io.ports kernel libc
+math namespaces sequences simple-tokenizer strings system
 unix.ffi unix.process ;
 QUALIFIED-WITH: unix.signals sig
 IN: io.launcher.unix

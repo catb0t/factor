@@ -24,13 +24,13 @@ CONSTANT: POSIX_SPAWN_SETSIGMASK 0x8
 ! these 2 require the optional "Process Scheduling" feature, which macosx does not have
 ! these are defined by each platform's sub vocabulary
 
-! POSIX_SPAWN_SETSCHEDPARAM
-! POSIX_SPAWN_SETSCHEDULER
+CONSTANT: POSIX_SPAWN_SETSCHEDPARAM f
+CONSTANT: POSIX_SPAWN_SETSCHEDULER f
 
 << {
-  { [ os linux? ]   [ "unix.process.posix-spawn.linux"   require ] }
-  { [ os macosx? ]  [ "unix.process.posix-spawn.macosx"  require ] }
-  { [ os freebsd? ] [ "unix.process.posix-spawn.freebsd" require ] }
+    { [ os linux? ]   [ "unix.process.posix-spawn.linux"   require ] }
+    { [ os macosx? ]  [ "unix.process.posix-spawn.macosx"  require ] }
+    { [ os freebsd? ] [ "unix.process.posix-spawn.freebsd" require ] }
 } cond >>
 
 FUNCTION: int posix_spawn ( pid_t* pid, c-string path, posix_spawn_file_actions_t* file_actions, posix_spawnattr_t* attrp, c-string argv[], c-string envp[] )
@@ -196,8 +196,8 @@ M: unix attr-set-schedpolicy
 : (posix-spawn)
     ( path: string file_actions: posix_spawn_file_actions_t attrp: posix_spawnattr_t argv envp func: word -- pid: pid_t )
     [
-      [ [ 0 pid_t <ref> ] dip utf8 string>alien ] 4dip
-      [ utf8 strings>alien ] bi@
+        [ [ 0 pid_t <ref> ] dip utf8 string>alien ] 4dip
+        [ utf8 strings>alien ] bi@
     ] dip
     [
         execute( pid file fa sa argv env -- e )
@@ -208,18 +208,18 @@ M: unix attr-set-schedpolicy
 : (posix-spawn-with-destructors)
     ( path: string file_actions: posix_spawn_file_actions_t attrp: posix_spawnattr_t argv envp func: word -- pid: pid_t )
     [
-      [
         [
-            [ dup [ &posix_spawn_file_actions_destroy ] when ]
-            [ dup [ &posix_spawnattr_destroy ] when ] bi*
-            [ [ 0 pid_t <ref> ] dip utf8 string>alien ] 2dip
-        ] 2dip
-        [ utf8 strings>alien ] bi@
-      ] dip
-      [
-          execute( pid file fa sa argv env -- e )
-          check-posix
-      ] 7 nkeep 6 ndrop pid_t deref
+            [
+                [ dup [ &posix_spawn_file_actions_destroy ] when ]
+                [ dup [ &posix_spawnattr_destroy ] when ] bi*
+                [ [ 0 pid_t <ref> ] dip utf8 string>alien ] 2dip
+            ] 2dip
+            [ utf8 strings>alien ] bi@
+        ] dip
+        [
+            execute( pid file fa sa argv env -- e )
+            check-posix
+        ] 7 nkeep 6 ndrop pid_t deref
     ] with-destructors ; inline
 
 : (setup-spawn-args) ( args -- target actions attr args envp )

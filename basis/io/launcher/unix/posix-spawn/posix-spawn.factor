@@ -34,7 +34,7 @@ CONSTANT: middle-priorities { +low-priority+ +high-priority+ +highest-priority+ 
 ! NOTE when documenting: Unimplemented: SETPGROUP and attr_setpgroup(n != 0)
 ! "the child's process group shall be as specified in the spawn-pgroup"
 : setup-process-group ( spawnattr: posix_spawnattr_t flags process -- flags )
-    dup group>> {
+    dup group>> [ +same-group+ ] unless* {
         { +same-group+  [ 3drop 0 ] }
         { +new-group+   [ drop do-new-group ] }
         { +new-session+ [ nip dup group>> spawn-new-session-impossible ] }
@@ -181,9 +181,7 @@ M: unix setup-scheduler ( spawnattr: posix_spawnattr_t flags process -- flags )
     ! setup-redirection here
     drop <posix-spawn-file-actions> ;
 
-PRIVATE>
-
-:: spawn-process ( process: process -- pid: pid_t )
+:: setup-spawn ( process: process -- target spawnattr file-actions argv envp )
     process arguments>split-argv :> ( target argv )
     process setup-spawnattr :> spawnattr
     process setup-file-actions :> file-actions
@@ -191,7 +189,11 @@ PRIVATE>
 
     target
     spawnattr file-actions
-    argv envp
-    posix-spawnp ;
+    argv envp ;
+
+PRIVATE>
+
+: spawn-process ( process: process -- pid: pid_t )
+    setup-spawn posix-spawnp ;
 
 !     [ setup-redirection ] [ 4drop 251 _exit ] recover

@@ -17,7 +17,7 @@ HOOK: (sigset-new) os ( -- set )
 M: freebsd (sigset-new)
     0 sigset_t <ref> ;
 
-M: macosx (sigset-new)
+M: macos (sigset-new)
     0 sigset_t <ref> ;
 
 M: linux (sigset-new)

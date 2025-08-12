@@ -9,7 +9,7 @@ IN: io.launcher.unix.posix-spawn.tests
 
 SYMBOL: old-os
 
-! need to stop priority scheduler tests from running on macosx?
+! need to stop priority scheduler tests from running on macos?
 
 ! REQUIRES GNU TO PASS
 ! are we doing GNU support on Linux or not?
@@ -19,7 +19,7 @@ SYMBOL: old-os
     $[ SCHED_IDLE ]
     0
 } [
-    os macosx? [ flags{ POSIX_SPAWN_SETSCHEDULER } SCHED_IDLE 0 ] [
+    os macos? [ flags{ POSIX_SPAWN_SETSCHEDULER } SCHED_IDLE 0 ] [
 
         <posix-spawnattr> dup flags{ }
         T{ process { priority +lowest-priority+ } }
@@ -33,7 +33,7 @@ SYMBOL: old-os
         [ attr-get-schedpolicy ]
         [ attr-get-schedparam sched_priority>> ] bi
 
-    ] if ! macosx?
+    ] if ! macos?
 ] unit-test
 
 ! ...and +lowest-priority+ should give SCHED_RR policy with minimum priority on FreeBSD
@@ -42,7 +42,7 @@ SYMBOL: old-os
     $[ SCHED_RR ]
     t
 } [
-    os macosx? [ flags{ POSIX_SPAWN_SETSCHEDULER } SCHED_RR t ] [
+    os macos? [ flags{ POSIX_SPAWN_SETSCHEDULER } SCHED_RR t ] [
 
         <posix-spawnattr> dup flags{ }
         T{ process { priority +lowest-priority+ } }
@@ -59,5 +59,5 @@ SYMBOL: old-os
             [ sched_get_priority_min ] dip =
         ] bi
 
-    ] if ! macosx?
+    ] if ! macos?
 ] unit-test

@@ -43,7 +43,7 @@ HELP: setup-scheduler
     $nl
     { $link +normal-priority+ } " will be " { $link SCHED_OTHER } ", which is the default on Linux and BSD. " { $link SCHED_IDLE } ", " { $link SCHED_OTHER } ", and all non-realtime scheduler policies require " { $snippet "sched_param->priority" } "(i.e. " { $snippet "sched_param sched_priority>>" } ") to be " { $snippet "0" } " because the priority will be completely determined by the kernel scheduler in that case."
 }
-{ $warning { $link macosx } " does not implement POSIX Process Scheduling natively, but has similarly low-level APIs that can be used here instead." }
+{ $warning { $link macos } " does not implement POSIX Process Scheduling natively, but has similarly low-level APIs that can be used here instead." }
 { $side-effects "spawnattr" }
 { $notes
     "See also " { $snippet "man 7 sched" } "."

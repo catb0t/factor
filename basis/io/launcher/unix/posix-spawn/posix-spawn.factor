@@ -12,7 +12,7 @@ IN: io.launcher.unix.posix-spawn
 
 <PRIVATE
 ! supporting +new-session+ only on GNU would be feature parity with io.launcher.windows
-! but would still leave out freebsd, macosx and non-GNU linux, and would require
+! but would still leave out freebsd, macos and non-GNU linux, and would require
 ! special handling between GNU libc linux and other linux
 ERROR: spawn-new-session-impossible attr process group ;
 M: spawn-new-session-impossible summary
@@ -49,7 +49,7 @@ HOOK: setup-scheduler os ( spawnattr: posix_spawnattr_t flags process -- flags )
 ! the same as priority
 
 ! this is currently a no-op
-M: macosx setup-scheduler
+M: macos setup-scheduler
     [ 3drop ] keepd ;
 
 : use-fifo-policy? ( priority -- ? )

@@ -1,7 +1,7 @@
 USING: alien alien.c-types alien.data alien.syntax
 environment.unix generalizations inspector io io.encodings.utf8
 kernel layouts libc math math.functions math.order sequences
-simple-tokenizer strings system unix unix.types unix.utilities ;
+simple-tokenizer strings system unix unix.types alien.utilities ;
 IN: unix.process
 
 ! Low-level Unix process launching utilities. These are used
@@ -108,7 +108,7 @@ FUNCTION: pid_t waitpid ( pid_t wpid, int* status, int options )
 HOOK: (pid-limit) os ( -- max-pid )
 
 ! PIDs are strictly less than PID_MAX on macosx
-M: macosx (pid-limit)
+M: macos (pid-limit)
     99,998 ;
 
 ! PIDs may include PID_MAX on freebsd
@@ -117,7 +117,7 @@ M: freebsd (pid-limit)
 
 ! PIDS are limited to 2^15 on linux32, and 2^22 on linux64
 M: linux (pid-limit)
-    2 64bit? 22 15 ? ^ ;
+    2 64-bit? 22 15 ? ^ ;
 
 PRIVATE>
 

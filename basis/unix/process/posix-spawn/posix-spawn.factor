@@ -6,7 +6,7 @@ classes.struct combinators debugger destructors environment
 formatting generalizations generic.single inspector
 io.encodings.utf8 kernel layouts libc literals math strings
 summary system unix.ffi unix.process unix.signals unix.types
-unix.utilities vocabs vocabs.loader words ;
+alien.utilities vocabs vocabs.loader words ;
 
 FROM: alien.c-types => short ;
 QUALIFIED: sequences
@@ -21,7 +21,7 @@ CONSTANT: POSIX_SPAWN_SETPGROUP 0x2
 CONSTANT: POSIX_SPAWN_SETSIGDEF 0x4
 CONSTANT: POSIX_SPAWN_SETSIGMASK 0x8
 
-! these 2 require the optional "Process Scheduling" feature, which macosx does not have
+! these 2 require the optional "Process Scheduling" feature, which macos does not have
 ! these are defined by each platform's sub vocabulary
 
 CONSTANT: POSIX_SPAWN_SETSCHEDPARAM f
@@ -29,7 +29,7 @@ CONSTANT: POSIX_SPAWN_SETSCHEDULER f
 
 << {
     { [ os linux? ]   [ "unix.process.posix-spawn.linux"   require ] }
-    { [ os macosx? ]  [ "unix.process.posix-spawn.macosx"  require ] }
+    { [ os macos? ]  [ "unix.process.posix-spawn.macos"  require ] }
     { [ os freebsd? ] [ "unix.process.posix-spawn.freebsd" require ] }
 } cond >>
 
@@ -101,7 +101,7 @@ PRIVATE>
 <PRIVATE
 HOOK: (posix-spawnattr-new) os ( -- attr )
 
-! as above, OK for macosx and bsd, not OK for Linux
+! as above, OK for macos and bsd, not OK for Linux
 M: unix (posix-spawnattr-new)
     f posix_spawnattr_t <ref> ;
 
@@ -146,7 +146,7 @@ PRIVATE>
 : attr-set-sigmask ( attr: posix_spawnattr_t sigmask: sigset_t -- )
     [ posix_spawnattr_setsigmask ] with-check-posix ;
 
-! NOTE: POSIX feature "Process Scheduling" (not implemented by macosx)
+! NOTE: POSIX feature "Process Scheduling" (not implemented by macos)
 ERROR: posix-process-scheduling-not-available word os attr ;
 M: posix-process-scheduling-not-available summary
     [ os>> dup ] [ word>> ] bi
@@ -159,8 +159,8 @@ M: posix-process-scheduling-not-available error.
     os rot posix-process-scheduling-not-available ;
 
 HOOK: attr-get-schedparam os ( attr: posix_spawnattr_t -- schedparam: sched_param )
-M: macosx attr-get-schedparam macosx
-    \ attr-get-schedparam (posix-process-scheduling-not-available) ;
+M: macos attr-get-schedparam
+    macos \ attr-get-schedparam (posix-process-scheduling-not-available) ;
 
 M: unix attr-get-schedparam
     sched_param <struct> [
@@ -168,14 +168,14 @@ M: unix attr-get-schedparam
     ] keep ;
 
 HOOK: attr-set-schedparam os ( attr: posix_spawnattr_t schedparam: sched_param -- )
-M: macosx attr-set-schedparam
+M: macos attr-set-schedparam
     drop \ attr-set-schedparam (posix-process-scheduling-not-available) ;
 
 M: unix attr-set-schedparam
     [ posix_spawnattr_setschedparam ] with-check-posix ;
 
 HOOK: attr-get-schedpolicy os ( attr: posix_spawnattr_t -- schedpolicy: int )
-M: macosx attr-get-schedpolicy
+M: macos attr-get-schedpolicy
     \ attr-get-schedpolicy (posix-process-scheduling-not-available) ;
 
 M: unix attr-get-schedpolicy
@@ -184,7 +184,7 @@ M: unix attr-get-schedpolicy
     ] keep int deref ;
 
 HOOK: attr-set-schedpolicy os ( attr: posix_spawnattr_t schedpolicy: int -- )
-M: macosx attr-set-schedpolicy
+M: macos attr-set-schedpolicy
     \ attr-set-schedpolicy (posix-process-scheduling-not-available) ;
 
 M: unix attr-set-schedpolicy

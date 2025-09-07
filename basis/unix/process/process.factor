@@ -107,7 +107,7 @@ FUNCTION: pid_t waitpid ( pid_t wpid, int* status, int options )
 <PRIVATE
 HOOK: (pid-limit) os ( -- max-pid )
 
-! PIDs are strictly less than PID_MAX on macosx
+! PIDs are strictly less than PID_MAX on macos
 M: macos (pid-limit)
     99,998 ;
 

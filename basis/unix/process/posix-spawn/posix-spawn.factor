@@ -21,15 +21,16 @@ CONSTANT: POSIX_SPAWN_SETPGROUP 0x2
 CONSTANT: POSIX_SPAWN_SETSIGDEF 0x4
 CONSTANT: POSIX_SPAWN_SETSIGMASK 0x8
 
-! these 2 require the optional "Process Scheduling" feature, which macos does not have
-! these are defined by each platform's sub vocabulary
-
-CONSTANT: POSIX_SPAWN_SETSCHEDPARAM f
-CONSTANT: POSIX_SPAWN_SETSCHEDULER f
+! POSIX_SPAWN_SETSCHEDPARAM and
+! POSIX_SPAWN_SETSCHEDULER require the optional "Process Scheduling" feature
+! macos does not support it
+! other unices, including linux, nixos, musl libc, and freebsd *may* be compiled
+! without support for them
+! TODO: feature test macro (small gcc invocation?) for those 2 constants
 
 << {
     { [ os linux? ]   [ "unix.process.posix-spawn.linux"   require ] }
-    { [ os macos? ]  [ "unix.process.posix-spawn.macos"  require ] }
+    { [ os macos? ]  [ "unix.process.posix-spawn.macos"    require ] }
     { [ os freebsd? ] [ "unix.process.posix-spawn.freebsd" require ] }
 } cond >>
 

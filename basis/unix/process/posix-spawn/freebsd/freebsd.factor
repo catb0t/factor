@@ -1,6 +1,6 @@
-USING: ;
+! Copyright 2023 Cat Stevens
 
-IN: unix.process
+IN: unix.process.posix-spawn
 ! FreeBSD specific stuff should appear here
 
 ! Note: Feature "Process Scheduling"

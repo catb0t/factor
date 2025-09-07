@@ -42,7 +42,7 @@ CONSTANT: middle-priorities { +low-priority+ +high-priority+ +highest-priority+ 
 
 HOOK: setup-scheduler os ( spawnattr: posix_spawnattr_t flags process -- flags )
 
-! TODO: mirror POSIX-style priority scheduling for <process> on macosx
+! TODO: mirror POSIX-style priority scheduling for <process> on macos
 ! since we are not in the forked process, we can't really do much
 ! unless we wait until after the child is posix_spawn'd, and then nice(2)
 ! its pid, but that isn't terribly robust and nice (affinity) is not

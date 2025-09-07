@@ -1,6 +1,6 @@
-USING: ;
+! Copyright 2023 Cat Stevens
 
-IN: unix.process
+IN: unix.process.posix-spawn
 ! Linux-specific constants should appear here
 ! the key difference on Linux is that the SETSID and USE_VFORK flags are available,
 ! but these are *only* available when _GNU_SOURCE is defined

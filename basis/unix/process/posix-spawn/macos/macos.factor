@@ -1,7 +1,7 @@
 ! Copyright 2022 Doug Coleman and Cat Stevens.
-IN: unix.process
+IN: unix.process.posix-spawn
 
-! See <https://opensource.apple.com/source/xnu/xnu-7195.81.3/bsd/sys/spawn_internal.h.auto.html>
+! See <https://github.com/apple-oss-distributions/xnu/blob/main/bsd/sys/spawn_internal.h>
 
 ! XNU's posix_spawn has a lot of extra features like "port action" and "coalition"
 ! and "MAC Policy Extensions" which are far too confusing to implement until they

@@ -5,6 +5,10 @@ io.streams.duplex io.timeouts kernel libc locals math namespaces
 sequences threads tools.test unix.process unix.signals ;
 IN: io.launcher.unix.tests
 
+CONSTANT: launcher-test-1 "/tmp/launcher-test-1"
+CONSTANT: launcher-test-2 "/tmp/launcher-test-2"
+CONSTANT: launcher-test-3 "/tmp/launcher-test-3"
+
 [
     { f } [ { "touch" "launcher-test-1" } run-detached killed>> ] unit-test
 
@@ -56,6 +60,7 @@ IN: io.launcher.unix.tests
         try-process
     ] unit-test
 
+    ! "no such file" on stderr, we only read stdout
     { "" } [
         { "cat" "launcher-test-1" }
         ascii <process-reader> stream-contents
@@ -63,7 +68,7 @@ IN: io.launcher.unix.tests
 
     { } [
         2 [
-            "launcher-test-1" binary <file-appender> [
+            "launcher-test-1" ascii <file-appender> [
                 <process>
                     swap >>stdout
                     "echo Hello" >>command
